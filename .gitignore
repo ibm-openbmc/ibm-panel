@@ -30,3 +30,17 @@
 *.exe
 *.out
 *.app
+
+# Code coverage
+*.gcda
+*.gcno
+*.trs
+*-coverage*
+
+# Meson related
+/build
+/builddir
+
+# vscode
+.vscode
+
