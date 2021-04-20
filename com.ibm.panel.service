@@ -1,0 +1,11 @@
+[Unit]
+Description=Application to interact with the IBM Operator Panel
+StopWhenUnneeded=false
+
+[Service]
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/ibm-panel
+
+[Install]
+WantedBy=multi-user.target
