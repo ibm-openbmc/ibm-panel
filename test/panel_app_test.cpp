@@ -5,5 +5,5 @@
 TEST(PanelApp, display)
 {
     // Good path.
-    EXPECT_EQ(true, display("BLAH"));
+    EXPECT_EQ(true, display("BLAH", "BLAH1"));
 }

@@ -1,10 +1,11 @@
-#include <errno.h>
-#include <string>
-#include <cstdint>
-
 #include "panel_app.hpp"
 
+#include <errno.h>
 
-bool display(const std::string&){
+#include <cstdint>
+#include <string>
+
+bool display(const std::string&, const std::string&)
+{
     return true;
 }
