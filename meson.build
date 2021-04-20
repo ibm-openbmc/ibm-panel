@@ -26,6 +26,7 @@ cxx.get_supported_arguments([
 '-DBOOST_ALLOW_DEPRECATED_HEADERS'
 ]),
 language : 'cpp')
+add_global_arguments('-Wno-psabi', language : ['c', 'cpp'])
 
 systemd_system_unit_dir = systemd.get_pkgconfig_variable(
     'systemdsystemunitdir'
