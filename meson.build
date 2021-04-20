@@ -7,7 +7,7 @@ project(
         'cpp_std=c++17',
         # note: This is allowed in certain contexts, but provides binary size
         # improvements for applications that don't require rtti
-        #'cpp_rtti=false',
+        'cpp_rtti=false',
     ],
     license: 'Apache-2.0',
     version: '0.1',
