@@ -42,7 +42,8 @@ panel_app_a = static_library(
     'ibm_panel_a',
     'src/panel_app.cpp',
     'src/panel_state_manager.cpp',
-    include_directories: 'include',
+    'src/i2c_message_encoder.cpp',
+    include_directories: 'include'
 )
 
 executable(
@@ -66,6 +67,7 @@ if get_option('tests').enabled()
       'panel-app-test',
       'test/panel_app_test.cpp',
       'test/panel_state_manager_test.cpp',
+      'test/i2c_message_encoder_test.cpp',
       dependencies: [
           sdbusplus,
           gmock,
