@@ -91,6 +91,20 @@ TEST(MessageEncoder, buttonControl)
     EXPECT_EQ(validData, msgEncode.buttonControl(0x02, 0x01));
 }
 
+TEST(MessageEncoder, scroll)
+{
+    MessageEncoder msgEncode;
+    // Good case - valid data
+    Binary validData = {0xFF, 0x88, 0x00, 10, 1, 109};
+    EXPECT_EQ(validData, msgEncode.scroll(0x00));
+
+    Binary validData1 = {0xFF, 0x88, 0x02, 10, 1, 107};
+    EXPECT_EQ(validData1, msgEncode.scroll(0x02));
+
+    Binary validData2 = {0xFF, 0x88, 0x23, 10, 1, 74};
+    EXPECT_EQ(validData2, msgEncode.scroll(0x23));
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

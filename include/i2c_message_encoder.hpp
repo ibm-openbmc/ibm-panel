@@ -53,6 +53,18 @@ class MessageEncoder
      * @return Encoded data packet of Button control command.
      */
     Binary buttonControl(Byte buttonID, Byte buttonOperation);
+
+    /** @brief Internal Scroll command encode api
+     * The Internal Scroll command is used to start/stop display scrolling and
+     * to define scroll characteristics. The Internal Scroll command is used to
+     * scroll LCD data loaded by the Display Data Write command.
+     * Command code of scroll command is 0xFF88.
+     * @param[in] scrollControl - scroll control type. Possible input values are
+     * 0x00 to 0x03, 0x10 to 0x13, 0x20 to 0x23. Other values will stop
+     * scrolling.
+     * @return Encoded data packet of internal scroll command.
+     */
+    Binary scroll(Byte scrollControl);
 };
 } // namespace encode
 } // namespace panel

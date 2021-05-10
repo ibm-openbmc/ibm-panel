@@ -70,5 +70,16 @@ Binary MessageEncoder::buttonControl(Byte buttonID, Byte buttonOperation)
     return encodedData;
 }
 
+Binary MessageEncoder::scroll(Byte scrollControl)
+{
+    Binary encodedData = {0xFF, 0x88};
+    encodedData.reserve(6);
+    encodedData.emplace_back(scrollControl);
+    encodedData.emplace_back(10); // emplace scroll rate
+    encodedData.emplace_back(1);  // emplace scroll character count
+    calculateCheckSum(encodedData);
+    return encodedData;
+}
+
 } // namespace encode
 } // namespace panel
