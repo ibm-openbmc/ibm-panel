@@ -39,6 +39,20 @@ class MessageEncoder
      * calculated. The calculated checksum will be appended to the buffer.
      */
     void calculateCheckSum(Binary& dataBuffer);
+
+    /** @brief Method which encodes button control command data.
+     * The Button control command is used to setup the panel's button
+     * operational characteristics. A button is not active at the panel until
+     * its operational characteristics are specified. This method encodes the
+     * data of button control command whose code is 0xFFB0. The encoded data
+     * packet is sent to the slave micro controller by the master BMC.
+     * @param[in] buttonID - the button id which takes values from 0x00 till
+     * 0x02. Other values are reserved.
+     * @param[in] buttonOperation - the button operation which takes 0x00 & 0x01
+     * as its value and others are reserved.
+     * @return Encoded data packet of Button control command.
+     */
+    Binary buttonControl(Byte buttonID, Byte buttonOperation);
 };
 } // namespace encode
 } // namespace panel

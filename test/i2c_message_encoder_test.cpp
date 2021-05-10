@@ -83,6 +83,14 @@ TEST(MessageEncoder, displayDataWrite)
     EXPECT_EQ(validData, msgEncode.displayDataWrite(lineA, lineB));
 }
 
+TEST(MessageEncoder, buttonControl)
+{
+    MessageEncoder msgEncode;
+    // Good case - valid data
+    Binary validData = {0xFF, 0xB0, 0x02, 20, 0x01, 57};
+    EXPECT_EQ(validData, msgEncode.buttonControl(0x02, 0x01));
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

@@ -1,5 +1,8 @@
 #include "i2c_message_encoder.hpp"
 
+#include <algorithm>
+#include <iostream>
+
 using namespace std;
 
 namespace panel
@@ -55,5 +58,17 @@ Binary MessageEncoder::displayDataWrite(const string& line1,
     calculateCheckSum(dataVector);
     return dataVector;
 }
+
+Binary MessageEncoder::buttonControl(Byte buttonID, Byte buttonOperation)
+{
+    Binary encodedData = {0xFF, 0xB0};
+    encodedData.reserve(6);
+    encodedData.emplace_back(buttonID);
+    encodedData.emplace_back(20); // emplace button debounce value
+    encodedData.emplace_back(buttonOperation);
+    calculateCheckSum(encodedData);
+    return encodedData;
+}
+
 } // namespace encode
 } // namespace panel
