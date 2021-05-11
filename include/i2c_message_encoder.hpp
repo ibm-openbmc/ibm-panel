@@ -75,6 +75,14 @@ class MessageEncoder
      * @return Encoded data packet of lamp test command.
      */
     Binary lampTest();
+
+    /** @brief Soft Reset command encode api
+     * The Panel Code Soft Reset command is used to perform a soft reset of the
+     * Panel micro-controller. This will re-initialize the Panel micro-code to
+     * its start-up values. Command code of soft reset command is 0xFF00.
+     * @return Encoded data packet of soft reset command.
+     */
+    Binary softReset();
 };
 } // namespace encode
 } // namespace panel

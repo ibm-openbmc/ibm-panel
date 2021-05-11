@@ -90,5 +90,12 @@ Binary MessageEncoder::lampTest()
     return encodedData;
 }
 
+Binary MessageEncoder::softReset()
+{
+    Binary encodedData = {0xFF, 0x00};
+    encodedData.reserve(3);
+    calculateCheckSum(encodedData);
+    return encodedData;
+}
 } // namespace encode
 } // namespace panel
