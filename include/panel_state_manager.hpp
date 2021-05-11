@@ -119,7 +119,7 @@ class PanelStateManager
         bool functionActiveState = false;
 
         // debounce is required for this functionality.
-        bool isDebounceRequired = false;
+        std::string debouceSrc{};
 
         // tuple to hold range of sub methods for a function.
         panel::types::FunctionNumber subFunctionUpperRange;
