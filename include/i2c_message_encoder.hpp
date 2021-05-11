@@ -65,6 +65,16 @@ class MessageEncoder
      * @return Encoded data packet of internal scroll command.
      */
     Binary scroll(Byte scrollControl);
+
+    /** @brief Lamp test command encode api
+     * The Lamp Test command is used to perform a lamp test on all illumination
+     * elements (LED, LCD) on the converged Panel. The lamp test condition is
+     * terminated after the specified time-out duration, given in seconds, and
+     * all illumination elements are returned to normal operation states.
+     * Command code of lamp test command is 0xFF54.
+     * @return Encoded data packet of lamp test command.
+     */
+    Binary lampTest();
 };
 } // namespace encode
 } // namespace panel

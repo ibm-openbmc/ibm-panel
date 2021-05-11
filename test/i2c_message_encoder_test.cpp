@@ -105,6 +105,13 @@ TEST(MessageEncoder, scroll)
     EXPECT_EQ(validData2, msgEncode.scroll(0x23));
 }
 
+TEST(MessageEncoder, lampTest)
+{
+    MessageEncoder msgEncode;
+    Binary validData = {0xFF, 0x54, 240, 187};
+    EXPECT_EQ(validData, msgEncode.lampTest());
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

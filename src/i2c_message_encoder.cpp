@@ -81,5 +81,14 @@ Binary MessageEncoder::scroll(Byte scrollControl)
     return encodedData;
 }
 
+Binary MessageEncoder::lampTest()
+{
+    Binary encodedData = {0xFF, 0x54};
+    encodedData.reserve(4);
+    encodedData.emplace_back(240); // emplace lamp test duration
+    calculateCheckSum(encodedData);
+    return encodedData;
+}
+
 } // namespace encode
 } // namespace panel
