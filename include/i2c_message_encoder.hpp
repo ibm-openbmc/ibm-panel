@@ -83,6 +83,12 @@ class MessageEncoder
      * @return Encoded data packet of soft reset command.
      */
     Binary softReset();
+
+    /** @brief Flash Update command encode api
+     * Command code of flash update is 0xFF30.
+     * @return Encoded data packet of flash update command.
+     */
+    Binary flashUpdate();
 };
 } // namespace encode
 } // namespace panel

@@ -119,6 +119,13 @@ TEST(MessageEncoder, softReset)
     EXPECT_EQ(validData, msgEncode.ledControl(0x00));
 }
 
+TEST(MessageEncoder, flashUpdate)
+{
+    MessageEncoder msgEncode;
+    Binary validData = {0xFF, 0x30, 208};
+    EXPECT_EQ(validData, msgEncode.flashUpdate());
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
