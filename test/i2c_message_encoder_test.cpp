@@ -4,7 +4,7 @@
 
 using namespace std;
 using namespace panel;
-using namespace panel::encode;
+using namespace panel::encoder;
 
 TEST(MessageEncoder, checkSum)
 {
@@ -35,7 +35,7 @@ TEST(MessageEncoder, checkSum)
     EXPECT_EQ(128, dataBytes.back());
 }
 
-TEST(MessageEncoder, displayDataWrite)
+TEST(MessageEncoder, rawDisplay)
 {
     MessageEncoder msgEncode;
     // Good case - The data should be encoded in the right format.(command
@@ -48,11 +48,11 @@ TEST(MessageEncoder, displayDataWrite)
     copy(line1.begin(), line1.end(), back_inserter(validData));
     copy(line2.begin(), line2.end(), back_inserter(validData));
     validData.emplace_back(0xB5);
-    EXPECT_EQ(validData, msgEncode.displayDataWrite(line1, line2));
+    EXPECT_EQ(validData, msgEncode.rawDisplay(line1, line2));
 
     // Good case - Total 163 bytes of data should be sent for Display Data Write
     // command.
-    Binary encodedData = msgEncode.displayDataWrite(line1, line2);
+    Binary encodedData = msgEncode.rawDisplay(line1, line2);
     size_t dataSize = encodedData.size();
     EXPECT_EQ(
         dataSize,
@@ -64,7 +64,7 @@ TEST(MessageEncoder, displayDataWrite)
     copy(line1.begin(), line1.end(), back_inserter(invalidData));
     copy(line2.begin(), line2.end(), back_inserter(invalidData));
     invalidData.emplace_back(0x8C);
-    EXPECT_NE(invalidData, msgEncode.displayDataWrite(line1, line2));
+    EXPECT_NE(invalidData, msgEncode.rawDisplay(line1, line2));
 
     // Good case - when the input string has more than 80 bytes each, the extra
     // bytes are removed.
@@ -78,9 +78,11 @@ TEST(MessageEncoder, displayDataWrite)
                             "hellohellohellohellohello12345";
     copy(lineATruncated.begin(), lineATruncated.end(),
          back_inserter(validData));
-    copy(lineB.begin(), lineB.end(), back_inserter(validData));
+    string lineBComplete = "world                                              "
+                           "                             ";
+    copy(lineBComplete.begin(), lineBComplete.end(), back_inserter(validData));
     validData.emplace_back(0xA1);
-    EXPECT_EQ(validData, msgEncode.displayDataWrite(lineA, lineB));
+    EXPECT_EQ(validData, msgEncode.rawDisplay(lineA, lineB));
 }
 
 TEST(MessageEncoder, buttonControl)
@@ -116,7 +118,7 @@ TEST(MessageEncoder, softReset)
 {
     MessageEncoder msgEncode;
     Binary validData = {0xFF, 0x00, 1};
-    EXPECT_EQ(validData, msgEncode.ledControl(0x00));
+    EXPECT_EQ(validData, msgEncode.softReset());
 }
 
 TEST(MessageEncoder, flashUpdate)
@@ -124,6 +126,13 @@ TEST(MessageEncoder, flashUpdate)
     MessageEncoder msgEncode;
     Binary validData = {0xFF, 0x30, 208};
     EXPECT_EQ(validData, msgEncode.flashUpdate());
+}
+
+TEST(MessageEncoder, displayVersionCmd)
+{
+    MessageEncoder msgEncode;
+    Binary validData = {0xFF, 0x50, 176};
+    EXPECT_EQ(validData, msgEncode.displayVersionCmd());
 }
 
 int main(int argc, char** argv)

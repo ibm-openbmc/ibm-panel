@@ -1,19 +1,18 @@
 #include "i2c_message_encoder.hpp"
 
 #include <algorithm>
-#include <iostream>
 
 using namespace std;
 
 namespace panel
 {
-namespace encode
+namespace encoder
 {
 void MessageEncoder::calculateCheckSum(Binary& dataBuffer)
 {
     Byte l_checkSum = 0;
     uint16_t l_sum = 0;
-    for (Byte i : dataBuffer)
+    for (auto i : dataBuffer)
     {
         l_sum += i;
         if (l_sum & 0xFF00)
@@ -28,41 +27,45 @@ void MessageEncoder::calculateCheckSum(Binary& dataBuffer)
     dataBuffer.emplace_back(l_checkSum);
 }
 
-Binary MessageEncoder::displayDataWrite(const string& line1,
-                                        const string& line2)
+Binary MessageEncoder::rawDisplay(const string& line1, const string& line2)
 {
-    Binary dataVector = {0xFF, 0x50};
-    dataVector.reserve(163);
-    copy(line1.begin(), line1.end(), back_inserter(dataVector));
+    Binary encodedData;
+    encodedData.reserve(163);
+    encodedData.emplace_back(0xFF);
+    encodedData.emplace_back(0x80);
+
+    copy(line1.begin(), line1.end(), back_inserter(encodedData));
     int count = 80 - line1.length();
     if (count > 0)
     {
-        dataVector.insert(dataVector.end(), count, ' ');
+        encodedData.insert(encodedData.end(), count, ' ');
     }
     else if (count < 0)
     {
-        dataVector.erase(dataVector.end() - abs(count), dataVector.end());
+        encodedData.erase(encodedData.end() - abs(count), encodedData.end());
     }
 
-    copy(line2.begin(), line2.end(), back_inserter(dataVector));
+    copy(line2.begin(), line2.end(), back_inserter(encodedData));
     count = 80 - line2.length();
     if (count > 0)
     {
-        dataVector.insert(dataVector.end(), count, ' ');
+        encodedData.insert(encodedData.end(), count, ' ');
     }
     else if (count < 0)
     {
-        dataVector.erase(dataVector.end() - abs(count), dataVector.end());
+        encodedData.erase(encodedData.end() - abs(count), encodedData.end());
     }
 
-    calculateCheckSum(dataVector);
-    return dataVector;
+    calculateCheckSum(encodedData);
+    return encodedData;
 }
 
 Binary MessageEncoder::buttonControl(Byte buttonID, Byte buttonOperation)
 {
-    Binary encodedData = {0xFF, 0xB0};
+    Binary encodedData;
     encodedData.reserve(6);
+    encodedData.emplace_back(0xFF);
+    encodedData.emplace_back(0xB0);
     encodedData.emplace_back(buttonID);
     encodedData.emplace_back(20); // emplace button debounce value
     encodedData.emplace_back(buttonOperation);
@@ -72,8 +75,10 @@ Binary MessageEncoder::buttonControl(Byte buttonID, Byte buttonOperation)
 
 Binary MessageEncoder::scroll(Byte scrollControl)
 {
-    Binary encodedData = {0xFF, 0x88};
+    Binary encodedData;
     encodedData.reserve(6);
+    encodedData.emplace_back(0xFF);
+    encodedData.emplace_back(0x88);
     encodedData.emplace_back(scrollControl);
     encodedData.emplace_back(10); // emplace scroll rate
     encodedData.emplace_back(1);  // emplace scroll character count
@@ -83,8 +88,10 @@ Binary MessageEncoder::scroll(Byte scrollControl)
 
 Binary MessageEncoder::lampTest()
 {
-    Binary encodedData = {0xFF, 0x54};
+    Binary encodedData;
     encodedData.reserve(4);
+    encodedData.emplace_back(0xFF);
+    encodedData.emplace_back(0x54);
     encodedData.emplace_back(240); // emplace lamp test duration
     calculateCheckSum(encodedData);
     return encodedData;
@@ -92,19 +99,33 @@ Binary MessageEncoder::lampTest()
 
 Binary MessageEncoder::softReset()
 {
-    Binary encodedData = {0xFF, 0x00};
+    Binary encodedData;
     encodedData.reserve(3);
+    encodedData.emplace_back(0xFF);
+    encodedData.emplace_back(0x00);
     calculateCheckSum(encodedData);
     return encodedData;
 }
 
 Binary MessageEncoder::flashUpdate()
 {
-    Binary encodedData = {0xFF, 0x30};
+    Binary encodedData;
     encodedData.reserve(3);
+    encodedData.emplace_back(0xFF);
+    encodedData.emplace_back(0x30);
     calculateCheckSum(encodedData);
     return encodedData;
 }
 
-} // namespace encode
+Binary MessageEncoder::displayVersionCmd()
+{
+    Binary encodedData;
+    encodedData.reserve(3);
+    encodedData.emplace_back(0xFF);
+    encodedData.emplace_back(0x50);
+    calculateCheckSum(encodedData);
+    return encodedData;
+}
+
+} // namespace encoder
 } // namespace panel
