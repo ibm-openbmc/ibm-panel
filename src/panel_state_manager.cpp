@@ -1,11 +1,6 @@
 #include "panel_state_manager.hpp"
 
-#include <assert.h>
-
 #include <algorithm>
-#include <fstream>
-#include <sstream>
-#include <tuple>
 
 namespace panel
 {
@@ -14,65 +9,68 @@ namespace state
 namespace manager
 {
 
-using namespace std;
-using namespace types;
-
-enum SubStateType
+enum StateType
 {
     INITIAL_STATE = 0,
-    DEBOUCNE_SRC_STATE = 254,
-    STAR_STATE = 255
+    DEBOUCNE_SRC_STATE = 125,
+    STAR_STATE = 126,
+    INVALID_STATE = 127,
 };
+
+static constexpr auto FUNCTION_02 = 2;
+static constexpr auto FUNCTION_55 = 55;
+static constexpr auto ACCEPT = 0x00;
+static constexpr auto REJECT = 0xFF;
 
 // structure defines fincttionaliy attributes.
 struct FunctionalityAttributes
 {
-    FunctionNumber funcNumber;
+    panel::types::FunctionNumber funcNumber;
     // Any function number not dependent on the state of the machine or any
     // other element will be enabled by default.
     bool defaultEnabled;
     bool isDebounceRequired;
-    string debounceSrcValue;
-    FunctionNumber subRangeEndPoint;
+    std::string debounceSrcValue;
+    panel::types::FunctionNumber subRangeEndPoint;
 };
 
 // This can be moved to a common file in case this information needs to be
-// shared between files. List of functionalites, initialized to their default
-// values.
+// shared between files. List of functionalites, initialized to their
+// default values.
 std::vector<FunctionalityAttributes> functionalityList = {
-    {1, true, false, "NONE", SubStateType::INITIAL_STATE},
-    {2, true, false, "NONE", SubStateType::INITIAL_STATE},
-    {3, false, true, "A1008003", SubStateType::INITIAL_STATE},
-    {4, true, false, "NONE", SubStateType::INITIAL_STATE},
-    {8, false, true, "A1008008", SubStateType::INITIAL_STATE},
-    {11, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {12, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {13, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {14, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {15, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {16, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {17, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {18, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {19, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {20, true, false, "NONE", SubStateType::INITIAL_STATE},
-    {21, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {22, false, true, "A1003022", SubStateType::INITIAL_STATE},
-    {25, true, false, "NONE", SubStateType::INITIAL_STATE},
-    {26, true, false, "NONE", SubStateType::INITIAL_STATE},
+    {1, true, false, "NONE", StateType::INITIAL_STATE},
+    {2, true, false, "NONE", StateType::INITIAL_STATE},
+    {3, false, true, "A1008003", StateType::INITIAL_STATE},
+    {4, true, false, "NONE", StateType::INITIAL_STATE},
+    {8, false, true, "A1008008", StateType::INITIAL_STATE},
+    {11, false, false, "NONE", StateType::INITIAL_STATE},
+    {12, false, false, "NONE", StateType::INITIAL_STATE},
+    {13, false, false, "NONE", StateType::INITIAL_STATE},
+    {14, false, false, "NONE", StateType::INITIAL_STATE},
+    {15, false, false, "NONE", StateType::INITIAL_STATE},
+    {16, false, false, "NONE", StateType::INITIAL_STATE},
+    {17, false, false, "NONE", StateType::INITIAL_STATE},
+    {18, false, false, "NONE", StateType::INITIAL_STATE},
+    {19, false, false, "NONE", StateType::INITIAL_STATE},
+    {20, true, false, "NONE", StateType::INITIAL_STATE},
+    {21, false, false, "NONE", StateType::INITIAL_STATE},
+    {22, false, true, "A1003022", StateType::INITIAL_STATE},
+    {25, true, false, "NONE", StateType::INITIAL_STATE},
+    {26, true, false, "NONE", StateType::INITIAL_STATE},
     {30, false, false, "NONE", 0x03},
-    {34, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {41, false, true, "A1003041", SubStateType::INITIAL_STATE},
-    {42, false, true, "A1003042", SubStateType::INITIAL_STATE},
-    {43, true, true, "A1003043", SubStateType::INITIAL_STATE},
+    {34, false, false, "NONE", StateType::INITIAL_STATE},
+    {41, false, true, "A1003041", StateType::INITIAL_STATE},
+    {42, false, true, "A1003042", StateType::INITIAL_STATE},
+    {43, true, true, "A1003043", StateType::INITIAL_STATE},
     {55, true, false, "NONE", 0x0D},
     {63, true, false, "NONE", 0x18},
     {64, true, false, "NONE", 0x18},
-    {65, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {66, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {67, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {68, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {69, false, false, "NONE", SubStateType::INITIAL_STATE},
-    {70, false, false, "NONE", SubStateType::INITIAL_STATE}};
+    {65, false, false, "NONE", StateType::INITIAL_STATE},
+    {66, false, false, "NONE", StateType::INITIAL_STATE},
+    {67, false, false, "NONE", StateType::INITIAL_STATE},
+    {68, false, false, "NONE", StateType::INITIAL_STATE},
+    {69, false, false, "NONE", StateType::INITIAL_STATE},
+    {70, false, false, "NONE", StateType::INITIAL_STATE}};
 
 PanelStateManager& PanelStateManager::getStateHandler()
 {
@@ -81,7 +79,7 @@ PanelStateManager& PanelStateManager::getStateHandler()
 }
 
 void PanelStateManager::enableFunctonality(
-    const FunctionalityList& listOfFunctionalities)
+    const panel::types::FunctionalityList& listOfFunctionalities)
 {
     for (const auto& functionNumber : listOfFunctionalities)
     {
@@ -96,39 +94,97 @@ void PanelStateManager::enableFunctonality(
         }
         else
         {
-            cout << "Entry for functionality Number " << functionNumber
-                 << " not found" << std::endl;
+            std::cout << "Entry for functionality Number " << functionNumber
+                      << " not found" << std::endl;
         }
     }
 }
 
-void PanelStateManager::processPanelButtonEvent(const ButtonEvent& button)
+void PanelStateManager::printPanelStates()
 {
-    // In case panel is in DEBOUCNE_SRC_STATE, and next button is increment or
-    // decrement, it should come out of DEBOUCNE_SRC_STATE
-    if (panelCurSubState == SubStateType::DEBOUCNE_SRC_STATE &&
-        (button == INCREMENT || button == DECREMENT))
+    const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
+    std::cout << "Selected functionality = " << int(funcState.functionNumber)
+              << std::endl;
+
+    if (funcState.functionNumber == FUNCTION_02 && isSubrangeActive)
     {
-        panelCurSubState = SubStateType::INITIAL_STATE;
+        std::cout << "Active sub state level 0 = "
+                  << functionality02[0].at(panelCurSubStates.at(0))
+                  << std::endl;
+        if (panelCurSubStates.at(1) != StateType::INVALID_STATE)
+        {
+            std::cout << "Active sub state level 1 = "
+                      << functionality02[1].at(panelCurSubStates.at(1))
+                      << std::endl;
+            if (panelCurSubStates.at(2) != StateType::INVALID_STATE)
+            {
+                std::cout << "Active sub state level 2 = "
+                          << functionality02[2].at(panelCurSubStates.at(2))
+                          << std::endl;
+            }
+        }
+    }
+    else
+    {
+        if (isSubrangeActive)
+        {
+            if (panelCurSubStates.at(0) == StateType::INITIAL_STATE)
+            {
+                std::cout << "Active sub state level 0 = INITIAL" << std::endl;
+            }
+            else if (panelCurSubStates.at(0) == StateType::STAR_STATE)
+            {
+                std::cout << "Active sub state level 0 = **" << std::endl;
+            }
+            else
+            {
+                std::cout << "Current active sub state level 0 = "
+                          << int(panelCurSubStates.at(0)) << std::endl;
+
+                if (funcState.functionNumber == FUNCTION_55)
+                {
+                    if (panelCurSubStates.at(1) != StateType::INVALID_STATE)
+                    {
+                        std::cout << "Active sub state level 1 = "
+                                  << int(panelCurSubStates.at(1)) << std::endl;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void PanelStateManager::processPanelButtonEvent(
+    const panel::types::ButtonEvent& button)
+{
+    // In case panel is in DEBOUCNE_SRC_STATE, and next button is increment
+    // or decrement, it should come out of DEBOUCNE_SRC_STATE
+    if (panelCurSubStates.at(0) == StateType::DEBOUCNE_SRC_STATE &&
+        (button == panel::types::ButtonEvent::INCREMENT ||
+         button == panel::types::ButtonEvent::DECREMENT))
+    {
+        panelCurSubStates.at(0) = StateType::INITIAL_STATE;
     }
 
     switch (button)
     {
-        case INCREMENT:
+        case panel::types::ButtonEvent::INCREMENT:
             incrementState();
             break;
 
-        case DECREMENT:
+        case panel::types::ButtonEvent::DECREMENT:
             decrementState();
             break;
 
-        case EXECUTE:
+        case panel::types::ButtonEvent::EXECUTE:
             executeState();
             break;
 
         default:
             break;
     }
+
+    // printStates();
 }
 
 void PanelStateManager::initPanelState()
@@ -146,59 +202,129 @@ void PanelStateManager::initPanelState()
         panelFunctions.push_back(aPanelFunctionality);
     }
 
-    // initialize state to first enabled method
-    auto pos = find_if(panelFunctions.begin(), panelFunctions.end(),
-                       [](const PanelFunctionality& aFunctionality) {
-                           if (aFunctionality.functionActiveState)
-                           {
-                               return true;
-                           }
-                           return false;
-                       });
-
-    if (pos != panelFunctions.end())
-    {
-        panelCurState = distance(panelFunctions.begin(), pos);
-        panelCurSubState = SubStateType::INITIAL_STATE;
-    }
-    else
-    {
-        assert("No Enabled method for Op-Panel");
-    }
+    panelCurState = StateType::INITIAL_STATE;
+    panelCurSubStates.push_back(StateType::INITIAL_STATE);
+    panelCurSubStates.push_back(StateType::INVALID_STATE);
+    panelCurSubStates.push_back(StateType::INVALID_STATE);
 }
 
-std::tuple<FunctionNumber, FunctionNumber>
+std::tuple<panel::types::FunctionNumber, panel::types::FunctionNumber>
     PanelStateManager::getPanelCurrentStateInfo() const
 {
     const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
-    return std::make_tuple(funcState.functionNumber, panelCurSubState);
+    return std::make_tuple(funcState.functionNumber, panelCurSubStates.at(0));
+}
+
+// functionality 02
+void PanelStateManager::setIPLParameters(
+    const panel::types::ButtonEvent& button)
+{
+    // by default always increment level 0
+    static uint8_t levelToOperate = 0;
+    std::vector<std::string> subRange = functionality02.at(levelToOperate);
+
+    switch (button)
+    {
+        case panel::types::ButtonEvent::INCREMENT:
+            if (panelCurSubStates.at(levelToOperate) == subRange.size() - 1)
+            {
+                panelCurSubStates.at(levelToOperate) = StateType::INITIAL_STATE;
+            }
+            else
+            {
+                panelCurSubStates.at(levelToOperate)++;
+            }
+            break;
+
+        case panel::types::ButtonEvent::DECREMENT:
+            if (panelCurSubStates.at(levelToOperate) ==
+                StateType::INITIAL_STATE)
+            {
+                panelCurSubStates.at(levelToOperate) = subRange.size() - 1;
+            }
+            else
+            {
+                panelCurSubStates.at(levelToOperate)--;
+            }
+            break;
+
+        case panel::types::ButtonEvent::EXECUTE:
+            if (!isSubrangeActive)
+            {
+                isSubrangeActive = true;
+
+                // set sub states to initial value
+                // TODO: implement a method to get inital values of substate.
+                /* auto subStateInitialValue =
+                     getInitialValue(this function does not exist, figure out);
+                 lets say for test be it 2,1,1 index of functionality02 Map*/
+
+                panelCurSubStates.at(0) = 2;
+                panelCurSubStates.at(1) = 1;
+                panelCurSubStates.at(2) = 1;
+            }
+            else if (levelToOperate != 2) // max depth of sub state
+            {
+                levelToOperate++;
+            }
+            else
+            {
+                // reset all the flag and execute as we are at last depth of
+                // subsate and functionality needs to be executed.
+                panelCurSubStates.at(0) = StateType::INITIAL_STATE;
+                panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                levelToOperate = 0;
+                isSubrangeActive = false;
+            }
+            break;
+
+        default:
+            break;
+    }
+    createDisplayString(levelToOperate);
 }
 
 void PanelStateManager::incrementState()
 {
     const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
 
+    if (funcState.functionNumber == FUNCTION_02 && isSubrangeActive)
+    {
+        setIPLParameters(panel::types::ButtonEvent::INCREMENT);
+        return;
+    }
+
     // check if current state has sub range and if it is active.
-    if (funcState.subFunctionUpperRange != SubStateType::INITIAL_STATE &&
+    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE &&
         isSubrangeActive)
     {
-        if (panelCurSubState == SubStateType::STAR_STATE)
+        // functionality 55
+        if (funcState.functionNumber == FUNCTION_55 &&
+            panelCurSubStates.at(1) != StateType::INVALID_STATE)
+        {
+            panelCurSubStates.at(1) =
+                (panelCurSubStates.at(1) == ACCEPT) ? REJECT : ACCEPT;
+            return;
+        }
+
+        if (panelCurSubStates.at(0) == StateType::STAR_STATE)
         {
             // move to the intial method of the sub range which will be
             // always 00.
-            panelCurSubState = SubStateType::INITIAL_STATE;
+            panelCurSubStates.at(0) = StateType::INITIAL_STATE;
         }
-        else if (panelCurSubState == funcState.subFunctionUpperRange)
+        else if (panelCurSubStates.at(0) == funcState.subFunctionUpperRange)
         {
             // next substate should point to exiting the sub range
-            panelCurSubState = SubStateType::STAR_STATE;
+            panelCurSubStates.at(0) = StateType::STAR_STATE;
         }
         else
         {
-            if (panelCurSubState < funcState.subFunctionUpperRange)
+            if (panelCurSubStates.at(0) < funcState.subFunctionUpperRange)
             {
                 // get the next entry in subRange
-                panelCurSubState++;
+                panelCurSubStates.at(0)++;
             }
         }
     }
@@ -236,26 +362,41 @@ void PanelStateManager::decrementState()
 {
     const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
 
-    // if the functionality has sub range and is in active state, loop in sub
-    // range
-    if (funcState.subFunctionUpperRange != SubStateType::INITIAL_STATE &&
+    if (funcState.functionNumber == FUNCTION_02 && isSubrangeActive)
+    {
+        setIPLParameters(panel::types::ButtonEvent::DECREMENT);
+        return;
+    }
+
+    // if the functionality has sub range and is in active state, loop in
+    // sub range
+    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE &&
         isSubrangeActive)
     {
-        if (panelCurSubState == SubStateType::INITIAL_STATE)
+        // functionality 55
+        if (funcState.functionNumber == FUNCTION_55 &&
+            panelCurSubStates.at(1) != StateType::INVALID_STATE)
         {
-            panelCurSubState = SubStateType::STAR_STATE;
+            panelCurSubStates.at(1) =
+                (panelCurSubStates.at(1) == ACCEPT) ? REJECT : ACCEPT;
+            return;
         }
-        else if (panelCurSubState == SubStateType::STAR_STATE)
+
+        if (panelCurSubStates.at(0) == StateType::INITIAL_STATE)
+        {
+            panelCurSubStates.at(0) = StateType::STAR_STATE;
+        }
+        else if (panelCurSubStates.at(0) == StateType::STAR_STATE)
         {
             // roll back to the last method of the sub range
-            panelCurSubState = funcState.subFunctionUpperRange;
+            panelCurSubStates.at(0) = funcState.subFunctionUpperRange;
         }
         else
         {
-            if (panelCurSubState > SubStateType::INITIAL_STATE)
+            if (panelCurSubStates.at(0) > StateType::INITIAL_STATE)
             {
                 // get the next entry in subRange
-                panelCurSubState--;
+                panelCurSubStates.at(0)--;
             }
         }
     }
@@ -296,30 +437,34 @@ void PanelStateManager::executeState()
 {
     const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
 
-    // first handle the debounce case, in case a method has both subrange and
-    // debounce SRC.
-    if (funcState.debouceSrc != "NONE" &&
-        panelCurSubState != SubStateType::DEBOUCNE_SRC_STATE)
+    if (funcState.functionNumber == FUNCTION_02)
     {
-        panelCurSubState = SubStateType::DEBOUCNE_SRC_STATE;
-        // TODO:
+        setIPLParameters(panel::types::ButtonEvent::EXECUTE);
+        return;
+    }
+
+    if (funcState.debouceSrc != "NONE" &&
+        panelCurSubStates.at(0) != StateType::DEBOUCNE_SRC_STATE)
+    {
+        panelCurSubStates.at(0) = StateType::DEBOUCNE_SRC_STATE;
+        // TODO: Send this SRC to display
         std::cout << "Send this SRC to display " << funcState.debouceSrc
                   << std::endl;
         return;
     }
 
     // check if the current state has a subrange.
-    if (funcState.subFunctionUpperRange != SubStateType::INITIAL_STATE)
+    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE)
     {
         // Then check if it already active
         if (isSubrangeActive)
         {
-            if (panelCurSubState == SubStateType::STAR_STATE)
+            if (panelCurSubStates.at(0) == StateType::STAR_STATE)
             {
-                // execute exit sub range protocol, Dont change the state, just
-                // exit the sub loop
+                // execute exit sub range protocol, Dont change the state,
+                // just exit the sub loop
                 isSubrangeActive = false;
-                panelCurSubState = SubStateType::INITIAL_STATE;
+                panelCurSubStates.at(0) = StateType::INITIAL_STATE;
 
                 std::cout << "Exit sub range, retain state at " << panelCurState
                           << std::endl;
@@ -328,8 +473,41 @@ void PanelStateManager::executeState()
             {
                 std::cout << "Subrange is already active, execute the sub "
                              "functionality "
-                          << panelCurSubState << " of functionality"
+                          << panelCurSubStates.at(0) << " of functionality"
                           << panelCurState << std::endl;
+
+                if (funcState.functionNumber == FUNCTION_55)
+                {
+                    // if submethod is 00 then execute and  display the values.
+                    if (panelCurSubStates.at(0) == StateType::INITIAL_STATE)
+                    {
+                        // execute functionality
+                        return;
+                    }
+
+                    // if other than 00 sub functionality, we need accept and
+                    // reject sub state.
+                    // implies we are at level 0
+                    if (panelCurSubStates.at(1) == StateType::INVALID_STATE)
+                    {
+                        panelCurSubStates.at(1) = ACCEPT;
+                    }
+                    else if (panelCurSubStates.at(1) == ACCEPT)
+                    {
+                        // TODO: execute sub functionality
+
+                        // reset first depth of substate.
+                        panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                    }
+                    else if (panelCurSubStates.at(1) == REJECT)
+                    {
+                        // Todo: execute sub functionality
+
+                        // reset first depth of substate.
+                        panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                    }
+                    return;
+                }
 
                 // after this execute do whatever is required to execute the
                 // functionality
@@ -339,11 +517,11 @@ void PanelStateManager::executeState()
         else
         {
             isSubrangeActive = true;
-            panelCurSubState = SubStateType::STAR_STATE;
+            panelCurSubStates.at(0) = StateType::STAR_STATE;
 
             std::cout << "Sub Range has been activated, execute the sub "
                          "functionality "
-                      << panelCurSubState << " of functionality"
+                      << panelCurSubStates.at(0) << " of functionality"
                       << panelCurState << std::endl;
 
             // after this execute do whatever is required to execute the
@@ -353,12 +531,20 @@ void PanelStateManager::executeState()
     else
     {
         // set this anyhow in case we are coming from debounce SRC state.
-        panelCurSubState = SubStateType::INITIAL_STATE;
+        panelCurSubStates.at(0) = StateType::INITIAL_STATE;
         std::cout << "Execute method Directly" << std::endl;
     }
 
-    // perform what ever operations needs to be done here, execute does not need
-    // a state change
+    // perform what ever operations needs to be done here, execute does not
+    // need a state change
+}
+
+void PanelStateManager::createDisplayString(uint8_t level)
+{
+    std::ignore = level;
+    /*check for issubstate active to conclude if substate display is at all
+     * required*/
+    /*Define here*/
 }
 
 } // namespace manager
