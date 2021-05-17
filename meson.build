@@ -41,12 +41,14 @@ configure_file(input: 'com.ibm.panel.service',
 panel_app_a = static_library(
     'ibm_panel_a',
     'src/panel_app.cpp',
+    'src/panel_state_manager.cpp',
     include_directories: 'include',
 )
 
 executable(
     'ibm-panel',
     'src/panel_app_main.cpp',
+    'src/panel_state_manager.cpp',
     dependencies: [
       sdbusplus,
     ],
@@ -63,6 +65,7 @@ if get_option('tests').enabled()
   panel_app_test = executable(
       'panel-app-test',
       'test/panel_app_test.cpp',
+      'test/panel_state_manager_test.cpp',
       dependencies: [
           sdbusplus,
           gmock,
