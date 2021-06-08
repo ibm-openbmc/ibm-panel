@@ -105,6 +105,27 @@ class PanelStateManager
     void executeState();
 
     /**
+     * @brief An api to set IPL type, system operating mode and firmware
+     * mode.
+     * @param[in] button - button event.
+     */
+    void setIPLParameters(const panel::types::ButtonEvent& button);
+
+    /**
+     * @brief An api to create a string to be displayed on panel LCD.
+     * @param[in] level - Level of sub state currently active. Defaulted to 0 as
+     * not all the functionality needs substate level info. Hence no need to
+     * pass this info in those cases.
+     */
+    void createDisplayString(uint8_t level = 0);
+
+    /**
+     * @brief An api to display panel states on standard out.
+     * This is mainly being used for debug.
+     */
+    void printPanelStates();
+
+    /**
      * @brief A structure to store information related to a particular
      * functionality. It will carry information like function number, its
      * subrange etc. It will also store active state of a functionality at a
@@ -118,10 +139,10 @@ class PanelStateManager
         // true is enabled false is disabled.
         bool functionActiveState = false;
 
-        // debounce is required for this functionality.
-        bool isDebounceRequired = false;
+        // debounce string.
+        std::string debouceSrc{};
 
-        // tuple to hold range of sub methods for a function.
+        // Upper range in sub function list.
         panel::types::FunctionNumber subFunctionUpperRange;
     };
 
@@ -133,9 +154,9 @@ class PanelStateManager
     // active functionality.
     uint8_t panelCurState;
 
-    // In case any functionality has subrange, It will store the current active
-    // state in that sub-range.
-    panel::types::FunctionNumber panelCurSubState;
+    // To store substate's state. In case of nested substate, every index
+    // refer to the level of substate we are at.
+    panel::types::FunctionalityList panelCurSubStates;
 
     // A variable to keep track if sub range is active. Required to decide if we
     // need to loop in subrange or not.
@@ -143,6 +164,9 @@ class PanelStateManager
 
     // Hold information if state machine is in enabled state or not.
     bool isPanelStateActive = false;
+
+    const std::vector<std::vector<std::string>> functionality02 = {
+        {{"A", "B", "C", "D"}, {"M", "N"}, {"P", "T"}}};
 }; // class PanelStateManager
 
 } // namespace manager
