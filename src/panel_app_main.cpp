@@ -2,7 +2,7 @@
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
 
-int main(int , char** )
+int main(int, char**)
 {
     boost::asio::io_context io;
     auto conn = std::make_shared<sdbusplus::asio::connection>(io);
@@ -11,8 +11,7 @@ int main(int , char** )
     auto server = sdbusplus::asio::object_server(conn);
 
     std::shared_ptr<sdbusplus::asio::dbus_interface> iface =
-        server.add_interface("/com/ibm/panel_app",
-                             "com.ibm.panel");
+        server.add_interface("/com/ibm/panel_app", "com.ibm.panel");
 
     iface->register_method("Display", display);
 
