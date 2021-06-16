@@ -21,7 +21,10 @@ class Executor
     /* Destructor */
     ~Executor() = default;
 
-    /* Constructor */
+    /**
+     * @brief Constructor
+     * @param[in] transport - Pointer to transport class.
+     */
     Executor(std::shared_ptr<Transport> transportObj) :
         transportObj(transportObj)
     {
@@ -46,6 +49,19 @@ class Executor
      * @brief An api to execute functionality 20
      */
     void execute20();
+
+    /**
+     * @brief An api to execute functionality 01.
+     */
+    void execute01();
+
+    /**
+     * @brief An api of check if OS IPL type is enabled.
+     * It is a helper function for functionality 01. Display needs to be
+     * modified depending upon if OS IPL type is enabled or disabled.
+     * @return OS IPL type enabled/disbaled.
+     */
+    bool isOSIPLTypeEnabled() const;
 
     /*Transport class object*/
     std::shared_ptr<Transport> transportObj;

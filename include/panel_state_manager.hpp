@@ -1,5 +1,6 @@
 #pragma once
 
+#include "executor.hpp"
 #include "transport.hpp"
 #include "types.hpp"
 
@@ -16,8 +17,8 @@ namespace manager
 /** @class PanelStateManager
  *  @brief Class to implement state handler for Op-Panel.
  * It will hold Op-Panel state information.
- * State of an Op-Panel indicates the current functionality at which the panel
- * is.
+ * State of an Op-Panel indicates the current functionality at which the
+ * panel is.
  */
 class PanelStateManager
 {
@@ -58,8 +59,8 @@ class PanelStateManager
 
     /**
      * @brief Api to process button event.
-     * This api will be called in case of any button event, will process and set
-     * the state of panel accordingly.
+     * This api will be called in case of any button event, will process and
+     * set the state of panel accordingly.
      * @param[in] button - button event.
      */
     void processPanelButtonEvent(const panel::types::ButtonEvent& button);
@@ -87,8 +88,8 @@ class PanelStateManager
   private:
     /**
      * @brief An Api to set the initial state of PanelState class.
-     * It will set the initial state, substate and other class members to their
-     * initial values respectievely.
+     * It will set the initial state, substate and other class members to
+     * their initial values respectively.
      */
     void initPanelState();
 
@@ -157,17 +158,17 @@ class PanelStateManager
     // A list of functions provided by the panel.
     std::vector<PanelFunctionality> panelFunctions;
 
-    // To store current state of Op-Panel. This will store the index of vector
-    // panelFunctions. Fetch function number at that index to get the current
-    // active functionality.
+    // To store current state of Op-Panel. This will store the index of
+    // vector panelFunctions. Fetch function number at that index to get the
+    // current active functionality.
     uint8_t panelCurState;
 
     // To store substate's state. In case of nested substate, every index
     // refer to the level of substate we are at.
     panel::types::FunctionalityList panelCurSubStates;
 
-    // A variable to keep track if sub range is active. Required to decide if we
-    // need to loop in subrange or not.
+    // A variable to keep track if sub range is active. Required to decide
+    // if we need to loop in subrange or not.
     bool isSubrangeActive = false;
 
     // Hold information if state machine is in enabled state or not.
@@ -181,6 +182,8 @@ class PanelStateManager
     /** The current active sub level of function 2 */
     uint8_t levelToOperate = 0;
 
+    /*shared pointer to executor object*/
+    std::shared_ptr<panel::Executor> funcExecutor;
 }; // class PanelStateManager
 
 } // namespace manager
