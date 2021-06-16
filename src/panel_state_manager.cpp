@@ -190,6 +190,9 @@ void PanelStateManager::initPanelState()
     panelCurSubStates.push_back(StateType::INITIAL_STATE);
     panelCurSubStates.push_back(StateType::INVALID_STATE);
     panelCurSubStates.push_back(StateType::INVALID_STATE);
+
+    // create executorclass
+    funcExecutor = std::make_shared<panel::Executor>(transport);
 }
 
 std::tuple<panel::types::FunctionNumber, panel::types::FunctionNumber>
@@ -464,7 +467,10 @@ void PanelStateManager::executeState()
     {
         // set this anyhow in case we are coming from debounce SRC state.
         panelCurSubStates.at(0) = StateType::INITIAL_STATE;
-        std::cout << "Execute method Directly" << std::endl;
+        std::cout << "Execute method" << std::endl;
+
+        funcExecutor->executeFunction(
+            panelFunctions.at(panelCurState).functionNumber, panelCurSubStates);
     }
 
     // perform what ever operations needs to be done here, execute does not

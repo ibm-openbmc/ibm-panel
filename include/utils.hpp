@@ -58,5 +58,13 @@ std::string binaryToHexString(const panel::types::Binary& val);
  */
 void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
                             std::shared_ptr<panel::Transport> transportObj);
+
+/**
+ * @brief An api to read initial values of OS IPL types, System operating
+ * mode, firmware IPL type, Hypervisor type and HMC indicator.
+ * @return - Values of required system parameters.
+ */
+types::SystemParameterValues readSystemParameters();
+
 } // namespace utils
 } // namespace panel

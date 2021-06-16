@@ -9,14 +9,19 @@ namespace panel
 void Executor::executeFunction(const types::FunctionNumber funcNumber,
                                const types::FunctionalityList& subFuncNumber)
 {
-    // to remove warning. will be removed with subsequent commits.
-    (void)subFuncNumber;
-
     // test output, to be removed
+    std::cout << "Function Number" << int(funcNumber) << std::endl;
+    (void)subFuncNumber; // to remove unused variable error
+
     switch (funcNumber)
     {
+        case 1:
+            execute01();
+            break;
+
         case 20:
             execute20();
+            break;
 
         default:
             break;
@@ -68,4 +73,60 @@ void Executor::execute20()
     utils::sendCurrDisplayToPanel(line1, line2, transportObj);
 }
 
+bool Executor::isOSIPLTypeEnabled() const
+{
+    // TODO: Check with PLDM how they will communicate if IPL type is
+    // enabled or disabled. Till then return dummy value as false.
+    return false;
+}
+
+void Executor::execute01()
+{
+    const auto sysValues = panel::utils::readSystemParameters();
+
+    if (!std::get<0>(sysValues).empty() && !std::get<1>(sysValues).empty() &&
+        !std::get<2>(sysValues).empty() && !std::get<3>(sysValues).empty() &&
+        !std::get<4>(sysValues).empty())
+    {
+        std::string line1(16, ' ');
+        std::string line2(16, ' ');
+
+        // function number
+        line1.replace(0, 2, "01");
+
+        if (isOSIPLTypeEnabled())
+        {
+            // OS IPL Type
+            line1.replace(4, 1, std::get<0>(sysValues).substr(0, 1));
+        }
+
+        // Operating mode
+        line1.replace(7, 1, std::get<1>(sysValues).substr(0, 1));
+
+        // hypervisor type
+        if (std::get<4>(sysValues) == "PowerVM")
+        {
+            line1.replace(12, 3, "PVM");
+        }
+        else
+        {
+            line1.replace(12, std::get<4>(sysValues).length(),
+                          std::get<4>(sysValues));
+        }
+
+        // HMC Managed
+        if (std::get<2>(sysValues) == "1")
+        {
+            line2.replace(0, 5, "HMC=1");
+        }
+
+        // Boot side. This needs to be renamed later.
+        line2.replace(12, 1, std::get<3>(sysValues).substr(0, 1));
+
+        utils::sendCurrDisplayToPanel(line1, line2, transportObj);
+        return;
+    }
+
+    std::cerr << "Error reading system parameters" << std::endl;
+}
 } // namespace panel
