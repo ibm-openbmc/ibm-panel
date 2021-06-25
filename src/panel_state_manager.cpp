@@ -18,9 +18,6 @@ enum StateType
 };
 
 static constexpr auto FUNCTION_02 = 2;
-static constexpr auto FUNCTION_55 = 55;
-static constexpr auto ACCEPT = 0x00;
-static constexpr auto REJECT = 0xFF;
 
 // structure defines fincttionaliy attributes.
 struct FunctionalityAttributes
@@ -140,15 +137,6 @@ void PanelStateManager::printPanelStates()
             {
                 std::cout << "Current active sub state level 0 = "
                           << int(panelCurSubStates.at(0)) << std::endl;
-
-                if (funcState.functionNumber == FUNCTION_55)
-                {
-                    if (panelCurSubStates.at(1) != StateType::INVALID_STATE)
-                    {
-                        std::cout << "Active sub state level 1 = "
-                                  << int(panelCurSubStates.at(1)) << std::endl;
-                    }
-                }
             }
         }
     }
@@ -299,15 +287,6 @@ void PanelStateManager::incrementState()
     if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE &&
         isSubrangeActive)
     {
-        // functionality 55
-        if (funcState.functionNumber == FUNCTION_55 &&
-            panelCurSubStates.at(1) != StateType::INVALID_STATE)
-        {
-            panelCurSubStates.at(1) =
-                (panelCurSubStates.at(1) == ACCEPT) ? REJECT : ACCEPT;
-            return;
-        }
-
         if (panelCurSubStates.at(0) == StateType::STAR_STATE)
         {
             // move to the intial method of the sub range which will be
@@ -373,15 +352,6 @@ void PanelStateManager::decrementState()
     if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE &&
         isSubrangeActive)
     {
-        // functionality 55
-        if (funcState.functionNumber == FUNCTION_55 &&
-            panelCurSubStates.at(1) != StateType::INVALID_STATE)
-        {
-            panelCurSubStates.at(1) =
-                (panelCurSubStates.at(1) == ACCEPT) ? REJECT : ACCEPT;
-            return;
-        }
-
         if (panelCurSubStates.at(0) == StateType::INITIAL_STATE)
         {
             panelCurSubStates.at(0) = StateType::STAR_STATE;
@@ -475,39 +445,6 @@ void PanelStateManager::executeState()
                              "functionality "
                           << panelCurSubStates.at(0) << " of functionality"
                           << panelCurState << std::endl;
-
-                if (funcState.functionNumber == FUNCTION_55)
-                {
-                    // if submethod is 00 then execute and  display the values.
-                    if (panelCurSubStates.at(0) == StateType::INITIAL_STATE)
-                    {
-                        // execute functionality
-                        return;
-                    }
-
-                    // if other than 00 sub functionality, we need accept and
-                    // reject sub state.
-                    // implies we are at level 0
-                    if (panelCurSubStates.at(1) == StateType::INVALID_STATE)
-                    {
-                        panelCurSubStates.at(1) = ACCEPT;
-                    }
-                    else if (panelCurSubStates.at(1) == ACCEPT)
-                    {
-                        // TODO: execute sub functionality
-
-                        // reset first depth of substate.
-                        panelCurSubStates.at(1) = StateType::INVALID_STATE;
-                    }
-                    else if (panelCurSubStates.at(1) == REJECT)
-                    {
-                        // Todo: execute sub functionality
-
-                        // reset first depth of substate.
-                        panelCurSubStates.at(1) = StateType::INVALID_STATE;
-                    }
-                    return;
-                }
 
                 // after this execute do whatever is required to execute the
                 // functionality
