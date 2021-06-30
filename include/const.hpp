@@ -8,6 +8,8 @@ namespace constants
 static constexpr auto baseDevPath = "/dev/i2c-3";
 static constexpr auto rainLcdDevPath = "/dev/i2c-7";
 static constexpr auto everLcdDevPath = "/dev/i2c-28";
+static constexpr auto tacomaLcdDevPath = "/dev/i2c-0";
+
 static constexpr auto devAddr = 0x5a;
 
 static constexpr auto systemDbusObj =
