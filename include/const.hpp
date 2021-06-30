@@ -35,5 +35,8 @@ static constexpr auto itemInterface = "xyz.openbmc_project.Inventory.Item";
 static constexpr auto inventoryManagerIntf =
     "xyz.openbmc_project.Inventory.Manager";
 
+static constexpr auto tmKwdDataLength = 8;
+static constexpr auto ccinDataLength = 4;
+
 } // namespace constants
 } // namespace panel

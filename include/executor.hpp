@@ -1,6 +1,10 @@
 #pragma once
 
+#include "transport.hpp"
 #include "types.hpp"
+
+#include <memory>
+
 namespace panel
 {
 /**
@@ -18,7 +22,10 @@ class Executor
     ~Executor() = default;
 
     /* Constructor */
-    Executor() = default;
+    Executor(std::shared_ptr<Transport> transportObj) :
+        transportObj(transportObj)
+    {
+    }
 
     /**
      * @brief An api to execute a given function/sub-function.
@@ -31,19 +38,17 @@ class Executor
      * @param[in] funcNumber - function number to execute.
      * @param[in] subFuncNumber - Sub function number to be executed.
      */
-    void executeFunction(const panel::types::FunctionNumber funcNumber,
-                         const panel::types::FunctionalityList& subFuncNumber);
+    void executeFunction(const types::FunctionNumber funcNumber,
+                         const types::FunctionalityList& subFuncNumber);
 
   private:
     /**
-     * @brief An api to execute function 01.
+     * @brief An api to execute functionality 20
      */
-    void execute01();
+    void execute20();
 
-    /**
-     * @brief An api to execute function 02.
-     */
-    void execute02();
+    /*Transport class object*/
+    std::shared_ptr<Transport> transportObj;
 
 }; // class Executor
 } // namespace panel
