@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <map>
+#include <sdbusplus/server.hpp>
 #include <tuple>
 #include <unordered_map>
 #include <variant>
@@ -51,6 +52,19 @@ using BiosBaseTable = std::vector<BiosBaseTableItem>;
  */
 using SystemParameterValues =
     std::tuple<std::string, std::string, std::string, std::string, std::string>;
+
+/** Get managed objects for Network manager:
+ * array{pair(network-object-paths : array{pair(all-interfaces-of-that-obj-path
+ * : map(property-of-that-interface-if-any : property-value))})}
+ */
+using GetManagedObjects = std::vector<std::pair<
+    sdbusplus::message::object_path,
+    std::vector<std::pair<
+        std::string,
+        std::map<std::string,
+                 std::variant<std::string, bool, uint8_t, int16_t, uint16_t,
+                              int32_t, uint32_t, int64_t, uint64_t, double,
+                              std::vector<std::string>>>>>>>;
 
 enum ButtonEvent
 {

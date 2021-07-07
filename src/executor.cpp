@@ -43,6 +43,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
             execute14to19(funcNumber);
             break;
 
+        case 30:
+            execute30(subFuncNumber);
+            break;
+
         default:
             break;
     }
@@ -133,6 +137,84 @@ void Executor::execute11()
 
     // TODO: Decide what needs to be done in this case.
     std::cerr << "Error getting SRC data" << std::endl;
+}
+
+void Executor::execute30(const types::FunctionalityList& subFuncNumber)
+{
+    // call Get Managed Objects for Network manager
+    const auto& networkObjects = utils::getManagedObjects(
+        constants::networkManagerService, constants::networkManagerObj);
+
+    std::string ethPort = "eth0";
+    if (subFuncNumber.at(0) == 0x01) // eth1
+    {
+        ethPort = "eth1";
+    }
+    std::string line2{};
+
+    for (const auto& obj : networkObjects)
+    {
+        const std::string& objPath =
+            std::get<sdbusplus::message::object_path>(obj);
+        // search for eth0/eth1 ipv4 objects based on input
+        // eg: /xyz/openbmc_project/network/eth0/ipv4/bb39e832
+        std::string ethV4 = "/";
+        ethV4 += ethPort;
+        ethV4 += "/ipv4/";
+        if (objPath.find(ethV4) != std::string::npos)
+        {
+            const auto& intfPropVector = std::get<1>(obj);
+            for (const auto& intfProp : intfPropVector)
+            {
+                const auto& ipInterface = "xyz.openbmc_project.Network.IP";
+                if (std::get<0>(intfProp) == ipInterface)
+                {
+                    const auto& propValMap = std::get<1>(intfProp);
+                    const auto& originItr = propValMap.find("Origin");
+                    const auto& typeItr = propValMap.find("Type");
+
+                    if ((typeItr != propValMap.end()) &&
+                        (originItr != propValMap.end()))
+                    {
+                        const auto& type =
+                            std::get_if<std::string>(&(typeItr->second));
+                        const auto& origin =
+                            std::get_if<std::string>(&(originItr->second));
+
+                        // Ignore link local ip and display the other one
+                        // (could be either static/dynamic ip)
+                        if ((type != nullptr) && (origin != nullptr) &&
+                            (*type == "xyz.openbmc_project.Network.IP."
+                                      "Protocol.IPv4") &&
+                            (*origin != "xyz.openbmc_project.Network.IP."
+                                        "AddressOrigin.LinkLocal"))
+                        {
+                            const auto& addressItr = propValMap.find("Address");
+                            if (addressItr != propValMap.end())
+                            {
+                                const auto& address = std::get_if<std::string>(
+                                    &(addressItr->second));
+                                if (address != nullptr)
+                                {
+                                    line2 = *address;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!line2.empty())
+            {
+                break;
+            }
+        }
+    }
+    if (line2.empty())
+    {
+        std::cerr << "\n IP address of the ethernet port is not found"
+                  << std::endl;
+    }
 }
 
 bool Executor::isOSIPLTypeEnabled() const

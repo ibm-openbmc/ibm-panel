@@ -110,6 +110,9 @@ class Executor
      */
     bool isOSIPLTypeEnabled() const;
 
+    /** @brief API to execute function 30. */
+    void execute30(const types::FunctionalityList& subFuncNumber);
+
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
 
