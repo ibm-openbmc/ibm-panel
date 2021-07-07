@@ -466,6 +466,9 @@ void PanelStateManager::executeState()
 
                 // after this execute do whatever is required to execute the
                 // functionality
+                funcExecutor->executeFunction(
+                    panelFunctions.at(panelCurState).functionNumber,
+                    panelCurSubStates);
             }
         }
         // if not active, activate it and point to star method

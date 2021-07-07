@@ -120,5 +120,25 @@ types::SystemParameterValues readSystemParameters()
                            FWIPLType, hypType);
 }
 
+types::GetManagedObjects getManagedObjects(const std::string& service,
+                                           const std::string& object)
+{
+    types::GetManagedObjects retVal{};
+    try
+    {
+        auto bus = sdbusplus::bus::new_default();
+        auto properties = bus.new_method_call(
+            service.c_str(), object.c_str(),
+            "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
+        auto result = bus.call(properties);
+        result.read(retVal);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << e.what();
+    }
+    return retVal;
+}
+
 } // namespace utils
 } // namespace panel

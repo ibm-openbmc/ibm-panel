@@ -36,6 +36,8 @@ static constexpr auto imKeyword = "IM";
 static constexpr auto itemInterface = "xyz.openbmc_project.Inventory.Item";
 static constexpr auto inventoryManagerIntf =
     "xyz.openbmc_project.Inventory.Manager";
+static constexpr auto networkManagerService = "xyz.openbmc_project.Network";
+static constexpr auto networkManagerObj = "/xyz/openbmc_project/network";
 
 static constexpr auto tmKwdDataLength = 8;
 static constexpr auto ccinDataLength = 4;

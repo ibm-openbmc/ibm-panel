@@ -66,5 +66,13 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
  */
 types::SystemParameterValues readSystemParameters();
 
+/** @brief Make d-bus call to "GetManagedObjects" method
+ * @param[in] service - service on which the d-bus call needs to happen.
+ * @param[in] object - object path.
+ * @return returns output of "GetManagedObjects" call.
+ */
+types::GetManagedObjects getManagedObjects(const std::string& service,
+                                           const std::string& object);
+
 } // namespace utils
 } // namespace panel
