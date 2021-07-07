@@ -48,6 +48,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute02(subFuncNumber);
                 break;
 
+            case 8:
+                execute08();
+                break;
+
             case 11:
                 execute11();
                 break;
@@ -827,6 +831,18 @@ void Executor::execute55(const types::FunctionalityList& subFuncNumber)
     }
 
     displayExecutionStatus(55, subFuncNumber, true);
+}
+
+void Executor::execute08()
+{
+    // set the transition state of chassis to poweroff.
+    panel::utils::writeBusProperty<std::string>(
+        "xyz.openbmc_project.State.Chassis",
+        "/xyz/openbmc_project/state/chassis0",
+        "xyz.openbmc_project.State.Chassis", "RequestedPowerTransition",
+        "xyz.openbmc_project.State.Chassis.Transition.Off");
+
+    utils::sendCurrDisplayToPanel("SHUTDOWN SERVER", "INITIATED", transport);
 }
 
 } // namespace panel
