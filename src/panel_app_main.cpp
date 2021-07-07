@@ -1,6 +1,7 @@
+#include "button_handler.hpp"
+
 #include <iostream>
 #include <panel_app.hpp>
-#include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
 
 void progressCodeCallBack(sdbusplus::message::message& msg)
@@ -37,9 +38,8 @@ void progressCodeCallBack(sdbusplus::message::message& msg)
 
 int main(int, char**)
 {
-    boost::asio::io_context io;
-    auto conn = std::make_shared<sdbusplus::asio::connection>(io);
-
+    auto io = std::make_shared<boost::asio::io_context>();
+    auto conn = std::make_shared<sdbusplus::asio::connection>(*io);
     conn->request_name("com.ibm.PanelApp");
 
     auto server = sdbusplus::asio::object_server(conn);
@@ -57,12 +57,19 @@ int main(int, char**)
             "xyz.openbmc_project.State.Boot.Raw"),
         progressCodeCallBack);
 
-    io.run();
+    try
+    {
+        panel::ButtonHandler btnHandler(
+            "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick", io);
+    }
+    catch (std::exception& ex)
+    {
+        std::cerr << ex.what() << '\n';
+    }
 
-    // ends here
+    io->run();
 
     // Create the Transport class
-    // Create the ButtonHandler class
     // Create the D-Bus invoker class
     // Create D-Bus signal handler
 }

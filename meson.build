@@ -4,7 +4,7 @@ project(
     default_options: [
         'warning_level=3',
         'werror=true',
-        'cpp_std=c++17',
+        'cpp_std=c++20',
         # note: This is allowed in certain contexts, but provides binary size
         # improvements for applications that don't require rtti
         'cpp_rtti=false',
@@ -43,6 +43,7 @@ panel_app_a = static_library(
     'src/panel_app.cpp',
     'src/panel_state_manager.cpp',
     'src/i2c_message_encoder.cpp',
+    'src/button_handler.cpp',
     include_directories: 'include'
 )
 
