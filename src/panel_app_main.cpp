@@ -85,6 +85,24 @@ std::string getIM()
     return "";
 }
 
+std::string getInputDevicePath(const std::string& imValue)
+{
+    if (imValue == panel::constants::rain2s2uIM ||
+        imValue == panel::constants::rain2s4uIM ||
+        imValue == panel::constants::rain1s4uIM)
+    {
+        return "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick";
+    }
+    else if (imValue == panel::constants::everestIM)
+    {
+        // TODO: This path needs to be modified with Everest path.
+        return "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick";
+    }
+
+    // default to tacoma
+    return "/dev/input/by-path/platform-1e78a080.i2c-bus-event-joystick";
+}
+
 bool getPresentProperty(const std::string& imValue)
 {
     auto present = panel::utils::readBusProperty<std::variant<bool>>(
@@ -105,28 +123,30 @@ bool getPresentProperty(const std::string& imValue)
 
 int main(int, char**)
 {
-    auto io = std::make_shared<boost::asio::io_context>();
-    auto conn = std::make_shared<sdbusplus::asio::connection>(*io);
-    conn->request_name("com.ibm.PanelApp");
-
-    auto server = sdbusplus::asio::object_server(conn);
-
-    std::shared_ptr<sdbusplus::asio::dbus_interface> iface =
-        server.add_interface("/com/ibm/panel_app", "com.ibm.panel");
-
-    iface->register_method("Display", display);
-
-    // register to progress code property change.
-    auto progressCodeSignal = std::make_unique<sdbusplus::bus::match::match>(
-        *conn,
-        sdbusplus::bus::match::rules::propertiesChanged(
-            "/xyz/openbmc_project/state/boot/raw0",
-            "xyz.openbmc_project.State.Boot.Raw"),
-        progressCodeCallBack);
-
-    const std::string imValue = getIM();
     try
     {
+        auto io = std::make_shared<boost::asio::io_context>();
+        auto conn = std::make_shared<sdbusplus::asio::connection>(*io);
+        conn->request_name("com.ibm.PanelApp");
+
+        auto server = sdbusplus::asio::object_server(conn);
+
+        std::shared_ptr<sdbusplus::asio::dbus_interface> iface =
+            server.add_interface("/com/ibm/panel_app", "com.ibm.panel");
+
+        iface->register_method("Display", display);
+
+        // register to progress code property change.
+        auto progressCodeSignal =
+            std::make_unique<sdbusplus::bus::match::match>(
+                *conn,
+                sdbusplus::bus::match::rules::propertiesChanged(
+                    "/xyz/openbmc_project/state/boot/raw0",
+                    "xyz.openbmc_project.State.Boot.Raw"),
+                progressCodeCallBack);
+
+        const std::string imValue = getIM();
+
         // create transport lcd object
         auto lcdPanelObj = std::make_shared<panel::Transport>(
             std::get<0>((lcdDataMap.find(imValue))->second),
@@ -160,9 +180,8 @@ int main(int, char**)
             std::make_shared<panel::state::manager::PanelStateManager>(
                 lcdPanelObj);
 
-        panel::ButtonHandler btnHandler(
-            "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick", io,
-            lcdPanelObj, stateManagerObj);
+        panel::ButtonHandler btnHandler(getInputDevicePath(imValue), io,
+                                        lcdPanelObj, stateManagerObj);
 
         io->run();
     }
