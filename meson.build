@@ -44,13 +44,15 @@ panel_app_a = static_library(
     'src/panel_state_manager.cpp',
     'src/i2c_message_encoder.cpp',
     'src/button_handler.cpp',
+    'src/transport.cpp',
+    'src/utils.cpp',
+    'src/presence.cpp',
     include_directories: 'include'
 )
 
 executable(
     'ibm-panel',
     'src/panel_app_main.cpp',
-    'src/panel_state_manager.cpp',
     dependencies: [
       sdbusplus,
     ],

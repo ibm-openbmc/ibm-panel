@@ -1,8 +1,41 @@
 #include "button_handler.hpp"
+#include "const.hpp"
+#include "panel_app.hpp"
+#include "presence.hpp"
+#include "utils.hpp"
 
+#include <exception>
 #include <iostream>
-#include <panel_app.hpp>
+#include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
+
+panel::types::PanelDataMap baseDataMap = {
+    {panel::constants::rain2s2uIM,
+     {panel::constants::baseDevPath, panel::constants::devAddr,
+      panel::constants::rainBaseDbusObj}},
+    {panel::constants::rain2s4uIM,
+     {panel::constants::baseDevPath, panel::constants::devAddr,
+      panel::constants::rainBaseDbusObj}},
+    {panel::constants::rain1s4uIM,
+     {panel::constants::baseDevPath, panel::constants::devAddr,
+      panel::constants::rainBaseDbusObj}},
+    {panel::constants::everestIM,
+     {panel::constants::baseDevPath, panel::constants::devAddr,
+      panel::constants::everBaseDbusObj}}};
+
+panel::types::PanelDataMap lcdDataMap = {
+    {panel::constants::rain2s2uIM,
+     {panel::constants::rainLcdDevPath, panel::constants::devAddr,
+      panel::constants::rainLcdDbusObj}},
+    {panel::constants::rain2s4uIM,
+     {panel::constants::rainLcdDevPath, panel::constants::devAddr,
+      panel::constants::rainLcdDbusObj}},
+    {panel::constants::rain1s4uIM,
+     {panel::constants::rainLcdDevPath, panel::constants::devAddr,
+      panel::constants::rainLcdDbusObj}},
+    {panel::constants::everestIM,
+     {panel::constants::everLcdDevPath, panel::constants::devAddr,
+      panel::constants::everLcdDbusObj}}};
 
 void progressCodeCallBack(sdbusplus::message::message& msg)
 {
@@ -36,6 +69,40 @@ void progressCodeCallBack(sdbusplus::message::message& msg)
     }
 }
 
+std::string getIM()
+{
+    auto im = panel::utils::readBusProperty<std::variant<panel::types::Binary>>(
+        panel::constants::inventoryManagerIntf, panel::constants::systemDbusObj,
+        panel::constants::imInterface, panel::constants::imKeyword);
+    if (auto imVector = std::get_if<panel::types::Binary>(&im))
+    {
+        return panel::utils::binaryToHexString(*imVector);
+    }
+    else
+    {
+        std::cerr << "\n Failed querying IM property from dbus" << std::endl;
+    }
+    return "";
+}
+
+bool getPresentProperty(const std::string& imValue)
+{
+    auto present = panel::utils::readBusProperty<std::variant<bool>>(
+        panel::constants::inventoryManagerIntf,
+        std::get<2>((lcdDataMap.find(imValue))->second),
+        panel::constants::itemInterface, "Present");
+    if (auto p = std::get_if<bool>(&present))
+    {
+        return *p;
+    }
+    else
+    {
+        std::cerr << "\n Failed querying Present property from dbus."
+                  << std::endl;
+    }
+    return false;
+}
+
 int main(int, char**)
 {
     auto io = std::make_shared<boost::asio::io_context>();
@@ -57,19 +124,45 @@ int main(int, char**)
             "xyz.openbmc_project.State.Boot.Raw"),
         progressCodeCallBack);
 
+    const std::string imValue = getIM();
     try
     {
         panel::ButtonHandler btnHandler(
             "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick", io);
+
+        // create transport lcd object
+        auto lcdPanelObj = std::make_shared<panel::Transport>(
+            std::get<0>((lcdDataMap.find(imValue))->second),
+            std::get<1>((lcdDataMap.find(imValue))->second));
+
+        // create transport base object
+        auto basePanelObj = std::make_shared<panel::Transport>(
+            std::get<0>((baseDataMap.find(imValue))->second),
+            std::get<1>((baseDataMap.find(imValue))->second));
+        basePanelObj->setTransportKey(true);
+
+        // Listen to lcd panel presence always for both rainier and everest
+        panel::PanelPresence presenceObj(
+            std::get<2>((lcdDataMap.find(imValue))->second), conn, lcdPanelObj);
+        presenceObj.listenPanelPresence();
+
+        // Race condition can happen when the panel is removed exactly at the
+        // time after setting the transport key(to true - for the first time)
+        // and before firing the match signal. Here after removing the panel,
+        // "Properties.Changed" signal will wait for a property change from
+        // false to true; but the transport key is true(unchanged). To maintain
+        // data accuracy get the "Present" property from dbus and set the
+        // transport key again.
+
+        lcdPanelObj->setTransportKey(getPresentProperty(imValue));
+
+        io->run();
     }
-    catch (std::exception& ex)
+    catch (const std::exception& e)
     {
-        std::cerr << ex.what() << '\n';
+        std::cerr << e.what();
+        throw;
     }
-
-    io->run();
-
-    // Create the Transport class
     // Create the D-Bus invoker class
     // Create D-Bus signal handler
 }
