@@ -105,4 +105,49 @@ class PELListener
     bool functionStateEnabled = false;
 
 }; // class PEL Listener
+
+/**
+ * @brief Progress code event handler.
+ * A class to register handler for progress code property channge.
+ */
+class BootProgressCode
+{
+  public:
+    BootProgressCode(const BootProgressCode&) = delete;
+    BootProgressCode& operator=(const BootProgressCode&) = delete;
+    BootProgressCode(BootProgressCode&&) = delete;
+    ~BootProgressCode() = default;
+
+    /**
+     * @brief Constructor.
+     * @param[in] transport - pointer to transport class.
+     * @param[in] con - Bus connection.
+     */
+    BootProgressCode(std::shared_ptr<Transport> transport,
+                     std::shared_ptr<sdbusplus::asio::connection> con) :
+        transport(transport),
+        conn(con)
+    {
+    }
+
+    /**
+     * @brief Api to register call back for progress code.
+     */
+    void listenProgressCode();
+
+  private:
+    /**
+     * @brief Callback handler.
+     * An Api to handle callback in case of progress code property change.
+     * @param[in] msg - Callback message.
+     */
+    void progressCodeCallBack(sdbusplus::message::message& msg);
+
+    /*Transport Class object */
+    std::shared_ptr<Transport> transport;
+
+    /* D-Bus connection. */
+    std::shared_ptr<sdbusplus::asio::connection> conn;
+
+}; // class BootProgressCode
 } // namespace panel

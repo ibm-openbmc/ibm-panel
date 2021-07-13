@@ -40,5 +40,8 @@ static constexpr auto inventoryManagerIntf =
 static constexpr auto tmKwdDataLength = 8;
 static constexpr auto ccinDataLength = 4;
 
+// Progress code src equivalent to  ascii "00000000"
+static constexpr auto clearDisplayProgressCode = 0x3030303030303030;
+
 } // namespace constants
 } // namespace panel
