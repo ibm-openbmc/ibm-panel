@@ -4,7 +4,6 @@
 #include "utils.hpp"
 
 #include <boost/algorithm/string.hpp>
-#include <vector>
 
 namespace panel
 {
@@ -134,6 +133,54 @@ void Executor::execute11()
     std::cerr << "Error getting SRC data" << std::endl;
 }
 
+static std::string getEthObjByIntf(const std::string& portName)
+{
+    std::string invEthObj = "/xyz/openbmc_project/inventory/system/chassis/"
+                            "motherboard/ebmc_card_bmc/ethernet0";
+
+    if (portName == "eth1")
+    {
+        invEthObj = "/xyz/openbmc_project/inventory/system/chassis/motherboard/"
+                    "ebmc_card_bmc/ethernet1";
+    }
+    return invEthObj;
+}
+
+static std::string getEthernetMac(const std::string& portName)
+{
+    std::string invEthObj = getEthObjByIntf(portName);
+    const auto nwItemIntf =
+        "xyz.openbmc_project.Inventory.Item.NetworkInterface";
+    auto ethMac = utils::readBusProperty<std::variant<std::string>>(
+        constants::inventoryManagerIntf, invEthObj, nwItemIntf, "MACAddress");
+    if (auto p = std::get_if<std::string>(&ethMac))
+    {
+        return *p;
+    }
+    return {};
+}
+
+static std::string getEthernetLocation(const std::string& portName)
+{
+    std::string invEthObj = getEthObjByIntf(portName);
+    auto locCode = utils::readBusProperty<std::variant<std::string>>(
+        constants::inventoryManagerIntf, invEthObj, constants::locCodeIntf,
+        "LocationCode");
+    if (auto p = std::get_if<std::string>(&locCode))
+    {
+        return *p;
+    }
+    return {};
+}
+
+static std::string getPortSegment(const std::string& locCode)
+{
+    // U78DB.ND0.WZS0008-P0-C5-T0
+    auto pos = locCode.find_last_of('-');
+    std::string loc = locCode.substr(pos + 1);
+    return loc;
+}
+
 void Executor::execute30(const types::FunctionalityList& subFuncNumber)
 {
     // call Get Managed Objects for Network manager
@@ -141,11 +188,17 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         constants::networkManagerService, constants::networkManagerObj);
 
     std::string ethPort = "eth0";
+    std::string otherPort = "eth1";
     if (subFuncNumber.at(0) == 0x01) // eth1
     {
         ethPort = "eth1";
+        otherPort = "eth0";
     }
     std::string line2{};
+    std::string ethObjPath = constants::networkManagerObj;
+    ethObjPath += "/";
+    ethObjPath += ethPort;
+    std::string macAddr{}, locCode{};
 
     for (const auto& obj : networkObjects)
     {
@@ -156,9 +209,9 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         std::string ethV4 = "/";
         ethV4 += ethPort;
         ethV4 += "/ipv4/";
+        const auto& intfPropVector = std::get<1>(obj);
         if (objPath.find(ethV4) != std::string::npos)
         {
-            const auto& intfPropVector = std::get<1>(obj);
             for (const auto& intfProp : intfPropVector)
             {
                 const auto& ipInterface = "xyz.openbmc_project.Network.IP";
@@ -199,10 +252,32 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
                     }
                 }
             }
-            if (!line2.empty())
+        }
+        if (objPath == ethObjPath)
+        {
+            auto intfItr = std::find_if(
+                intfPropVector.begin(), intfPropVector.end(),
+                [](const auto& intf) {
+                    return (intf.first ==
+                            "xyz.openbmc_project.Network.MACAddress");
+                });
+            if (intfItr == intfPropVector.end())
             {
-                break;
+                std::cerr << "Mac address interface not found." << std::endl;
             }
+            const auto& macAddrItr = intfItr->second.find("MACAddress");
+            if (macAddrItr == intfItr->second.end())
+            {
+                std::cerr << "MACAddress property not found." << std::endl;
+            }
+            if (auto mac = std::get_if<std::string>(&(macAddrItr->second)))
+            {
+                macAddr = *mac;
+            }
+        }
+        if (!macAddr.empty() && !line2.empty())
+        {
+            break;
         }
     }
     if (line2.empty())
@@ -210,6 +285,37 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         std::cerr << "\n IP address of the ethernet port is not found"
                   << std::endl;
     }
+
+    // obtain the mac address of network ethernet object path. query mac
+    // address of ethernet0&1 of inv manager objects. if mac of both the
+    // objects(network & inventory eth objects)matches, take loc code from
+    // the respective inv manager obj path.
+
+    if (macAddr == getEthernetMac(ethPort))
+    {
+        locCode = getEthernetLocation(ethPort);
+    }
+    else if (macAddr == getEthernetMac(otherPort))
+    {
+        locCode = getEthernetLocation(otherPort);
+    }
+    else
+    {
+        std::cerr << "\n No matching ethernet object in Inventory Manager. "
+                  << std::endl;
+    }
+
+    if (!locCode.empty())
+    {
+        locCode = getPortSegment(locCode);
+    }
+
+    // create display
+    std::string line1 = "SP: ";
+    line1 += boost::to_upper_copy<std::string>(ethPort);
+    line1 += ":      ";
+    line1 += locCode;
+    panel::utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 
 bool Executor::isOSIPLTypeEnabled() const
