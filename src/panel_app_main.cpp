@@ -37,38 +37,6 @@ panel::types::PanelDataMap lcdDataMap = {
      {panel::constants::everLcdDevPath, panel::constants::devAddr,
       panel::constants::everLcdDbusObj}}};
 
-void progressCodeCallBack(sdbusplus::message::message& msg)
-{
-    using PostCode = std::tuple<uint64_t, std::vector<uint8_t>>;
-
-    std::string interface{};
-    std::string propVal{};
-    std::map<std::string, std::variant<PostCode>> propertyMap;
-
-    msg.read(interface, propertyMap);
-
-    // property we are looking for.
-    const auto it = propertyMap.find("Value");
-    if (it != propertyMap.end())
-    {
-        if (auto postCodeData = std::get_if<PostCode>(&(it->second)))
-        {
-            uint64_t src = std::get<0>(*postCodeData);
-            std::ostringstream os;
-            os << src;
-            propVal = os.str();
-
-            std::cout << "Progress code SRC value = " << propVal << std::endl;
-        }
-        else
-        {
-            std::cerr << "Progress code Data error" << std::endl;
-        }
-        // TODO:
-        // send the data to display?
-    }
-}
-
 std::string getIM()
 {
     auto im = panel::utils::readBusProperty<std::variant<panel::types::Binary>>(
@@ -153,15 +121,6 @@ int main(int, char**)
 
         iface->register_method("Display", display);
 
-        // register to progress code property change.
-        auto progressCodeSignal =
-            std::make_unique<sdbusplus::bus::match::match>(
-                *conn,
-                sdbusplus::bus::match::rules::propertiesChanged(
-                    "/xyz/openbmc_project/state/boot/raw0",
-                    "xyz.openbmc_project.State.Boot.Raw"),
-                progressCodeCallBack);
-
         const std::string imValue = getIM();
 
         std::string lcdDevPath{}, lcdObjPath{};
@@ -220,6 +179,10 @@ int main(int, char**)
 
         panel::PELListener pelEvent(conn, stateManager, executor);
         pelEvent.listenPelEvents();
+
+        // register property change call back for progress code.
+        panel::BootProgressCode progressCode(lcdPanel, conn);
+        progressCode.listenProgressCode();
 
         io->run();
     }
