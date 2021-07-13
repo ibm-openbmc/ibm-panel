@@ -38,6 +38,8 @@ static constexpr auto inventoryManagerIntf =
     "xyz.openbmc_project.Inventory.Manager";
 static constexpr auto networkManagerService = "xyz.openbmc_project.Network";
 static constexpr auto networkManagerObj = "/xyz/openbmc_project/network";
+static constexpr auto locCodeIntf =
+    "xyz.openbmc_project.Inventory.Decorator.LocationCode";
 
 static constexpr auto tmKwdDataLength = 8;
 static constexpr auto ccinDataLength = 4;
