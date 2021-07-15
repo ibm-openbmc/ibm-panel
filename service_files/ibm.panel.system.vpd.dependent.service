@@ -1,0 +1,15 @@
+[Unit]
+Description=IBM operator panel application.
+StopWhenUnneeded=false
+Requires=system-vpd.service
+After=system-vpd.service
+
+[Service]
+BusName=com.ibm.PanelApp
+Type=dbus
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/ibm-panel
+
+[Install]
+WantedBy=multi-user.target
