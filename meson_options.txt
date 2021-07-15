@@ -1,1 +1,2 @@
 option('tests', type: 'feature', value: 'enabled', description: 'Build tests.',)
+option('system-vpd-dependency', type: 'feature', description: 'Enable/disable system vpd dependency.', value: 'disabled')

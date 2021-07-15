@@ -28,11 +28,15 @@ cxx.get_supported_arguments([
 language : 'cpp')
 add_global_arguments('-Wno-psabi', language : ['c', 'cpp'])
 
-systemd_system_unit_dir = systemd.get_pkgconfig_variable(
-    'systemdsystemunitdir'
-)
+systemd_system_unit_dir = systemd.get_pkgconfig_variable('systemdsystemunitdir')
 
-configure_file(input: 'com.ibm.panel.service',
+service_file = 'service_files/com.ibm.panel.service'
+
+if get_option('system-vpd-dependency').enabled()
+ service_file = 'service_files/ibm.panel.system.vpd.dependent.service'
+endif
+
+configure_file(input: service_file,
                output: 'com.ibm.panel.service',
                install_dir: systemd_system_unit_dir,
                copy: true,

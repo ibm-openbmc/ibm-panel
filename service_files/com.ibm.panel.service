@@ -1,8 +1,10 @@
 [Unit]
-Description=Application to interact with the IBM Operator Panel
+Description=IBM operator panel application.
 StopWhenUnneeded=false
 
 [Service]
+BusName=com.ibm.PanelApp
+Type=dbus
 Restart=always
 RestartSec=5
 ExecStart=/usr/bin/ibm-panel
