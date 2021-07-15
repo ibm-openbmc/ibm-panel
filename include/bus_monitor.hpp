@@ -1,5 +1,7 @@
 #pragma once
 
+#include "executor.hpp"
+#include "panel_state_manager.hpp"
 #include "transport.hpp"
 
 #include <memory>
@@ -51,4 +53,56 @@ class PanelPresence
      */
     void readPresentProperty(sdbusplus::message::message& msg);
 };
+
+/** @class PELListener
+ * @brief Listen to PEL logged event.
+ *
+ * It will implement callback to listen for interface added against any PEL
+ * event logged in the bmc.
+ *
+ */
+class PELListener
+{
+  public:
+    PELListener(const PELListener&) = delete;
+    PELListener& operator=(const PELListener&) = delete;
+    PELListener(PELListener&&) = delete;
+    ~PELListener() = default;
+
+    /**
+     * @brief Constructor
+     * @param[in] con - Bus connection.
+     * @param[in] manager - Pointer to State manager.
+     * @param[in] execute - pointer to Executor.
+     */
+    PELListener(std::shared_ptr<sdbusplus::asio::connection> con,
+                std::shared_ptr<state::manager::PanelStateManager> manager,
+                std::shared_ptr<Executor> execute) :
+        conn(con),
+        stateManager(manager), executor(execute)
+    {
+    }
+
+    /**
+     * @brief Api to listen for PEL events.
+     */
+    void listenPelEvents();
+
+  private:
+    /* Callback to listen for PEL event log */
+    void PELEventCallBack(sdbusplus::message::message& msg);
+
+    /* Dbus connection */
+    std::shared_ptr<sdbusplus::asio::connection> conn;
+
+    /* state manager */
+    std::shared_ptr<state::manager::PanelStateManager> stateManager;
+
+    /* Executor */
+    std::shared_ptr<Executor> executor;
+
+    /* Check if respective functions are enabled */
+    bool functionStateEnabled = false;
+
+}; // class PEL Listener
 } // namespace panel

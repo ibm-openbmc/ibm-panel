@@ -4,6 +4,7 @@
 #include "types.hpp"
 
 #include <memory>
+#include <sdbusplus/message/native_types.hpp>
 
 namespace panel
 {
@@ -43,6 +44,15 @@ class Executor
     void executeFunction(const types::FunctionNumber funcNumber,
                          const types::FunctionalityList& subFuncNumber);
 
+    /**
+     * @brief Api to store event path of last PEL.
+     * @param[in] lastPel - Object path of last PEL.
+     */
+    inline void lastPELId(const sdbusplus::message::object_path& lastPel)
+    {
+        pelEventPath = lastPel;
+    }
+
   private:
     /**
      * @brief An api to execute functionality 20
@@ -64,6 +74,9 @@ class Executor
 
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
+
+    /* Event object path of last logged PEL */
+    sdbusplus::message::object_path pelEventPath{};
 
 }; // class Executor
 } // namespace panel
