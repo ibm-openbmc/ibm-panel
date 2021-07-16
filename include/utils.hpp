@@ -2,6 +2,7 @@
 #include <sdbusplus/asio/object_server.hpp>
 #include <sstream>
 #include <string>
+#include <transport.hpp>
 #include <types.hpp>
 
 namespace panel
@@ -44,5 +45,18 @@ T readBusProperty(const std::string& service, const std::string& object,
  */
 std::string binaryToHexString(const panel::types::Binary& val);
 
+/** @brief Display on panel using transport class api.
+ *
+ * Method which sends the actual data to the panel's micro code using Transport
+ * class write, to display the data on lcd panel.
+ * TODO: Enable scroll if the lines exceeds 16 characters.
+ *
+ * @param[in] line1 - line 1 data that needs to be displayed.
+ * @param[in] line2 - line 2 data that needs to be displayed.
+ * @param[in] transportObj - Transport class object to access panelI2CWrite
+ * method.
+ */
+void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
+                            std::shared_ptr<panel::Transport> transportObj);
 } // namespace utils
 } // namespace panel

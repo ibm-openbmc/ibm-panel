@@ -1,7 +1,9 @@
 #pragma once
 
+#include "transport.hpp"
 #include "types.hpp"
 
+#include <memory>
 #include <tuple>
 
 namespace panel
@@ -12,8 +14,7 @@ namespace manager
 {
 
 /** @class PanelStateManager
- *  @brief
- * A Singleton Class to implement state handler for Op-Panel.
+ *  @brief Class to implement state handler for Op-Panel.
  * It will hold Op-Panel state information.
  * State of an Op-Panel indicates the current functionality at which the panel
  * is.
@@ -25,12 +26,12 @@ class PanelStateManager
     PanelStateManager(const PanelStateManager&) = delete;
     PanelStateManager& operator=(const PanelStateManager&) = delete;
     PanelStateManager(PanelStateManager&&) = delete;
-    ~PanelStateManager() = default;
 
-    /**
-     * @brief Api to get instance of panel state handler.
-     * */
-    static PanelStateManager& getStateHandler();
+#ifdef StateManagerTest
+    PanelStateManager() = default;
+#endif
+
+    ~PanelStateManager() = default;
 
     /**
      * @brief Api to reset state of Op-Panel to default.
@@ -73,15 +74,17 @@ class PanelStateManager
         isPanelStateActive = isEnabled;
     }
 
-  private:
     /**
      * @brief Constructor.
+     * @param[in] transport - transport object to call transport functions.
      */
-    PanelStateManager()
+    PanelStateManager(std::shared_ptr<panel::Transport> transport) :
+        transport(transport)
     {
         initPanelState();
     }
 
+  private:
     /**
      * @brief An Api to set the initial state of PanelState class.
      * It will set the initial state, substate and other class members to their
@@ -111,19 +114,24 @@ class PanelStateManager
      */
     void setIPLParameters(const panel::types::ButtonEvent& button);
 
-    /**
-     * @brief An api to create a string to be displayed on panel LCD.
-     * @param[in] level - Level of sub state currently active. Defaulted to 0 as
-     * not all the functionality needs substate level info. Hence no need to
-     * pass this info in those cases.
-     */
-    void createDisplayString(uint8_t level = 0);
+    /** @brief API to create the display string. */
+    void createDisplayString() const;
 
     /**
      * @brief An api to display panel states on standard out.
      * This is mainly being used for debug.
      */
     void printPanelStates();
+
+    /**
+     * @brief Api which displays debounce src.
+     * This api is called when the current function's execute needs to display
+     * debounce src. The debounce src is taken from the functionalityList.
+     */
+    void displayDebounce() const;
+
+    /** @brief Api to display function 2 on panel */
+    void displayFunc02() const;
 
     /**
      * @brief A structure to store information related to a particular
@@ -167,6 +175,12 @@ class PanelStateManager
 
     const std::vector<std::vector<std::string>> functionality02 = {
         {{"A", "B", "C", "D"}, {"M", "N"}, {"P", "T"}}};
+
+    std::shared_ptr<panel::Transport> transport;
+
+    /** The current active sub level of function 2 */
+    uint8_t levelToOperate = 0;
+
 }; // class PanelStateManager
 
 } // namespace manager

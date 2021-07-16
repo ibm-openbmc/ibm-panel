@@ -19,7 +19,7 @@ using namespace std;
 
 TEST(PanelStateManager, default_state)
 {
-    PanelStateManager& stateMgr = PanelStateManager::getStateHandler();
+    PanelStateManager stateMgr;
     tuple<size_t, size_t> panelStateInfo = stateMgr.getPanelCurrentStateInfo();
 
     EXPECT_EQ(1, get<0>(panelStateInfo));
@@ -28,7 +28,7 @@ TEST(PanelStateManager, default_state)
 
 TEST(PanelStateManager, increment_decremt)
 {
-    PanelStateManager& stateMgr = PanelStateManager::getStateHandler();
+    PanelStateManager stateMgr;
 
     stateMgr.processPanelButtonEvent(ButtonEvent::INCREMENT);
     tuple<size_t, size_t> panelStateInfo = stateMgr.getPanelCurrentStateInfo();
@@ -49,7 +49,7 @@ TEST(PanelStateManager, increment_decremt)
 TEST(PanelStateManager, increment_decrement_loop)
 {
     // current state is 2, as per above test case
-    PanelStateManager& stateMgr = PanelStateManager::getStateHandler();
+    PanelStateManager stateMgr;
 
     stateMgr.processPanelButtonEvent(ButtonEvent::DECREMENT);
     stateMgr.processPanelButtonEvent(ButtonEvent::DECREMENT);
@@ -65,7 +65,7 @@ TEST(PanelStateManager, increment_decrement_loop)
 
 TEST(PanelStateManager, enter_exit_sub_range)
 {
-    PanelStateManager& stateMgr = PanelStateManager::getStateHandler();
+    PanelStateManager stateMgr;
 
     stateMgr.processPanelButtonEvent(ButtonEvent::DECREMENT); // 64
     stateMgr.processPanelButtonEvent(ButtonEvent::EXECUTE);
@@ -85,7 +85,7 @@ TEST(PanelStateManager, enter_exit_sub_range)
 TEST(PanelStateManager, enter_traverse_sub_range)
 {
     // current state 64 as per above test case
-    PanelStateManager& stateMgr = PanelStateManager::getStateHandler();
+    PanelStateManager stateMgr;
 
     stateMgr.processPanelButtonEvent(ButtonEvent::EXECUTE);
     tuple<size_t, size_t> panelStateInfo = stateMgr.getPanelCurrentStateInfo();

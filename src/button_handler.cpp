@@ -10,10 +10,12 @@
 namespace panel
 {
 
-ButtonHandler::ButtonHandler(const std::string& path,
-                             std::shared_ptr<boost::asio::io_context>& io) :
+ButtonHandler::ButtonHandler(
+    const std::string& path, std::shared_ptr<boost::asio::io_context>& io,
+    std::shared_ptr<panel::Transport> transport,
+    std::shared_ptr<panel::state::manager::PanelStateManager> stateManager) :
     devicePath(path),
-    io(io)
+    io(io), transport(transport), stateManager(stateManager)
 {
     // TODO update this to actual size needed.
     ipEvent.resize(10);
@@ -74,24 +76,20 @@ void ButtonHandler::processInputEvent(const boost::system::error_code& ec,
             {
                 return;
             }
-
-            auto& manager =
-                panel::state::manager::PanelStateManager::getStateHandler();
-
             switch (ev.code)
             {
                 case BTN_NORTH:
-                    manager.processPanelButtonEvent(
+                    stateManager->processPanelButtonEvent(
                         panel::types::ButtonEvent::INCREMENT);
                     break;
 
                 case BTN_SOUTH:
-                    manager.processPanelButtonEvent(
+                    stateManager->processPanelButtonEvent(
                         panel::types::ButtonEvent::DECREMENT);
                     break;
 
                 case BTN_SELECT:
-                    manager.processPanelButtonEvent(
+                    stateManager->processPanelButtonEvent(
                         panel::types::ButtonEvent::EXECUTE);
                     break;
 

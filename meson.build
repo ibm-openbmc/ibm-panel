@@ -83,6 +83,7 @@ if get_option('tests').enabled()
       link_with: [
           panel_app_a,
       ],
+      cpp_args: ['-DStateManagerTest']
   )
 
   test('test_panel_app', panel_app_test)

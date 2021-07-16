@@ -1,5 +1,7 @@
 #include "panel_state_manager.hpp"
 
+#include "utils.hpp"
+
 #include <algorithm>
 
 namespace panel
@@ -68,12 +70,6 @@ std::vector<FunctionalityAttributes> functionalityList = {
     {68, false, false, "NONE", StateType::INITIAL_STATE},
     {69, false, false, "NONE", StateType::INITIAL_STATE},
     {70, false, false, "NONE", StateType::INITIAL_STATE}};
-
-PanelStateManager& PanelStateManager::getStateHandler()
-{
-    static PanelStateManager stateHandler;
-    return stateHandler;
-}
 
 void PanelStateManager::enableFunctonality(
     const panel::types::FunctionalityList& listOfFunctionalities)
@@ -207,8 +203,6 @@ std::tuple<panel::types::FunctionNumber, panel::types::FunctionNumber>
 void PanelStateManager::setIPLParameters(
     const panel::types::ButtonEvent& button)
 {
-    // by default always increment level 0
-    static uint8_t levelToOperate = 0;
     std::vector<std::string> subRange = functionality02.at(levelToOperate);
 
     switch (button)
@@ -270,7 +264,7 @@ void PanelStateManager::setIPLParameters(
         default:
             break;
     }
-    createDisplayString(levelToOperate);
+    displayFunc02();
 }
 
 void PanelStateManager::incrementState()
@@ -335,6 +329,7 @@ void PanelStateManager::incrementState()
             panelCurState = distance(panelFunctions.begin(), pos);
         }
     }
+    createDisplayString();
 }
 
 void PanelStateManager::decrementState()
@@ -401,6 +396,7 @@ void PanelStateManager::decrementState()
             panelCurState = distance(nextpos, (panelFunctions.rend() - 1));
         }
     }
+    createDisplayString();
 }
 
 void PanelStateManager::executeState()
@@ -417,9 +413,7 @@ void PanelStateManager::executeState()
         panelCurSubStates.at(0) != StateType::DEBOUCNE_SRC_STATE)
     {
         panelCurSubStates.at(0) = StateType::DEBOUCNE_SRC_STATE;
-        // TODO: Send this SRC to display
-        std::cout << "Send this SRC to display " << funcState.debouceSrc
-                  << std::endl;
+        displayDebounce();
         return;
     }
 
@@ -435,7 +429,7 @@ void PanelStateManager::executeState()
                 // just exit the sub loop
                 isSubrangeActive = false;
                 panelCurSubStates.at(0) = StateType::INITIAL_STATE;
-
+                createDisplayString();
                 std::cout << "Exit sub range, retain state at " << panelCurState
                           << std::endl;
             }
@@ -455,6 +449,7 @@ void PanelStateManager::executeState()
         {
             isSubrangeActive = true;
             panelCurSubStates.at(0) = StateType::STAR_STATE;
+            createDisplayString();
 
             std::cout << "Sub Range has been activated, execute the sub "
                          "functionality "
@@ -476,14 +471,83 @@ void PanelStateManager::executeState()
     // need a state change
 }
 
-void PanelStateManager::createDisplayString(uint8_t level)
+void PanelStateManager::createDisplayString() const
 {
-    std::ignore = level;
-    /*check for issubstate active to conclude if substate display is at all
-     * required*/
-    /*Define here*/
+    std::string line1{};
+
+    const auto& funcState = panelFunctions.at(panelCurState);
+
+    std::stringstream ss;
+    ss << std::setw(2) << std::setfill('0')
+       << std::to_string(funcState.functionNumber);
+    line1 += ss.str();
+
+    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE &&
+        isSubrangeActive)
+    {
+        if (panelCurSubStates.at(0) == StateType::STAR_STATE)
+        {
+            line1 += "**";
+        }
+        else
+        {
+            ss.str(std::string());
+            ss << std::setw(2) << std::setfill('0') << std::hex
+               << static_cast<int>(panelCurSubStates.at(0));
+            line1 += ss.str();
+        }
+    }
+
+    panel::utils::sendCurrDisplayToPanel(line1, std::string{}, transport);
 }
 
+void PanelStateManager::displayDebounce() const
+{
+    std::string line1{};
+
+    const auto& funcState = panelFunctions.at(panelCurState);
+
+    if ((panelCurSubStates.at(0) == StateType::DEBOUCNE_SRC_STATE) &&
+        (funcState.debouceSrc != "NONE"))
+    {
+        line1 += funcState.debouceSrc;
+    }
+
+    panel::utils::sendCurrDisplayToPanel(line1, std::string{}, transport);
+}
+
+/**
+0 2 _ _ B_ _N __ __ _ _ _ _
+_ _ _ _ __ __ __ __ T < _ _
+*/
+void PanelStateManager::displayFunc02() const
+{
+    std::string line1(16, ' ');
+    std::string line2(16, ' ');
+
+    line1.replace(0, 2, "02");
+
+    if (isSubrangeActive)
+    {
+        line1.replace(4, 1, functionality02.at(0).at(panelCurSubStates.at(0)));
+        line1.replace(7, 1, functionality02.at(1).at(panelCurSubStates.at(1)));
+        line2.replace(12, 1, functionality02.at(2).at(panelCurSubStates.at(2)));
+
+        if (levelToOperate == 0)
+        {
+            line1.replace(5, 1, 1, '<');
+        }
+        else if (levelToOperate == 1)
+        {
+            line1.replace(8, 1, 1, '<');
+        }
+        else if (levelToOperate == 2)
+        {
+            line2.replace(13, 1, 1, '<');
+        }
+    }
+    panel::utils::sendCurrDisplayToPanel(line1, line2, transport);
+}
 } // namespace manager
 } // namespace state
 } // namespace panel

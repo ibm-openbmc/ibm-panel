@@ -1,5 +1,8 @@
 #pragma once
 
+#include "panel_state_manager.hpp"
+#include "transport.hpp"
+
 #include <linux/input.h>
 
 #include <sdbusplus/asio/connection.hpp>
@@ -34,9 +37,14 @@ class ButtonHandler
      * @brief Constructor.
      * @param[in] path - Path of the device.
      * @param[in] io - Boost asio io_context object pointer.
+     * @param[in] transport - Transport Object to call transport functions.
+     * @param[in] stateManager - State manager object to call
+     * increment/decrement/execute methods.
      */
-    ButtonHandler(const std::string& path,
-                  std::shared_ptr<boost::asio::io_context>& io);
+    ButtonHandler(
+        const std::string& path, std::shared_ptr<boost::asio::io_context>& io,
+        std::shared_ptr<panel::Transport> transport,
+        std::shared_ptr<panel::state::manager::PanelStateManager> stateManager);
 
   private:
     /** @brief Api to perform async read operation on the device path.
@@ -62,6 +70,12 @@ class ButtonHandler
 
     /* buffer of input event required for async_read operation*/
     std::vector<input_event> ipEvent;
+
+    /* transport object required for calling transport functions */
+    std::shared_ptr<panel::Transport> transport;
+
+    /* state manager object to call increment/decrement/execute functions */
+    std::shared_ptr<panel::state::manager::PanelStateManager> stateManager;
 
     /* file descriptor */
     int fd = -1;

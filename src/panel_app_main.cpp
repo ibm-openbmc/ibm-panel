@@ -127,9 +127,6 @@ int main(int, char**)
     const std::string imValue = getIM();
     try
     {
-        panel::ButtonHandler btnHandler(
-            "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick", io);
-
         // create transport lcd object
         auto lcdPanelObj = std::make_shared<panel::Transport>(
             std::get<0>((lcdDataMap.find(imValue))->second),
@@ -155,6 +152,15 @@ int main(int, char**)
         // transport key again.
 
         lcdPanelObj->setTransportKey(getPresentProperty(imValue));
+
+        // create state manager object
+        auto stateManagerObj =
+            std::make_shared<panel::state::manager::PanelStateManager>(
+                lcdPanelObj);
+
+        panel::ButtonHandler btnHandler(
+            "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick", io,
+            lcdPanelObj, stateManagerObj);
 
         io->run();
     }
