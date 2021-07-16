@@ -10,13 +10,17 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                                const types::FunctionalityList& subFuncNumber)
 {
     // test output, to be removed
-    std::cout << "Function Number" << int(funcNumber) << std::endl;
-    (void)subFuncNumber; // to remove unused variable error
+    std::cout << funcNumber << std::endl;
+    std::cout << subFuncNumber.at(0) << std::endl;
 
     switch (funcNumber)
     {
         case 1:
             execute01();
+            break;
+
+        case 11:
+            execute11();
             break;
 
         case 20:
@@ -71,6 +75,36 @@ void Executor::execute20()
     }
 
     utils::sendCurrDisplayToPanel(line1, line2, transport);
+}
+
+void Executor::execute11()
+{
+    auto res = utils::readBusProperty<std::variant<std::string>>(
+        "xyz.openbmc_project.Logging", pelEventPath,
+        "xyz.openbmc_project.Logging.Entry", "EventId");
+
+    auto srcData = std::get_if<std::string>(&res);
+
+    if (srcData != nullptr)
+    {
+        // find the first space to get response code
+        auto pos = (*srcData).find_first_of(" ");
+
+        // length of src data need to be 8
+        if (pos != std::string::npos && pos == 8)
+        {
+            utils::sendCurrDisplayToPanel((*srcData).substr(0, pos),
+                                          std::string{}, transport);
+        }
+        else
+        {
+            std::cerr << "Invalid srcData received = " << *srcData << std::endl;
+        }
+        return;
+    }
+
+    // TODO: Decide what needs to be done in this case.
+    std::cerr << "Error getting SRC data" << std::endl;
 }
 
 bool Executor::isOSIPLTypeEnabled() const

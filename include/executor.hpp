@@ -65,6 +65,11 @@ class Executor
     void execute01();
 
     /**
+     * @brief An api to execute function 11.
+     */
+    void execute11();
+
+    /**
      * @brief An api of check if OS IPL type is enabled.
      * It is a helper function for functionality 01. Display needs to be
      * modified depending upon if OS IPL type is enabled or disabled.
