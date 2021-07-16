@@ -1,5 +1,7 @@
 #include "transport.hpp"
 
+#include "i2c_message_encoder.hpp"
+
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
@@ -67,9 +69,27 @@ void Transport::panelI2CWrite(const panel::types::Binary& buffer) const
     }
 }
 
+void Transport::doButtonConfig()
+{
+    panel::encoder::MessageEncoder encodeObj;
+    panelI2CWrite(encodeObj.buttonControl(0x00, 0x01));
+    panelI2CWrite(encodeObj.buttonControl(0x01, 0x01));
+    panelI2CWrite(encodeObj.buttonControl(0x02, 0x01));
+    std::cout << "\n Button configuration done." << std::endl;
+}
+
 void Transport::setTransportKey(bool keyValue)
 {
-    transportKey = keyValue;
+    if (!transportKey && keyValue && panelType == panel::types::PanelType::LCD)
+    {
+        transportKey = keyValue;
+        // TODO: Do soft reset when the transport key is active.
+        doButtonConfig();
+    }
+    else
+    {
+        transportKey = keyValue;
+    }
     std::cout << "\nTransport key is set to " << transportKey << std::endl;
 }
 

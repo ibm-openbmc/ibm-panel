@@ -27,5 +27,11 @@ enum ButtonEvent
     EXECUTE
 };
 
+enum PanelType
+{
+    BASE,
+    LCD
+};
+
 } // namespace types
 } // namespace panel

@@ -22,8 +22,10 @@ class Transport
      * Initialise the transport class object with the right panel device path
      * and device address based on the system type.
      */
-    Transport(const std::string& devPath, const uint8_t& devAddr) :
-        devPath(devPath), devAddress(devAddr)
+    Transport(const std::string& devPath, const uint8_t& devAddr,
+              const panel::types::PanelType& type) :
+        devPath(devPath),
+        devAddress(devAddr), panelType(type)
     {
         panelI2CSetup();
     }
@@ -55,6 +57,9 @@ class Transport
      */
     void setTransportKey(bool keyValue);
 
+    /** @brief API to setup panel's button operational characteristics. */
+    void doButtonConfig();
+
     /** @brief Method to check and return the current status of transport key.
      * @return transportKey
      */
@@ -79,6 +84,9 @@ class Transport
      * i2c bus. False otherwise.
      */
     bool transportKey = false;
+
+    /** @brief Panel type (base/lcd) */
+    const panel::types::PanelType panelType;
 
     /** @brief Establish panel i2c connection
      * This api establishes the i2c bus connection to the panel micro

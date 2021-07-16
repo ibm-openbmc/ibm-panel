@@ -130,12 +130,14 @@ int main(int, char**)
         // create transport lcd object
         auto lcdPanelObj = std::make_shared<panel::Transport>(
             std::get<0>((lcdDataMap.find(imValue))->second),
-            std::get<1>((lcdDataMap.find(imValue))->second));
+            std::get<1>((lcdDataMap.find(imValue))->second),
+            panel::types::PanelType::LCD);
 
         // create transport base object
         auto basePanelObj = std::make_shared<panel::Transport>(
             std::get<0>((baseDataMap.find(imValue))->second),
-            std::get<1>((baseDataMap.find(imValue))->second));
+            std::get<1>((baseDataMap.find(imValue))->second),
+            panel::types::PanelType::BASE);
         basePanelObj->setTransportKey(true);
 
         // Listen to lcd panel presence always for both rainier and everest
