@@ -3,6 +3,9 @@
 #include "const.hpp"
 #include "utils.hpp"
 
+#include <boost/algorithm/string.hpp>
+#include <vector>
+
 namespace panel
 {
 
@@ -21,6 +24,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
 
         case 11:
             execute11();
+            break;
+
+        case 12:
+            execute12();
             break;
 
         case 20:
@@ -77,7 +84,7 @@ void Executor::execute20()
     utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 
-void Executor::execute11()
+std::string Executor::getSrcDataForPEL()
 {
     auto res = utils::readBusProperty<std::variant<std::string>>(
         "xyz.openbmc_project.Logging", pelEventPath,
@@ -87,18 +94,30 @@ void Executor::execute11()
 
     if (srcData != nullptr)
     {
+        return *srcData;
+    }
+
+    return "";
+}
+
+void Executor::execute11()
+{
+    auto srcData = getSrcDataForPEL();
+
+    if (!srcData.empty())
+    {
         // find the first space to get response code
-        auto pos = (*srcData).find_first_of(" ");
+        auto pos = srcData.find_first_of(" ");
 
         // length of src data need to be 8
         if (pos != std::string::npos && pos == 8)
         {
-            utils::sendCurrDisplayToPanel((*srcData).substr(0, pos),
+            utils::sendCurrDisplayToPanel((srcData).substr(0, pos),
                                           std::string{}, transport);
         }
         else
         {
-            std::cerr << "Invalid srcData received = " << *srcData << std::endl;
+            std::cerr << "Invalid srcData received = " << srcData << std::endl;
         }
         return;
     }
@@ -163,4 +182,31 @@ void Executor::execute01()
 
     std::cerr << "Error reading system parameters" << std::endl;
 }
+
+void Executor::execute12()
+{
+    auto srcData = getSrcDataForPEL();
+
+    // Need to show blank spaces in case no srcData as function is enabled.
+    constexpr auto blankHexWord = "        ";
+    std::vector<std::string> output(4, blankHexWord);
+
+    if (!srcData.empty())
+    {
+        std::vector<std::string> src;
+        boost::split(src, srcData, boost::is_any_of(" "));
+
+        const auto size = std::min(src.size(), (size_t)5);
+        // ignoring the first hexword
+        for (size_t i = 1; i < size; ++i)
+        {
+            output[i - 1] = src[i];
+        }
+    }
+
+    // send blank display if string is empty
+    utils::sendCurrDisplayToPanel((output.at(0) + output.at(1)),
+                                  (output.at(2) + output.at(3)), transport);
+}
+
 } // namespace panel
