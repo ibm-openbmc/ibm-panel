@@ -30,6 +30,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
             execute12();
             break;
 
+        case 13:
+            execute13();
+            break;
+
         case 20:
             execute20();
             break;
@@ -201,6 +205,32 @@ void Executor::execute12()
         for (size_t i = 1; i < size; ++i)
         {
             output[i - 1] = src[i];
+        }
+    }
+
+    // send blank display if string is empty
+    utils::sendCurrDisplayToPanel((output.at(0) + output.at(1)),
+                                  (output.at(2) + output.at(3)), transport);
+}
+
+void Executor::execute13()
+{
+    auto srcData = getSrcDataForPEL();
+
+    // Need to show blank spaces in case of no srcData as function is enabled.
+    constexpr auto blankHexWord = "        ";
+    std::vector<std::string> output(4, blankHexWord);
+
+    if (!srcData.empty())
+    {
+        std::vector<std::string> src;
+        boost::split(src, srcData, boost::is_any_of(" "));
+
+        const auto size = std::min(src.size(), (size_t)9);
+        // ignoring the first five hexword
+        for (size_t i = 5; i < size; ++i)
+        {
+            output[i - 5] = src[i];
         }
     }
 
