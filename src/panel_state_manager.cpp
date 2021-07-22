@@ -87,6 +87,28 @@ void PanelStateManager::enableFunctonality(
         }
         else
         {
+            std::cout << "Entry for function Number " << functionNumber
+                      << " not found" << std::endl;
+        }
+    }
+}
+
+void PanelStateManager::disableFunctonality(
+    const panel::types::FunctionalityList& listOfFunctionalities)
+{
+    for (const auto& functionNumber : listOfFunctionalities)
+    {
+        auto pos =
+            find_if(panelFunctions.begin(), panelFunctions.end(),
+                    [functionNumber](const PanelFunctionality& afunctionality) {
+                        return afunctionality.functionNumber == functionNumber;
+                    });
+        if (pos != panelFunctions.end())
+        {
+            pos->functionActiveState = false;
+        }
+        else
+        {
             std::cout << "Entry for functionality Number " << functionNumber
                       << " not found" << std::endl;
         }
