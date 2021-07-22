@@ -46,7 +46,7 @@ panel_app_a = static_library(
     'src/button_handler.cpp',
     'src/transport.cpp',
     'src/utils.cpp',
-    'src/presence.cpp',
+    'src/bus_monitor.cpp',
     'src/executor.cpp',
     include_directories: 'include'
 )
