@@ -58,6 +58,13 @@ class PanelStateManager
         const types::FunctionalityList& listOfFunctionalities);
 
     /**
+     * @brief Api to disable function(s).
+     * @param[in] listOfFunctionalities - A list of function(s) to be disabled.
+     * */
+    void disableFunctonality(
+        const types::FunctionalityList& listOfFunctionalities);
+
+    /**
      * @brief Api to process button event.
      * This api will be called in case of any button event, will process and
      * set the state of panel accordingly.

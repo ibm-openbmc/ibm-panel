@@ -3,6 +3,10 @@
 #include "const.hpp"
 #include "utils.hpp"
 
+#include <algorithm>
+#include <boost/algorithm/string.hpp>
+#include <vector>
+
 namespace panel
 {
 
@@ -56,7 +60,7 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
     {
         const auto& propMap = infItr->second;
 
-        const auto propItr = propMap.find("Severity");
+        auto propItr = propMap.find("Severity");
         if (propItr != propMap.end())
         {
             const auto severity = std::get_if<std::string>(&propItr->second);
@@ -67,10 +71,65 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                 *severity !=
                     "xyz.openbmc_project.Logging.Entry.Level.Informational")
             {
+                types::FunctionalityList list;
+                // as there are maximum 9 SRC related functions.
+                list.reserve(9);
+
                 if (!functionStateEnabled)
                 {
+                    // these functions needs to be enabled only once when first
+                    // PEL of desired severity is received.
                     functionStateEnabled = true;
-                    types::FunctionalityList list{11, 12, 13};
+                    list.emplace_back(11);
+                    list.emplace_back(12);
+                    list.emplace_back(13);
+                }
+
+                propItr = propMap.find("Resolution");
+                if (propItr != propMap.end())
+                {
+                    const auto resolution =
+                        std::get_if<std::string>(&propItr->second);
+                    if (resolution != nullptr || !(*resolution).empty())
+                    {
+                        std::vector<std::string> callOutList;
+                        boost::split(callOutList, *resolution,
+                                     boost::is_any_of("\n"));
+
+                        // Need to show max 6 callout src.
+                        auto size = std::min(callOutList.size(),
+                                             static_cast<size_t>(6));
+
+                        // default list: 14 to 19 are the functions to display
+                        // callout SRCs.
+                        constexpr std::array<types::FunctionNumber, 6>
+                            callOutSRCFunctions{14, 15, 16, 17, 18, 19};
+
+                        // add functions to enable list based on number of
+                        // callouts.
+                        list.insert(std::end(list), callOutSRCFunctions.begin(),
+                                    callOutSRCFunctions.begin() + size);
+
+                        // Need to also disable functions in the range of 14 to
+                        // 19 based on number of callouts.
+                        if (size < callOutSRCFunctions.size())
+                        {
+                            // disable rest of the functions
+                            types::FunctionalityList disableFunc(
+                                (callOutSRCFunctions.begin() + size),
+                                callOutSRCFunctions.end());
+
+                            stateManager->disableFunctonality(disableFunc);
+                        }
+                    }
+                    else
+                    {
+                        std::cout << "No Callout found in the PEL";
+                    }
+                }
+
+                if (list.size() > 0)
+                {
                     stateManager->enableFunctonality(list);
                 }
 
