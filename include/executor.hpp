@@ -53,6 +53,15 @@ class Executor
         pelEventPath = lastPel;
     }
 
+    /**
+     * @brief Api to store callout list of last PEL.
+     * @param[in] callOuts - list of callouts.
+     */
+    inline void pelCallOutList(const std::vector<std::string>& callOuts)
+    {
+        callOutList = callOuts;
+    }
+
   private:
     /**
      * @brief An api to execute functionality 20
@@ -80,6 +89,12 @@ class Executor
     void execute13();
 
     /**
+     * @brief An api to execute function 14 to 19.
+     * @param[in] funcNumber - function to execute.
+     */
+    void execute14to19(const types::FunctionNumber funcNumber);
+
+    /**
      * @brief Api to get PEL eventId.
      *
      * This is a helper function to get the eventId(SRC) data for the PEL
@@ -100,6 +115,9 @@ class Executor
 
     /* Event object path of last logged PEL */
     sdbusplus::message::object_path pelEventPath{};
+
+    /* List of resolution property added to callouts */
+    std::vector<std::string> callOutList;
 
 }; // class Executor
 } // namespace panel

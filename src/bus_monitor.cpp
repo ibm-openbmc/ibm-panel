@@ -121,6 +121,8 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
 
                             stateManager->disableFunctonality(disableFunc);
                         }
+
+                        executor->pelCallOutList(callOutList);
                     }
                     else
                     {
