@@ -34,8 +34,13 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
             execute13();
             break;
 
-        case 20:
-            execute20();
+        case 14:
+        case 15:
+        case 16:
+        case 17:
+        case 18:
+        case 19:
+            execute14to19(funcNumber);
             break;
 
         default:
@@ -237,6 +242,91 @@ void Executor::execute13()
     // send blank display if string is empty
     utils::sendCurrDisplayToPanel((output.at(0) + output.at(1)),
                                   (output.at(2) + output.at(3)), transport);
+}
+
+void Executor::execute14to19(const types::FunctionNumber funcNumber)
+{
+    std::string aCallOut{};
+    std::string line1(16, ' ');
+    std::string line2(16, ' ');
+
+    switch (funcNumber)
+    {
+        // size check is not done here as functions are enabled based on count
+        // of entries in this vector.
+        case 14:
+            aCallOut = callOutList.at(0);
+            break;
+
+        case 15:
+            aCallOut = callOutList.at(1);
+            break;
+
+        case 16:
+            aCallOut = callOutList.at(2);
+            break;
+
+        case 17:
+            aCallOut = callOutList.at(3);
+            break;
+
+        case 18:
+            aCallOut = callOutList.at(4);
+            break;
+
+        case 19:
+            aCallOut = callOutList.at(5);
+            break;
+    }
+
+    // sample resolution string in case of procedure callout
+    // 1. Priority: High, Procedure: BMCSP02
+    // output:
+    // L1 : H -BMCSP02
+    // L2 :
+
+    // sample resolution string in hardware callout
+    // 1. Location Code: U78DA.ND0.1234567-P0, Priority: Medium, PN: SVCDOCS
+    // output:
+    // L1 : M -SVCDOCS
+    // L2 : U78DA.ND0.1234567-P0
+
+    std::vector<std::string> callOutPropertyList;
+    boost::split(callOutPropertyList, aCallOut, boost::is_any_of(","));
+
+    for (auto& aProperty : callOutPropertyList)
+    {
+        std::vector<std::string> propValueList;
+        boost::split(propValueList, aProperty, boost::is_any_of(":"));
+
+        size_t pos = std::string::npos;
+        if ((pos = propValueList[0].find("Priority")) != std::string::npos)
+        {
+            line1.replace(0, 1, propValueList[1].substr(1, 1));
+        }
+        else if ((pos = propValueList[0].find("Procedure")) !=
+                 std::string::npos)
+        {
+            line1.replace(2, 1, "-");
+            line1.replace(3, 7, propValueList[1].substr(1));
+        }
+        else if ((pos = propValueList[0].find("Location Code")) !=
+                 std::string::npos)
+        {
+            line2.replace(0, (propValueList[1].substr(1)).length(),
+                          propValueList[1].substr(1));
+        }
+        else if ((pos = propValueList[0].find("PN")) != std::string::npos)
+        {
+            line1.replace(2, 1, "-");
+            line1.replace(3, 7, propValueList[1].substr(1));
+        }
+        // TODO: Currently, CCIN is not in data recieved from D-Bus.
+    }
+
+    // TODO: We need to decide whether to display FF to indicate failure.
+    // send blank display if string is empty as function is enabled.
+    utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 
 } // namespace panel
