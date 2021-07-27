@@ -12,8 +12,8 @@ namespace panel
 
 ButtonHandler::ButtonHandler(
     const std::string& path, std::shared_ptr<boost::asio::io_context>& io,
-    std::shared_ptr<panel::Transport> transport,
-    std::shared_ptr<panel::state::manager::PanelStateManager> stateManager) :
+    std::shared_ptr<Transport> transport,
+    std::shared_ptr<state::manager::PanelStateManager> stateManager) :
     devicePath(path),
     io(io), transport(transport), stateManager(stateManager)
 {
@@ -80,17 +80,17 @@ void ButtonHandler::processInputEvent(const boost::system::error_code& ec,
             {
                 case BTN_NORTH:
                     stateManager->processPanelButtonEvent(
-                        panel::types::ButtonEvent::INCREMENT);
+                        types::ButtonEvent::INCREMENT);
                     break;
 
                 case BTN_SOUTH:
                     stateManager->processPanelButtonEvent(
-                        panel::types::ButtonEvent::DECREMENT);
+                        types::ButtonEvent::DECREMENT);
                     break;
 
                 case BTN_SELECT:
                     stateManager->processPanelButtonEvent(
-                        panel::types::ButtonEvent::EXECUTE);
+                        types::ButtonEvent::EXECUTE);
                     break;
 
                 default: /* unknown button event*/

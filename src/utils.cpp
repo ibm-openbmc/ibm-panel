@@ -6,7 +6,7 @@ namespace panel
 {
 namespace utils
 {
-std::string binaryToHexString(const panel::types::Binary& val)
+std::string binaryToHexString(const types::Binary& val)
 {
     std::ostringstream oss;
     for (auto i : val)
@@ -18,13 +18,13 @@ std::string binaryToHexString(const panel::types::Binary& val)
 }
 
 void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
-                            std::shared_ptr<panel::Transport> transport)
+                            std::shared_ptr<Transport> transport)
 {
     // couts are for debugging purpose. can be removed once the testing is done.
     std::cout << "L1 : " << line1 << std::endl;
     std::cout << "L2 : " << line2 << std::endl;
 
-    panel::encoder::MessageEncoder encode;
+    encoder::MessageEncoder encode;
 
     auto displayPacket = encode.rawDisplay(line1, line2);
 

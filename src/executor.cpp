@@ -82,7 +82,7 @@ bool Executor::isOSIPLTypeEnabled() const
 
 void Executor::execute01()
 {
-    const auto sysValues = panel::utils::readSystemParameters();
+    const auto sysValues = utils::readSystemParameters();
 
     if (!std::get<0>(sysValues).empty() && !std::get<1>(sysValues).empty() &&
         !std::get<2>(sysValues).empty() && !std::get<3>(sysValues).empty() &&

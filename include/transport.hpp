@@ -23,7 +23,7 @@ class Transport
      * and device address based on the system type.
      */
     Transport(const std::string& devPath, const uint8_t& devAddr,
-              const panel::types::PanelType& type) :
+              const types::PanelType& type) :
         devPath(devPath),
         devAddress(devAddr), panelType(type)
     {
@@ -47,7 +47,7 @@ class Transport
      * controller.
      * @param[in] buffer - data that needs to be sent to the panel.
      */
-    void panelI2CWrite(const panel::types::Binary& buffer) const;
+    void panelI2CWrite(const types::Binary& buffer) const;
 
     /** @brief Method to set the transport key
      * The transportKey boolean tells if the panel i2c bus is ready to use or
@@ -86,7 +86,7 @@ class Transport
     bool transportKey = false;
 
     /** @brief Panel type (base/lcd) */
-    const panel::types::PanelType panelType;
+    const types::PanelType panelType;
 
     /** @brief Establish panel i2c connection
      * This api establishes the i2c bus connection to the panel micro

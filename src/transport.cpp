@@ -40,7 +40,7 @@ void Transport::panelI2CSetup()
               << std::endl;
 }
 
-void Transport::panelI2CWrite(const panel::types::Binary& buffer) const
+void Transport::panelI2CWrite(const types::Binary& buffer) const
 {
     if (transportKey)
     {
@@ -71,7 +71,7 @@ void Transport::panelI2CWrite(const panel::types::Binary& buffer) const
 
 void Transport::doButtonConfig()
 {
-    panel::encoder::MessageEncoder encode;
+    encoder::MessageEncoder encode;
     panelI2CWrite(encode.buttonControl(0x00, 0x01));
     panelI2CWrite(encode.buttonControl(0x01, 0x01));
     panelI2CWrite(encode.buttonControl(0x02, 0x01));
@@ -80,7 +80,7 @@ void Transport::doButtonConfig()
 
 void Transport::setTransportKey(bool keyValue)
 {
-    if (!transportKey && keyValue && panelType == panel::types::PanelType::LCD)
+    if (!transportKey && keyValue && panelType == types::PanelType::LCD)
     {
         transportKey = keyValue;
         // TODO: Do soft reset when the transport key is active.

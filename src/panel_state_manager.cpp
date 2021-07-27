@@ -24,13 +24,13 @@ static constexpr auto FUNCTION_02 = 2;
 // structure defines fincttionaliy attributes.
 struct FunctionalityAttributes
 {
-    panel::types::FunctionNumber funcNumber;
+    types::FunctionNumber funcNumber;
     // Any function number not dependent on the state of the machine or any
     // other element will be enabled by default.
     bool defaultEnabled;
     bool isDebounceRequired;
     std::string debounceSrcValue;
-    panel::types::FunctionNumber subRangeEndPoint;
+    types::FunctionNumber subRangeEndPoint;
 };
 
 // This can be moved to a common file in case this information needs to be
@@ -72,7 +72,7 @@ std::vector<FunctionalityAttributes> functionalityList = {
     {70, false, false, "NONE", StateType::INITIAL_STATE}};
 
 void PanelStateManager::enableFunctonality(
-    const panel::types::FunctionalityList& listOfFunctionalities)
+    const types::FunctionalityList& listOfFunctionalities)
 {
     for (const auto& functionNumber : listOfFunctionalities)
     {
@@ -139,28 +139,28 @@ void PanelStateManager::printPanelStates()
 }
 
 void PanelStateManager::processPanelButtonEvent(
-    const panel::types::ButtonEvent& button)
+    const types::ButtonEvent& button)
 {
     // In case panel is in DEBOUCNE_SRC_STATE, and next button is increment
     // or decrement, it should come out of DEBOUCNE_SRC_STATE
     if (panelCurSubStates.at(0) == StateType::DEBOUCNE_SRC_STATE &&
-        (button == panel::types::ButtonEvent::INCREMENT ||
-         button == panel::types::ButtonEvent::DECREMENT))
+        (button == types::ButtonEvent::INCREMENT ||
+         button == types::ButtonEvent::DECREMENT))
     {
         panelCurSubStates.at(0) = StateType::INITIAL_STATE;
     }
 
     switch (button)
     {
-        case panel::types::ButtonEvent::INCREMENT:
+        case types::ButtonEvent::INCREMENT:
             incrementState();
             break;
 
-        case panel::types::ButtonEvent::DECREMENT:
+        case types::ButtonEvent::DECREMENT:
             decrementState();
             break;
 
-        case panel::types::ButtonEvent::EXECUTE:
+        case types::ButtonEvent::EXECUTE:
             executeState();
             break;
 
@@ -192,10 +192,10 @@ void PanelStateManager::initPanelState()
     panelCurSubStates.push_back(StateType::INVALID_STATE);
 
     // create executorclass
-    funcExecutor = std::make_shared<panel::Executor>(transport);
+    funcExecutor = std::make_shared<Executor>(transport);
 }
 
-std::tuple<panel::types::FunctionNumber, panel::types::FunctionNumber>
+std::tuple<types::FunctionNumber, types::FunctionNumber>
     PanelStateManager::getPanelCurrentStateInfo() const
 {
     const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
@@ -203,14 +203,13 @@ std::tuple<panel::types::FunctionNumber, panel::types::FunctionNumber>
 }
 
 // functionality 02
-void PanelStateManager::setIPLParameters(
-    const panel::types::ButtonEvent& button)
+void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
 {
     std::vector<std::string> subRange = functionality02.at(levelToOperate);
 
     switch (button)
     {
-        case panel::types::ButtonEvent::INCREMENT:
+        case types::ButtonEvent::INCREMENT:
             if (panelCurSubStates.at(levelToOperate) == subRange.size() - 1)
             {
                 panelCurSubStates.at(levelToOperate) = StateType::INITIAL_STATE;
@@ -221,7 +220,7 @@ void PanelStateManager::setIPLParameters(
             }
             break;
 
-        case panel::types::ButtonEvent::DECREMENT:
+        case types::ButtonEvent::DECREMENT:
             if (panelCurSubStates.at(levelToOperate) ==
                 StateType::INITIAL_STATE)
             {
@@ -233,7 +232,7 @@ void PanelStateManager::setIPLParameters(
             }
             break;
 
-        case panel::types::ButtonEvent::EXECUTE:
+        case types::ButtonEvent::EXECUTE:
             if (!isSubrangeActive)
             {
                 isSubrangeActive = true;
@@ -276,7 +275,7 @@ void PanelStateManager::incrementState()
 
     if (funcState.functionNumber == FUNCTION_02 && isSubrangeActive)
     {
-        setIPLParameters(panel::types::ButtonEvent::INCREMENT);
+        setIPLParameters(types::ButtonEvent::INCREMENT);
         return;
     }
 
@@ -341,7 +340,7 @@ void PanelStateManager::decrementState()
 
     if (funcState.functionNumber == FUNCTION_02 && isSubrangeActive)
     {
-        setIPLParameters(panel::types::ButtonEvent::DECREMENT);
+        setIPLParameters(types::ButtonEvent::DECREMENT);
         return;
     }
 
@@ -408,7 +407,7 @@ void PanelStateManager::executeState()
 
     if (funcState.functionNumber == FUNCTION_02)
     {
-        setIPLParameters(panel::types::ButtonEvent::EXECUTE);
+        setIPLParameters(types::ButtonEvent::EXECUTE);
         return;
     }
 
@@ -504,7 +503,7 @@ void PanelStateManager::createDisplayString() const
         }
     }
 
-    panel::utils::sendCurrDisplayToPanel(line1, std::string{}, transport);
+    utils::sendCurrDisplayToPanel(line1, std::string{}, transport);
 }
 
 void PanelStateManager::displayDebounce() const
@@ -519,7 +518,7 @@ void PanelStateManager::displayDebounce() const
         line1 += funcState.debouceSrc;
     }
 
-    panel::utils::sendCurrDisplayToPanel(line1, std::string{}, transport);
+    utils::sendCurrDisplayToPanel(line1, std::string{}, transport);
 }
 
 /**
@@ -552,7 +551,7 @@ void PanelStateManager::displayFunc02() const
             line2.replace(13, 1, 1, '<');
         }
     }
-    panel::utils::sendCurrDisplayToPanel(line1, line2, transport);
+    utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 } // namespace manager
 } // namespace state
