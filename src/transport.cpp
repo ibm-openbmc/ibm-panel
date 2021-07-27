@@ -71,10 +71,10 @@ void Transport::panelI2CWrite(const panel::types::Binary& buffer) const
 
 void Transport::doButtonConfig()
 {
-    panel::encoder::MessageEncoder encodeObj;
-    panelI2CWrite(encodeObj.buttonControl(0x00, 0x01));
-    panelI2CWrite(encodeObj.buttonControl(0x01, 0x01));
-    panelI2CWrite(encodeObj.buttonControl(0x02, 0x01));
+    panel::encoder::MessageEncoder encode;
+    panelI2CWrite(encode.buttonControl(0x00, 0x01));
+    panelI2CWrite(encode.buttonControl(0x01, 0x01));
+    panelI2CWrite(encode.buttonControl(0x02, 0x01));
     std::cout << "\n Button configuration done." << std::endl;
 }
 

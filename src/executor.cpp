@@ -70,7 +70,7 @@ void Executor::execute20()
         line1.replace(11, constants::ccinDataLength, *model);
     }
 
-    utils::sendCurrDisplayToPanel(line1, line2, transportObj);
+    utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 
 bool Executor::isOSIPLTypeEnabled() const
@@ -123,7 +123,7 @@ void Executor::execute01()
         // Boot side. This needs to be renamed later.
         line2.replace(12, 1, std::get<3>(sysValues).substr(0, 1));
 
-        utils::sendCurrDisplayToPanel(line1, line2, transportObj);
+        utils::sendCurrDisplayToPanel(line1, line2, transport);
         return;
     }
 

@@ -25,8 +25,7 @@ class Executor
      * @brief Constructor
      * @param[in] transport - Pointer to transport class.
      */
-    Executor(std::shared_ptr<Transport> transportObj) :
-        transportObj(transportObj)
+    Executor(std::shared_ptr<Transport> transport) : transport(transport)
     {
     }
 
@@ -64,7 +63,7 @@ class Executor
     bool isOSIPLTypeEnabled() const;
 
     /*Transport class object*/
-    std::shared_ptr<Transport> transportObj;
+    std::shared_ptr<Transport> transport;
 
 }; // class Executor
 } // namespace panel

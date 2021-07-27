@@ -148,22 +148,22 @@ int main(int, char**)
         const std::string imValue = getIM();
 
         // create transport lcd object
-        auto lcdPanelObj = std::make_shared<panel::Transport>(
+        auto lcdPanel = std::make_shared<panel::Transport>(
             std::get<0>((lcdDataMap.find(imValue))->second),
             std::get<1>((lcdDataMap.find(imValue))->second),
             panel::types::PanelType::LCD);
 
         // create transport base object
-        auto basePanelObj = std::make_shared<panel::Transport>(
+        auto basePanel = std::make_shared<panel::Transport>(
             std::get<0>((baseDataMap.find(imValue))->second),
             std::get<1>((baseDataMap.find(imValue))->second),
             panel::types::PanelType::BASE);
-        basePanelObj->setTransportKey(true);
+        basePanel->setTransportKey(true);
 
         // Listen to lcd panel presence always for both rainier and everest
-        panel::PanelPresence presenceObj(
-            std::get<2>((lcdDataMap.find(imValue))->second), conn, lcdPanelObj);
-        presenceObj.listenPanelPresence();
+        panel::PanelPresence lcdPresence(
+            std::get<2>((lcdDataMap.find(imValue))->second), conn, lcdPanel);
+        lcdPresence.listenPanelPresence();
 
         // Race condition can happen when the panel is removed exactly at the
         // time after setting the transport key(to true - for the first time)
@@ -173,15 +173,15 @@ int main(int, char**)
         // data accuracy get the "Present" property from dbus and set the
         // transport key again.
 
-        lcdPanelObj->setTransportKey(getPresentProperty(imValue));
+        lcdPanel->setTransportKey(getPresentProperty(imValue));
 
         // create state manager object
-        auto stateManagerObj =
+        auto stateManager =
             std::make_shared<panel::state::manager::PanelStateManager>(
-                lcdPanelObj);
+                lcdPanel);
 
         panel::ButtonHandler btnHandler(getInputDevicePath(imValue), io,
-                                        lcdPanelObj, stateManagerObj);
+                                        lcdPanel, stateManager);
 
         io->run();
     }
