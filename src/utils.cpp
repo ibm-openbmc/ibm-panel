@@ -18,17 +18,17 @@ std::string binaryToHexString(const panel::types::Binary& val)
 }
 
 void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
-                            std::shared_ptr<panel::Transport> transportObj)
+                            std::shared_ptr<panel::Transport> transport)
 {
     // couts are for debugging purpose. can be removed once the testing is done.
     std::cout << "L1 : " << line1 << std::endl;
     std::cout << "L2 : " << line2 << std::endl;
 
-    panel::encoder::MessageEncoder encodeObj;
+    panel::encoder::MessageEncoder encode;
 
-    auto displayPacket = encodeObj.rawDisplay(line1, line2);
+    auto displayPacket = encode.rawDisplay(line1, line2);
 
-    transportObj->panelI2CWrite(displayPacket);
+    transport->panelI2CWrite(displayPacket);
     // TODO: After sending display packet, pause for few seconds and send scroll
     // command to scroll both the lines towards right, if the lines exceeds
     // 16characters.

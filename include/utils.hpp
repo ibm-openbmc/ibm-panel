@@ -53,11 +53,11 @@ std::string binaryToHexString(const panel::types::Binary& val);
  *
  * @param[in] line1 - line 1 data that needs to be displayed.
  * @param[in] line2 - line 2 data that needs to be displayed.
- * @param[in] transportObj - Transport class object to access panelI2CWrite
+ * @param[in] transport - Transport class object to access panelI2CWrite
  * method.
  */
 void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
-                            std::shared_ptr<panel::Transport> transportObj);
+                            std::shared_ptr<panel::Transport> transport);
 
 /**
  * @brief An api to read initial values of OS IPL types, System operating

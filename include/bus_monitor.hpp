@@ -25,13 +25,13 @@ class PanelPresence
      * Constructor which instantiates the PanelPresence class object.
      * @param[in] objPath - panel's dbus object path.
      * @param[in] conn - panel sdbusplus connection object.
-     * @param[in] transportObj - transport object to set the transport key.
+     * @param[in] transport - transport object to set the transport key.
      */
     PanelPresence(std::string& objPath,
                   std::shared_ptr<sdbusplus::asio::connection> conn,
-                  std::shared_ptr<panel::Transport> transportObj) :
+                  std::shared_ptr<panel::Transport> transport) :
         objectPath(objPath),
-        conn(conn), transportObj(transportObj)
+        conn(conn), transport(transport)
     {
     }
 
@@ -44,7 +44,7 @@ class PanelPresence
   private:
     std::string objectPath;
     std::shared_ptr<sdbusplus::asio::connection> conn;
-    std::shared_ptr<panel::Transport> transportObj;
+    std::shared_ptr<panel::Transport> transport;
 
     /** @brief Read panel's "Present" property and set the transport key.
      * @param[in] msg - pointer to the msg sent by the PropertiesChanged signal.

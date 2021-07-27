@@ -18,7 +18,7 @@ void PanelPresence::readPresentProperty(sdbusplus::message::message& msg)
     {
         if (auto present = std::get_if<bool>(&(itr->second)))
         {
-            transportObj->setTransportKey(*present);
+            transport->setTransportKey(*present);
         }
         else
         {
