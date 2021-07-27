@@ -45,7 +45,7 @@ class PanelStateManager
     /**
      * @brief Api to get state and sub state info of panel.
      * */
-    std::tuple<panel::types::FunctionNumber, panel::types::FunctionNumber>
+    std::tuple<types::FunctionNumber, types::FunctionNumber>
         getPanelCurrentStateInfo() const;
 
     /**
@@ -55,7 +55,7 @@ class PanelStateManager
      * corresponding to a functionality.
      * */
     void enableFunctonality(
-        const panel::types::FunctionalityList& listOfFunctionalities);
+        const types::FunctionalityList& listOfFunctionalities);
 
     /**
      * @brief Api to process button event.
@@ -63,7 +63,7 @@ class PanelStateManager
      * set the state of panel accordingly.
      * @param[in] button - button event.
      */
-    void processPanelButtonEvent(const panel::types::ButtonEvent& button);
+    void processPanelButtonEvent(const types::ButtonEvent& button);
 
     /**
      * @brief Api to set state of Panel state handler altogether.
@@ -79,7 +79,7 @@ class PanelStateManager
      * @brief Constructor.
      * @param[in] transport - transport object to call transport functions.
      */
-    PanelStateManager(std::shared_ptr<panel::Transport> transport) :
+    PanelStateManager(std::shared_ptr<Transport> transport) :
         transport(transport)
     {
         initPanelState();
@@ -113,7 +113,7 @@ class PanelStateManager
      * mode.
      * @param[in] button - button event.
      */
-    void setIPLParameters(const panel::types::ButtonEvent& button);
+    void setIPLParameters(const types::ButtonEvent& button);
 
     /** @brief API to create the display string. */
     void createDisplayString() const;
@@ -143,7 +143,7 @@ class PanelStateManager
     struct PanelFunctionality
     {
         // serial number of the function.
-        panel::types::FunctionNumber functionNumber = 0;
+        types::FunctionNumber functionNumber = 0;
 
         // true is enabled false is disabled.
         bool functionActiveState = false;
@@ -152,7 +152,7 @@ class PanelStateManager
         std::string debouceSrc{};
 
         // Upper range in sub function list.
-        panel::types::FunctionNumber subFunctionUpperRange;
+        types::FunctionNumber subFunctionUpperRange;
     };
 
     // A list of functions provided by the panel.
@@ -165,7 +165,7 @@ class PanelStateManager
 
     // To store substate's state. In case of nested substate, every index
     // refer to the level of substate we are at.
-    panel::types::FunctionalityList panelCurSubStates;
+    types::FunctionalityList panelCurSubStates;
 
     // A variable to keep track if sub range is active. Required to decide
     // if we need to loop in subrange or not.
@@ -177,13 +177,13 @@ class PanelStateManager
     const std::vector<std::vector<std::string>> functionality02 = {
         {{"A", "B", "C", "D"}, {"M", "N"}, {"P", "T"}}};
 
-    std::shared_ptr<panel::Transport> transport;
+    std::shared_ptr<Transport> transport;
 
     /** The current active sub level of function 2 */
     uint8_t levelToOperate = 0;
 
     /*shared pointer to executor object*/
-    std::shared_ptr<panel::Executor> funcExecutor;
+    std::shared_ptr<Executor> funcExecutor;
 }; // class PanelStateManager
 
 } // namespace manager

@@ -43,8 +43,8 @@ class ButtonHandler
      */
     ButtonHandler(
         const std::string& path, std::shared_ptr<boost::asio::io_context>& io,
-        std::shared_ptr<panel::Transport> transport,
-        std::shared_ptr<panel::state::manager::PanelStateManager> stateManager);
+        std::shared_ptr<Transport> transport,
+        std::shared_ptr<state::manager::PanelStateManager> stateManager);
 
   private:
     /** @brief Api to perform async read operation on the device path.
@@ -72,10 +72,10 @@ class ButtonHandler
     std::vector<input_event> ipEvent;
 
     /* transport object required for calling transport functions */
-    std::shared_ptr<panel::Transport> transport;
+    std::shared_ptr<Transport> transport;
 
     /* state manager object to call increment/decrement/execute functions */
-    std::shared_ptr<panel::state::manager::PanelStateManager> stateManager;
+    std::shared_ptr<state::manager::PanelStateManager> stateManager;
 
     /* file descriptor */
     int fd = -1;

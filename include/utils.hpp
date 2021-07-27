@@ -43,7 +43,7 @@ T readBusProperty(const std::string& service, const std::string& object,
  * @param[in] val - byte vector that needs conversion
  * @return hex string
  */
-std::string binaryToHexString(const panel::types::Binary& val);
+std::string binaryToHexString(const types::Binary& val);
 
 /** @brief Display on panel using transport class api.
  *
@@ -57,7 +57,7 @@ std::string binaryToHexString(const panel::types::Binary& val);
  * method.
  */
 void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
-                            std::shared_ptr<panel::Transport> transport);
+                            std::shared_ptr<Transport> transport);
 
 /**
  * @brief An api to read initial values of OS IPL types, System operating
