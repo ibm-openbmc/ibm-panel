@@ -29,9 +29,22 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
     auto displayPacket = encode.rawDisplay(line1, line2);
 
     transport->panelI2CWrite(displayPacket);
-    // TODO: After sending display packet, pause for few seconds and send scroll
-    // command to scroll both the lines towards right, if the lines exceeds
-    // 16characters.
+
+    if ((line1.length() > 16) && (line2.length() > 16))
+    {
+        transport->panelI2CWrite(encode.scroll(
+            static_cast<types::Byte>(types::ScrollType::BOTH_LEFT)));
+    }
+    else if (line1.length() > 16)
+    {
+        transport->panelI2CWrite(encode.scroll(
+            static_cast<types::Byte>(types::ScrollType::LINE1_LEFT)));
+    }
+    else if (line2.length() > 16)
+    {
+        transport->panelI2CWrite(encode.scroll(
+            static_cast<types::Byte>(types::ScrollType::LINE2_LEFT)));
+    }
 }
 
 types::SystemParameterValues readSystemParameters()
