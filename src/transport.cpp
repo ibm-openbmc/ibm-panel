@@ -6,7 +6,9 @@
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 
+#include <chrono>
 #include <cstring>
+#include <thread>
 
 namespace panel
 {
@@ -78,12 +80,20 @@ void Transport::doButtonConfig()
     std::cout << "\n Button configuration done." << std::endl;
 }
 
+void Transport::doSoftReset()
+{
+    using namespace std::chrono_literals;
+    panelI2CWrite(encoder::MessageEncoder().softReset());
+    std::this_thread::sleep_for(100ms);
+    std::cout << "\n Panel:Soft reset done." << std::endl;
+}
+
 void Transport::setTransportKey(bool keyValue)
 {
     if (!transportKey && keyValue && panelType == types::PanelType::LCD)
     {
         transportKey = keyValue;
-        // TODO: Do soft reset when the transport key is active.
+        doSoftReset();
         doButtonConfig();
     }
     else
