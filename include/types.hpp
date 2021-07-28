@@ -65,5 +65,12 @@ enum PanelType
     LCD
 };
 
+enum class ScrollType : Byte
+{
+    BOTH_LEFT = 0x01,
+    LINE1_LEFT = 0x11,
+    LINE2_LEFT = 0x21,
+};
+
 } // namespace types
 } // namespace panel
