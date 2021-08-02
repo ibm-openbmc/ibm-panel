@@ -93,5 +93,13 @@ class Transport
      * controller.
      */
     void panelI2CSetup();
+
+    /** @brief API to do soft reset.
+     * The Panel Code Soft Reset command is used to perform a soft reset of
+     * the Panel micro-controller. This will re-initialize the Panel micro-code
+     * to its start-up values. A delay of 100milliseconds is added after the
+     * soft reset operation.
+     */
+    void doSoftReset();
 };
 } // namespace panel
