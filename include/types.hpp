@@ -20,6 +20,17 @@ using PanelDataTuple = std::tuple<std::string, uint8_t, std::string>;
 using PanelDataMap = std::unordered_map<std::string, PanelDataTuple>;
 using ItemInterfaceMap = std::map<std::string, std::variant<bool, std::string>>;
 
+/* DbusInterfaceMap reference
+map{InterfaceName, map{propertyName, value}}
+*/
+using DbusInterfaceMap = std::map<
+    std::string,
+    std::map<
+        std::string,
+        std::variant<
+            bool, uint32_t, uint64_t, std::string, std::vector<std::string>,
+            std::vector<std::tuple<std::string, std::string, std::string>>>>>;
+
 /*baseBIOSTable reference
 map{attributeName,struct{attributeType,readonlyStatus,displayname,
               description,menuPath,current,default,

@@ -175,6 +175,9 @@ int main(int, char**)
 
         lcdPanel->setTransportKey(getPresentProperty(imValue));
 
+        // create executor class
+        auto executor = std::make_shared<panel::Executor>(lcdPanel);
+
         // create state manager object
         auto stateManager =
             std::make_shared<panel::state::manager::PanelStateManager>(
@@ -182,6 +185,9 @@ int main(int, char**)
 
         panel::ButtonHandler btnHandler(getInputDevicePath(imValue), io,
                                         lcdPanel, stateManager);
+
+        panel::PELListener pelEvent(conn, stateManager, executor);
+        pelEvent.listenPelEvents();
 
         io->run();
     }
