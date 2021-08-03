@@ -121,6 +121,23 @@ bool getPresentProperty(const std::string& imValue)
     return false;
 }
 
+void getLcdDeviceData(std::string& lcdDevPath, uint8_t& lcdDevAddr,
+                      std::string& lcdObjPath, const std::string& imValue)
+{
+    if (lcdDataMap.find(imValue) ==
+        lcdDataMap.end()) // assume the system is tacoma
+    {
+        lcdDevPath = panel::constants::tacomaLcdDevPath;
+        lcdDevAddr = panel::constants::devAddr;
+    }
+    else
+    {
+        lcdDevPath = std::get<0>((lcdDataMap.find(imValue))->second);
+        lcdDevAddr = std::get<1>((lcdDataMap.find(imValue))->second);
+        lcdObjPath = std::get<2>((lcdDataMap.find(imValue))->second);
+    }
+}
+
 int main(int, char**)
 {
     try
@@ -147,33 +164,48 @@ int main(int, char**)
 
         const std::string imValue = getIM();
 
+        std::string lcdDevPath{}, lcdObjPath{};
+        uint8_t lcdDevAddr;
+        getLcdDeviceData(lcdDevPath, lcdDevAddr, lcdObjPath, imValue);
+
         // create transport lcd object
         auto lcdPanel = std::make_shared<panel::Transport>(
-            std::get<0>((lcdDataMap.find(imValue))->second),
-            std::get<1>((lcdDataMap.find(imValue))->second),
-            panel::types::PanelType::LCD);
+            lcdDevPath, lcdDevAddr, panel::types::PanelType::LCD);
 
         // create transport base object
-        auto basePanel = std::make_shared<panel::Transport>(
-            std::get<0>((baseDataMap.find(imValue))->second),
-            std::get<1>((baseDataMap.find(imValue))->second),
-            panel::types::PanelType::BASE);
-        basePanel->setTransportKey(true);
+        std::shared_ptr<panel::Transport> basePanel;
+        if (baseDataMap.find(imValue) != baseDataMap.end())
+        {
+            basePanel = std::make_shared<panel::Transport>(
+                std::get<0>((baseDataMap.find(imValue))->second),
+                std::get<1>((baseDataMap.find(imValue))->second),
+                panel::types::PanelType::BASE);
+            basePanel->setTransportKey(true);
+        }
 
         // Listen to lcd panel presence always for both rainier and everest
-        panel::PanelPresence lcdPresence(
-            std::get<2>((lcdDataMap.find(imValue))->second), conn, lcdPanel);
-        lcdPresence.listenPanelPresence();
+        std::unique_ptr<panel::PanelPresence> presence;
 
-        // Race condition can happen when the panel is removed exactly at the
-        // time after setting the transport key(to true - for the first time)
-        // and before firing the match signal. Here after removing the panel,
-        // "Properties.Changed" signal will wait for a property change from
-        // false to true; but the transport key is true(unchanged). To maintain
-        // data accuracy get the "Present" property from dbus and set the
-        // transport key again.
+        if (lcdDataMap.find(imValue) != lcdDataMap.end())
+        {
+            presence = std::make_unique<panel::PanelPresence>(lcdObjPath, conn,
+                                                              lcdPanel);
+            presence->listenPanelPresence();
 
-        lcdPanel->setTransportKey(getPresentProperty(imValue));
+            /** Race condition can happen when the panel is removed exactly at
+             * the time after setting the transport key(to true - for the first
+             * time) and before firing the match signal. After removing the
+             * panel, "Properties.Changed" signal will wait for a property
+             * change from false to true; but the transport key is still
+             * true(unchanged). To maintain data accuracy get the "Present"
+             * property from dbus and set the transport key again.*/
+            lcdPanel->setTransportKey(getPresentProperty(imValue));
+        }
+        else
+        {
+            // set transport key to true for test system(tacoma).
+            lcdPanel->setTransportKey(true);
+        }
 
         // create executor class
         auto executor = std::make_shared<panel::Executor>(lcdPanel);
