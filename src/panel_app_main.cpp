@@ -189,8 +189,10 @@ int main(int, char**)
     catch (const std::exception& e)
     {
         std::cerr << e.what();
-        throw;
+        std::cerr << "Panel app exiting..." << std::endl;
+        // TODO: Need to rethrow here so that systemd can mark the service a
+        // failure. We will do that once Everest hardware is ready.
+        // https://github.com/ibm-openbmc/ibm-panel/issues/21
     }
-    // Create the D-Bus invoker class
-    // Create D-Bus signal handler
+    return 0;
 }
