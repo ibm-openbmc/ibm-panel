@@ -185,6 +185,13 @@ class Executor
      */
     void execute55(const types::FunctionalityList& subFuncNumber);
 
+    /**
+     * @brief Api to initiate service processor dump.
+     * This method triggers a service processor dump when function 43 is pressed
+     * in panel.
+     */
+    void execute43();
+
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
 
