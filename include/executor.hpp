@@ -46,21 +46,31 @@ class Executor
                          const types::FunctionalityList& subFuncNumber);
 
     /**
-     * @brief Api to store event path of last PEL.
-     * @param[in] lastPel - Object path of last PEL.
-     */
-    inline void lastPELId(const sdbusplus::message::object_path& lastPel)
-    {
-        pelEventPath = lastPel;
-    }
-
-    /**
      * @brief Api to store callout list of last PEL.
      * @param[in] callOuts - list of callouts.
      */
     inline void pelCallOutList(const std::vector<std::string>& callOuts)
     {
         callOutList = callOuts;
+    }
+
+    /**
+     * @brief An api to store event id of last 25 PELs.
+     * This will be required by function 64 sub functions.
+     *
+     * @param[in] pelEventId - Value of eventId property of a given PEL.
+     */
+    void storePelEventId(const std::string& pelEventId);
+
+    /**
+     * @brief An api to return count of Pel EventIds.
+     * This count is required to enable/disable sub functions by state manager
+     * w.r.t function 64.
+     * @return The current count of stored PEL SRCs.
+     */
+    inline uint8_t getPelEventIdCount() const
+    {
+        return pelEventIdQueue.size();
     }
 
     /**
@@ -124,6 +134,12 @@ class Executor
     void execute63(const types::FunctionNumber subFuncNumber);
 
     /**
+     * @brief An api to execute function 64.
+     * @param[in] subFuncNumber - Sub function to execute.
+     */
+    void execute64(const types::FunctionNumber subFuncNumber);
+
+    /**
      * @brief Api to get PEL eventId.
      *
      * This is a helper function to get the eventId(SRC) data for the PEL
@@ -145,14 +161,14 @@ class Executor
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
 
-    /* Event object path of last logged PEL */
-    sdbusplus::message::object_path pelEventPath{};
-
     /* List of resolution property added to callouts */
     std::vector<std::string> callOutList;
 
     /* List of last 25 IPL SRCs. */
     std::deque<std::string> iplSrcs;
+
+    /* Queue of last 25 PEL SRCs */
+    std::deque<std::string> pelEventIdQueue;
 
 }; // class Executor
 } // namespace panel

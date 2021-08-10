@@ -135,10 +135,20 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                     stateManager->enableFunctonality(list);
                 }
 
-                // save the last predictive/unrecoverable error ID.
-                // TODO: how many we need to save. Function name to change
-                // accordingly.
-                executor->lastPELId(objPath);
+                propItr = propMap.find("EventId");
+                if (propItr != propMap.end())
+                {
+                    if (const auto eventId =
+                            std::get_if<std::string>(&propItr->second))
+                    {
+                        executor->storePelEventId(*eventId);
+                        return;
+                    }
+                }
+                // Store empty string if the evenId property is not found
+                // and log an error for reference.
+                executor->storePelEventId(std::string{});
+                std::cerr << "Event ID property not found" << std::endl;
             }
         }
     }

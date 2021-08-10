@@ -21,6 +21,7 @@ enum StateType
 
 static constexpr auto FUNCTION_02 = 2;
 static constexpr auto FUNCTION_63 = 63;
+static constexpr auto FUNCTION_64 = 64;
 
 // structure defines fincttionaliy attributes.
 struct FunctionalityAttributes
@@ -566,11 +567,25 @@ void PanelStateManager::executeState()
         // if not active, activate it and point to star method
         else
         {
-            // If function is 63 then sub function is enabled based on
-            // number of IPL SRCs.
-            if (funcState.functionNumber == FUNCTION_63)
+            if (funcState.functionNumber == FUNCTION_63 ||
+                funcState.functionNumber == FUNCTION_64)
             {
-                auto count = funcExecutor->getIPLSRCCount();
+                uint8_t count = 0;
+
+                // If function is 63 then sub function is enabled based on
+                // number of IPL SRCs.
+                if (funcState.functionNumber == FUNCTION_63)
+                {
+                    count = funcExecutor->getIPLSRCCount();
+                }
+
+                // If function is 64 then sub function is enabled based on
+                // number of Pel event received so far.
+                if (funcState.functionNumber == FUNCTION_64)
+                {
+                    count = funcExecutor->getPelEventIdCount();
+                }
+
                 if (count != 0)
                 {
                     //-1 to match the index

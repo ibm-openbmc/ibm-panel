@@ -4,6 +4,7 @@
 #include "utils.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <string_view>
 
 namespace panel
 {
@@ -56,6 +57,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
             execute63(subFuncNumber.at(0));
             break;
 
+        case 64:
+            execute64(subFuncNumber.at(0));
+            break;
+
         default:
             break;
     }
@@ -106,25 +111,9 @@ void Executor::execute20()
     utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 
-std::string Executor::getSrcDataForPEL()
-{
-    auto res = utils::readBusProperty<std::variant<std::string>>(
-        "xyz.openbmc_project.Logging", pelEventPath,
-        "xyz.openbmc_project.Logging.Entry", "EventId");
-
-    auto srcData = std::get_if<std::string>(&res);
-
-    if (srcData != nullptr)
-    {
-        return *srcData;
-    }
-
-    return "";
-}
-
 void Executor::execute11()
 {
-    auto srcData = getSrcDataForPEL();
+    auto srcData = pelEventIdQueue.back();
 
     if (!srcData.empty())
     {
@@ -392,7 +381,7 @@ void Executor::execute01()
 
 void Executor::execute12()
 {
-    auto srcData = getSrcDataForPEL();
+    auto srcData = pelEventIdQueue.back();
 
     // Need to show blank spaces in case no srcData as function is enabled.
     constexpr auto blankHexWord = "        ";
@@ -418,7 +407,7 @@ void Executor::execute12()
 
 void Executor::execute13()
 {
-    auto srcData = getSrcDataForPEL();
+    auto srcData = pelEventIdQueue.back();
 
     // Need to show blank spaces in case of no srcData as function is enabled.
     constexpr auto blankHexWord = "        ";
@@ -702,6 +691,47 @@ void Executor::execute63(const types::FunctionNumber subFuncNumber)
         if ((iplSrcs.size() - 1) >= subFuncNumber)
         {
             utils::sendCurrDisplayToPanel(iplSrcs.at(subFuncNumber),
+                                          std::string{}, transport);
+            return;
+        }
+    }
+
+    std::cerr << "Sub function number should not have been enabled"
+              << std::endl;
+}
+
+void Executor::storePelEventId(const std::string& pelEventId)
+{
+    // Need to store last 25 PEL SRCs.
+    if (pelEventIdQueue.size() == 25)
+    {
+        pelEventIdQueue.pop_front();
+    }
+    pelEventIdQueue.push_back(pelEventId);
+}
+
+void Executor::execute64(const types::FunctionNumber subFuncNumber)
+{
+    // 0th Sub function is always enabled and should show blank screen if
+    // required.
+    if ((subFuncNumber == 0) && (pelEventIdQueue.size() == 0))
+    {
+        utils::sendCurrDisplayToPanel(std::string{}, std::string{}, transport);
+        return;
+    }
+    else
+    {
+        if ((pelEventIdQueue.size() - 1) >= subFuncNumber)
+        {
+            std::string_view src(pelEventIdQueue.at(subFuncNumber));
+            if (src.length() < 8)
+            {
+                std::cerr << "Bad error event data" << std::endl;
+                return;
+            }
+            // TODO: via https://github.com/ibm-openbmc/ibm-panel/issues/34.
+            // avoid temp string object creation by using a std::string_view
+            utils::sendCurrDisplayToPanel(std::string{src.substr(0, 8)},
                                           std::string{}, transport);
             return;
         }
