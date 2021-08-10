@@ -203,6 +203,9 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message::message& msg)
             utils::sendCurrDisplayToPanel(
                 std::string(byteArray.begin(), byteArray.end()), std::string{},
                 transport);
+
+            executor->storeIPLSRC(
+                std::string(byteArray.begin(), byteArray.end()));
         }
         else
         {

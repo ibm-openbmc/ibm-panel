@@ -172,7 +172,7 @@ int main(int, char**)
         // create state manager object
         auto stateManager =
             std::make_shared<panel::state::manager::PanelStateManager>(
-                lcdPanel);
+                lcdPanel, executor);
 
         panel::ButtonHandler btnHandler(getInputDevicePath(imValue), io,
                                         lcdPanel, stateManager);
@@ -181,7 +181,7 @@ int main(int, char**)
         pelEvent.listenPelEvents();
 
         // register property change call back for progress code.
-        panel::BootProgressCode progressCode(lcdPanel, conn);
+        panel::BootProgressCode progressCode(lcdPanel, conn, executor);
         progressCode.listenProgressCode();
 
         iface->initialize();
