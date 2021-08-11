@@ -83,6 +83,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute30(subFuncNumber);
                 break;
 
+            case 42:
+                execute42();
+                break;
+
             case 43:
                 execute43();
                 break;
@@ -884,6 +888,13 @@ void Executor::execute43()
     createDump(
         sdbusplus::message::object_path("/xyz/openbmc_project/dump/bmc"));
     displayExecutionStatus(43, std::vector<types::FunctionNumber>(), true);
+}
+
+void Executor::execute42()
+{
+    createDump(
+        sdbusplus::message::object_path("/xyz/openbmc_project/dump/system"));
+    displayExecutionStatus(42, std::vector<types::FunctionNumber>(), true);
 }
 
 } // namespace panel

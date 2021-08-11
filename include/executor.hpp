@@ -180,7 +180,13 @@ class Executor
                                 const types::FunctionalityList& subFuncNumber,
                                 const bool result);
 
-    /** @brief API to execute function 55.
+    /**
+     * @brief API to initiate disruptive platform system dump.
+     */
+    void execute42();
+
+    /**
+     * @brief API to execute function 55.
      * @param[in] subFuncNumber - Sub function vector.
      */
     void execute55(const types::FunctionalityList& subFuncNumber);
