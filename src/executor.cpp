@@ -41,7 +41,9 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
         case 19:
             execute14to19(funcNumber);
             break;
-
+        case 20:
+            execute20();
+            break;
         case 30:
             execute30(subFuncNumber);
             break;
