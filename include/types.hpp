@@ -14,6 +14,7 @@ namespace types
 {
 
 using FunctionNumber = uint8_t;
+using index = uint8_t;
 using FunctionalityList = std::vector<FunctionNumber>;
 using Byte = uint8_t;
 using Binary = std::vector<Byte>;

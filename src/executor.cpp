@@ -21,6 +21,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
             execute01();
             break;
 
+        case 2:
+            execute02(subFuncNumber);
+            break;
+
         case 11:
             execute11();
             break;
@@ -517,6 +521,70 @@ void Executor::execute14to19(const types::FunctionNumber funcNumber)
     // TODO: We need to decide whether to display FF to indicate failure.
     // send blank display if string is empty as function is enabled.
     utils::sendCurrDisplayToPanel(line1, line2, transport);
+}
+
+static void bootSideSwitch()
+{
+    const auto bootSidePaths = utils::getBootSidePaths();
+
+    if (bootSidePaths.size() != 0)
+    {
+        if (bootSidePaths.size() > 2)
+        {
+            std::cout << "Received more than two boot paths, Setting the "
+                         "first path with priority 1 as next boot path"
+                      << std::endl;
+        }
+
+        for (const auto& path : bootSidePaths)
+        {
+            auto retVal = utils::readBusProperty<std::variant<uint8_t>>(
+                "xyz.openbmc_project.Software.BMC.Updater", path,
+                "xyz.openbmc_project.Software.RedundancyPriority", "Priority");
+
+            if (auto priority = std::get_if<uint8_t>(&retVal))
+            {
+                if (*priority != 0)
+                {
+                    uint8_t value = 0;
+                    utils::writeBusProperty<std::variant<uint8_t>>(
+                        "xyz.openbmc_project.Software.BMC.Updater", path,
+                        "xyz.openbmc_project.Software.RedundancyPriority",
+                        "Priority", value);
+
+                    // once the value is updated no need to check for other
+                    // paths.
+                    return;
+                }
+            }
+        }
+    }
+    std::cerr << "No boot paths returned by mapper call. Hence boot switch "
+                 "not executed"
+              << std::endl;
+}
+
+void Executor::execute02(const types::FunctionalityList& subFuncNumber)
+{
+    try
+    {
+        // 127 is sent in sub function number when the state is invalid.
+        static constexpr auto invalidState = 127;
+
+        // Process boot side switch only when state is not invalid. Implies
+        // change required.
+        if (subFuncNumber.at(2) != invalidState)
+        {
+            // switch boot side.
+            bootSideSwitch();
+        }
+    }
+    catch (const std::exception& e)
+    {
+        // write has failed. Show FF.
+        // TODO:Show FF once commit for FF is pushed.
+        std::cout << "Write failed Show FF" << e.what() << std::endl;
+    }
 }
 
 } // namespace panel

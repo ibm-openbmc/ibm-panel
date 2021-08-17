@@ -290,6 +290,7 @@ void PanelStateManager::initFunction02()
 void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
 {
     std::vector<std::string> subRange = functionality02.at(levelToOperate);
+    static std::tuple<types::index, types::index, types::index> initialValues;
 
     switch (button)
     {
@@ -323,6 +324,9 @@ void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
 
                 // set initial values
                 initFunction02();
+                initialValues = std::make_tuple(panelCurSubStates.at(0),
+                                                panelCurSubStates.at(1),
+                                                panelCurSubStates.at(2));
             }
             else if (levelToOperate != 2) // max depth of sub state
             {
@@ -330,11 +334,42 @@ void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
             }
             else
             {
-                // reset all the flag and execute as we are at last depth of
-                // subsate and functionality needs to be executed.
-                panelCurSubStates.at(0) = StateType::INITIAL_STATE;
-                panelCurSubStates.at(1) = StateType::INVALID_STATE;
-                panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                // check if we need to toggle that parameter in write.
+                // We need to change value only when different value has been
+                // selected than the initial value.
+
+                if (panelCurSubStates.at(0) == std::get<0>(initialValues))
+                {
+                    panelCurSubStates.at(0) = StateType::INVALID_STATE;
+                }
+
+                if (panelCurSubStates.at(1) == std::get<1>(initialValues))
+                {
+                    panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                }
+
+                if (panelCurSubStates.at(2) == std::get<2>(initialValues))
+                {
+                    panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                }
+
+                // if any one selected value is different than its initial
+                // value, then only we need to execute.
+                if (panelCurSubStates.at(0) != StateType::INVALID_STATE ||
+                    panelCurSubStates.at(1) != StateType::INVALID_STATE ||
+                    panelCurSubStates.at(2) != StateType::INVALID_STATE)
+                {
+
+                    funcExecutor->executeFunction(
+                        panelFunctions.at(panelCurState).functionNumber,
+                        panelCurSubStates);
+
+                    // reset all the flag
+                    panelCurSubStates.at(0) = StateType::INITIAL_STATE;
+                    panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                    panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                }
+
                 levelToOperate = 0;
                 isSubrangeActive = false;
             }
