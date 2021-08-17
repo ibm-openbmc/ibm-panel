@@ -522,6 +522,20 @@ void Executor::execute14to19(const types::FunctionNumber funcNumber)
     // send blank display if string is empty as function is enabled.
     utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
+static std::string getIplType(const uint8_t index)
+{
+    switch (index)
+    {
+        case 0:
+            return "A_Mode";
+        case 1:
+            return "B_Mode";
+        case 2:
+            return "C_Mode";
+        default:
+            return "D_Mode";
+    }
+}
 
 static void bootSideSwitch()
 {
@@ -571,12 +585,34 @@ void Executor::execute02(const types::FunctionalityList& subFuncNumber)
         // 127 is sent in sub function number when the state is invalid.
         static constexpr auto invalidState = 127;
 
+        // BIOS table attribute list.
+        types::PendingAttributesType listOfAttributeValue;
+
+        // change is needed only when state is not invalid.
+        if (subFuncNumber.at(0) != invalidState)
+        {
+            listOfAttributeValue.push_back(std::make_pair(
+                "pvm_os_ipl_type",
+                std::make_tuple("xyz.openbmc_project.BIOSConfig.Manager."
+                                "AttributeType.Enumeration",
+                                getIplType(subFuncNumber.at(0)))));
+        }
+
         // Process boot side switch only when state is not invalid. Implies
         // change required.
         if (subFuncNumber.at(2) != invalidState)
         {
             // switch boot side.
             bootSideSwitch();
+        }
+
+        if (listOfAttributeValue.size() > 0)
+        {
+            utils::writeBusProperty<std::variant<types::PendingAttributesType>>(
+                "xyz.openbmc_project.BIOSConfigManager",
+                "/xyz/openbmc_project/bios_config/manager",
+                "xyz.openbmc_project.BIOSConfig.Manager", "PendingAttributes",
+                std::move(listOfAttributeValue));
         }
     }
     catch (const std::exception& e)

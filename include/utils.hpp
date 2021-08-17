@@ -39,29 +39,6 @@ T readBusProperty(const std::string& service, const std::string& object,
     return retVal;
 }
 
-/**
- * @brief An api to write Bus property.
- * @param[in] serviceName - Name of the service.
- * @param[in] objectPath - Object path
- * @param[in] infName - Interface name.
- * @param[in] propertyName - Name of the property whose value is being written.
- * @param[in] propertyValue - The property value.
- */
-template <typename T>
-void writeBusProperty(const std::string& serviceName,
-                      const std::string& objectPath, const std::string& infName,
-                      const std::string& propertyName, const T& propertyValue)
-{
-    auto bus = sdbusplus::bus::new_default();
-    auto method = bus.new_method_call(serviceName.c_str(), objectPath.c_str(),
-                                      "org.freedesktop.DBus.Properties", "Set");
-    method.append(infName);
-    method.append(propertyName);
-    method.append(propertyValue);
-
-    bus.call(method);
-}
-
 /** @brief Convert byte vector to hex string.
  * @param[in] val - byte vector that needs conversion
  * @return hex string
