@@ -60,6 +60,24 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
                             std::shared_ptr<Transport> transport);
 
 /**
+ * @brief An api to read System operating mode.
+ * It will use combination of below mentioned three parameters to
+ * decide the operating mode of the system.
+ *
+ * By default it will be "Normal " mode.
+ * Value of three parameters in "Manual" mode would be,
+ * QuiesceOnHwError - true.
+ * PowerRestorePolicy -
+ * "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.AlwaysOff".
+ * AutoReboot - false.
+ *
+ * Any other value combination will set the system to "Normal" mode.
+ *
+ * @param[out] sysOperatingMode - Operating mode.
+ */
+void readSystemOperatingMode(std::string& sysOperatingMode);
+
+/**
  * @brief An api to read initial values of OS IPL types, System operating
  * mode, firmware IPL type, Hypervisor type and HMC indicator.
  * @return - Values of required system parameters.
@@ -107,5 +125,16 @@ void writeBusProperty(const std::string& serviceName,
     }
 }
 
+/**
+ * @brief Make mapper call to get boot side paths.
+ * @return List of all image object paths.
+ */
+std::vector<std::string> getBootSidePaths();
+
+/**
+ * @brief Get next marked boot side.
+ * @param[out] nextBootSide -  Next selected boot side.
+ */
+void getNextBootSide(std::string& nextBootSide);
 } // namespace utils
 } // namespace panel

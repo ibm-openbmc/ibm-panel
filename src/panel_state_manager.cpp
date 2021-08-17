@@ -190,7 +190,7 @@ void PanelStateManager::processPanelButtonEvent(
             break;
     }
 
-    // printStates();
+    // printPanelStates();
 }
 
 void PanelStateManager::initPanelState()
@@ -222,6 +222,68 @@ std::tuple<types::FunctionNumber, types::FunctionNumber>
 {
     const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
     return std::make_tuple(funcState.functionNumber, panelCurSubStates.at(0));
+}
+
+void PanelStateManager::initFunction02()
+{
+    try
+    {
+        auto sysValues = utils::readSystemParameters();
+
+        if (std::get<0>(sysValues).empty() || std::get<1>(sysValues).empty())
+        {
+            throw std::runtime_error("Error reading system values");
+        }
+
+        utils::getNextBootSide(nextBootSideSelected);
+
+        const auto& iplType = std::get<0>(sysValues);
+        if (iplType == "A_Mode")
+        {
+            panelCurSubStates.at(0) = 0;
+        }
+        else if (iplType == "B_Mode")
+        {
+            panelCurSubStates.at(0) = 1;
+        }
+        else if (iplType == "C_Mode")
+        {
+            panelCurSubStates.at(0) = 2;
+        }
+        else if (iplType == "D_Mode")
+        {
+            panelCurSubStates.at(0) = 3;
+        }
+        else
+        {
+            // TODO: Add elog here to detect invalid mode.
+            std::cout << "Invalid Mode" << std::endl;
+        }
+
+        const auto& systemOperatingMode = std::get<1>(sysValues);
+        if (systemOperatingMode == "Manual")
+        {
+            panelCurSubStates.at(1) = 0;
+        }
+        else if (systemOperatingMode == "Normal")
+        {
+            panelCurSubStates.at(1) = 1;
+        }
+
+        if (nextBootSideSelected == "P")
+        {
+            panelCurSubStates.at(2) = 0;
+        }
+        else
+        {
+            panelCurSubStates.at(2) = 1;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+        // TODO: Display FF once that commit is in.
+    }
 }
 
 // functionality 02
@@ -259,15 +321,8 @@ void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
             {
                 isSubrangeActive = true;
 
-                // set sub states to initial value
-                // TODO: implement a method to get inital values of substate.
-                /* auto subStateInitialValue =
-                     getInitialValue(this function does not exist, figure out);
-                 lets say for test be it 2,1,1 index of functionality02 Map*/
-
-                panelCurSubStates.at(0) = 2;
-                panelCurSubStates.at(1) = 1;
-                panelCurSubStates.at(2) = 1;
+                // set initial values
+                initFunction02();
             }
             else if (levelToOperate != 2) // max depth of sub state
             {
