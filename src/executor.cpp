@@ -537,6 +537,50 @@ static std::string getIplType(const uint8_t index)
     }
 }
 
+static types::PendingAttributesItemType
+    setOperatingMode(const uint8_t sysOperatingModeIndex)
+{
+    // Normal mode is the default mode hence all the defaul values are as per
+    // normal mode.
+    types::AttributeValueType sysOperatingModeValue = "Normal";
+    bool QuiesceOnHwError = false;
+    std::string PowerRestorePolicy =
+        "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.Restore";
+    bool autoReboot = true;
+
+    if (sysOperatingModeIndex == 0)
+    {
+        sysOperatingModeValue = "Manual";
+        QuiesceOnHwError = true;
+        PowerRestorePolicy =
+            "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.AlwaysOff";
+        autoReboot = false;
+    }
+
+    utils::writeBusProperty<std::variant<bool>>(
+        "xyz.openbmc_project.Settings", "/xyz/openbmc_project/logging/settings",
+        "xyz.openbmc_project.Logging.Settings", "QuiesceOnHwError",
+        QuiesceOnHwError);
+
+    utils::writeBusProperty<std::variant<std::string>>(
+        "xyz.openbmc_project.Settings",
+        "/xyz/openbmc_project/control/host0/power_restore_policy",
+        "xyz.openbmc_project.Control.Power.RestorePolicy", "PowerRestorePolicy",
+        PowerRestorePolicy);
+
+    utils::writeBusProperty<std::variant<bool>>(
+        "xyz.openbmc_project.Settings",
+        "/xyz/openbmc_project/control/host0/auto_reboot",
+        "xyz.openbmc_project.Control.Boot.RebootPolicy", "AutoReboot",
+        autoReboot);
+
+    return std::make_pair(
+        "pvm_system_operating_mode",
+        std::make_tuple("xyz.openbmc_project.BIOSConfig.Manager."
+                        "AttributeType.Enumeration",
+                        sysOperatingModeValue));
+}
+
 static void bootSideSwitch()
 {
     const auto bootSidePaths = utils::getBootSidePaths();
@@ -598,6 +642,12 @@ void Executor::execute02(const types::FunctionalityList& subFuncNumber)
                                 getIplType(subFuncNumber.at(0)))));
         }
 
+        if (subFuncNumber.at(1) != invalidState)
+        {
+            listOfAttributeValue.push_back(
+                setOperatingMode(subFuncNumber.at(1)));
+        }
+
         // Process boot side switch only when state is not invalid. Implies
         // change required.
         if (subFuncNumber.at(2) != invalidState)
@@ -619,7 +669,8 @@ void Executor::execute02(const types::FunctionalityList& subFuncNumber)
     {
         // write has failed. Show FF.
         // TODO:Show FF once commit for FF is pushed.
-        std::cout << "Write failed Show FF" << e.what() << std::endl;
+        std::cout << "Write failed for function 02. Show FF" << e.what()
+                  << std::endl;
     }
 }
 
