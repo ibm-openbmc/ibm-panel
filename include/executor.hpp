@@ -158,6 +158,18 @@ class Executor
     /** @brief API to execute function 30. */
     void execute30(const types::FunctionalityList& subFuncNumber);
 
+    /**
+     * @brief To display the execution result (function success/failure
+     * (00/FF)).
+     * @param[in] funcNumber - function number
+     * @param[in] subFuncNumber - sub function number list
+     * @param[in] result - Execution result - true:success(00) / false:failure
+     * (FF)
+     */
+    void displayExecutionStatus(const types::FunctionNumber funcNumber,
+                                const types::FunctionalityList& subFuncNumber,
+                                const bool result);
+
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
 
