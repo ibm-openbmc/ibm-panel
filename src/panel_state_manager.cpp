@@ -19,6 +19,25 @@ enum StateType
     INVALID_STATE = 127,
 };
 
+enum SystemStateMask : uint8_t
+{
+    NO_MASK = 0x00,
+    ENABLE_BY_PHYP = 0x01,
+    DISABLE_BY_PHYP = static_cast<SystemStateMask>(~ENABLE_BY_PHYP),
+    ENABLE_BMC_STANDBY_STATE = 0x20,
+    DISABLE_BMC_STANDBY_STATE =
+        static_cast<SystemStateMask>(~ENABLE_BMC_STANDBY_STATE),
+    ENABLE_POWER_STATE = 0x04,
+    DISABLE_POWER_STATE = static_cast<SystemStateMask>(~ENABLE_POWER_STATE),
+    ENABLE_PHYP_RUNTIME_STATE = 0x08,
+    DISABLE_PHYP_RUNTIME_STATE =
+        static_cast<SystemStateMask>(~ENABLE_PHYP_RUNTIME_STATE),
+    ENABLE_CE_MODE = 0x10,
+    DISABLE_CE_MODE = static_cast<SystemStateMask>(~ENABLE_CE_MODE),
+    ENABLE_MANUAL_MODE = 0x02,
+    DISABLE_MANUAL_MODE = static_cast<SystemStateMask>(~ENABLE_MANUAL_MODE),
+};
+
 static constexpr auto FUNCTION_02 = 2;
 static constexpr auto FUNCTION_63 = 63;
 static constexpr auto FUNCTION_64 = 64;
@@ -33,48 +52,110 @@ struct FunctionalityAttributes
     bool isDebounceRequired;
     std::string debounceSrcValue;
     types::FunctionNumber subRangeEndPoint;
+
+    // This will hold the conditions to ebnable that method.
+    /* 0th bit - Enabled by Phyp.
+     * 1st bit - Operation mode Normal/Manual 0/1
+     * 2nd bit - Power on state Off/On 0/1
+     * 3rd bit - Is Runtime No/Yes 0/1
+     * 4th bit - CE No/Yes 0/1 - we need to discuss.
+     * 5th bit - At standby No/Yes 0/1 - BMC state not ready to ready.
+     */
+    types::FunctionMask enableMask;
 };
 
 // This can be moved to a common file in case this information needs to be
 // shared between files. List of functionalites, initialized to their
 // default values.
 std::vector<FunctionalityAttributes> functionalityList = {
-    {1, true, false, "NONE", StateType::INITIAL_STATE},
-    {2, true, false, "NONE", StateType::INITIAL_STATE},
-    {3, false, true, "A1008003", StateType::INITIAL_STATE},
-    {4, true, false, "NONE", StateType::INITIAL_STATE},
-    {8, false, true, "A1008008", StateType::INITIAL_STATE},
-    {11, false, false, "NONE", StateType::INITIAL_STATE},
-    {12, false, false, "NONE", StateType::INITIAL_STATE},
-    {13, false, false, "NONE", StateType::INITIAL_STATE},
-    {14, false, false, "NONE", StateType::INITIAL_STATE},
-    {15, false, false, "NONE", StateType::INITIAL_STATE},
-    {16, false, false, "NONE", StateType::INITIAL_STATE},
-    {17, false, false, "NONE", StateType::INITIAL_STATE},
-    {18, false, false, "NONE", StateType::INITIAL_STATE},
-    {19, false, false, "NONE", StateType::INITIAL_STATE},
-    {20, true, false, "NONE", StateType::INITIAL_STATE},
-    {21, false, false, "NONE", StateType::INITIAL_STATE},
-    {22, false, true, "A1003022", StateType::INITIAL_STATE},
-    {25, true, false, "NONE", StateType::INITIAL_STATE},
-    {26, true, false, "NONE", StateType::INITIAL_STATE},
-    {30, false, false, "NONE", 0x01},
-    {34, false, false, "NONE", StateType::INITIAL_STATE},
-    {41, false, true, "A1003041", StateType::INITIAL_STATE},
-    {42, false, true, "A1003042", StateType::INITIAL_STATE},
-    {43, true, true, "A1003043", StateType::INITIAL_STATE},
-    {55, true, false, "NONE", 0x02},
-    {63, true, false, "NONE", 0x18},
-    {64, true, false, "NONE", 0x18},
-    {65, false, false, "NONE", StateType::INITIAL_STATE},
-    {66, false, false, "NONE", StateType::INITIAL_STATE},
-    {67, false, false, "NONE", StateType::INITIAL_STATE},
-    {68, false, false, "NONE", StateType::INITIAL_STATE},
-    {69, false, false, "NONE", StateType::INITIAL_STATE},
-    {70, false, false, "NONE", StateType::INITIAL_STATE},
-    // TODO: func 73 is enabled only after a certain condition, needs to be
-    // updated once the commit with enable/disable mask is in
-    {73, false, true, "A170800B", StateType::INITIAL_STATE}};
+    {1, true, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {2, true, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {3, false, true, "A1008003", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_POWER_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE)},
+    {4, true, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {8, false, true, "A1008008", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_POWER_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE)},
+    {11, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {12, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {13, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {14, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {15, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {16, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {17, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {18, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {19, false, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {20, true, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::NO_MASK},
+    {21, false, false, "NONE", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP)},
+    {22, false, true, "A1003022", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP)},
+    {25, true, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::ENABLE_MANUAL_MODE},
+    {26, true, false, "NONE", StateType::INITIAL_STATE,
+     SystemStateMask::ENABLE_MANUAL_MODE},
+    {30, false, false, "NONE", 0x01,
+     (SystemStateMask::ENABLE_BMC_STANDBY_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE)},
+    {34, false, false, "NONE", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP)},
+    {41, false, true, "A1003041", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP)},
+    {42, false, true, "A1003042", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE)},
+    {43, true, true, "A1003043", StateType::INITIAL_STATE,
+     SystemStateMask::ENABLE_MANUAL_MODE},
+    {55, true, false, "NONE", 0x0D,
+     SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_CE_MODE},
+    {63, true, false, "NONE", 0x18,
+     SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_CE_MODE},
+    {64, true, false, "NONE", 0x18,
+     SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_CE_MODE},
+    {65, false, false, "NONE", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP |
+      SystemStateMask::ENABLE_CE_MODE)},
+    {66, false, false, "NONE", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP |
+      SystemStateMask::ENABLE_CE_MODE)},
+    {67, false, false, "NONE", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP |
+      SystemStateMask::ENABLE_CE_MODE)},
+    {68, false, false, "NONE", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP |
+      SystemStateMask::ENABLE_CE_MODE)},
+    {69, false, false, "NONE", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP |
+      SystemStateMask::ENABLE_CE_MODE)},
+    {70, false, false, "NONE", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_PHYP_RUNTIME_STATE |
+      SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_BY_PHYP |
+      SystemStateMask::ENABLE_CE_MODE)},
+    {73, false, true, "A170800B", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_CE_MODE)}};
 
 void PanelStateManager::enableFunctonality(
     const types::FunctionalityList& listOfFunctionalities)
@@ -88,7 +169,14 @@ void PanelStateManager::enableFunctonality(
                     });
         if (pos != panelFunctions.end())
         {
-            pos->functionActiveState = true;
+            // before enabling the function check if all the pre-conditions are
+            // met.
+            if ((pos->functionEnableMask == SystemStateMask::NO_MASK) ||
+                (systemState | pos->functionEnabledByPhyp) ==
+                    pos->functionEnableMask)
+            {
+                pos->functionActiveState = true;
+            }
         }
         else
         {
@@ -110,7 +198,13 @@ void PanelStateManager::disableFunctonality(
                     });
         if (pos != panelFunctions.end())
         {
-            pos->functionActiveState = false;
+            if ((pos->functionEnableMask == SystemStateMask::NO_MASK) ||
+                (systemState | pos->functionEnabledByPhyp) !=
+                    pos->functionEnableMask)
+
+            {
+                pos->functionActiveState = false;
+            }
         }
         else
         {
@@ -209,6 +303,7 @@ void PanelStateManager::initPanelState()
         aPanelFunctionality.debouceSrc = singleFunctionality.debounceSrcValue;
         aPanelFunctionality.subFunctionUpperRange =
             singleFunctionality.subRangeEndPoint;
+        aPanelFunctionality.functionEnableMask = singleFunctionality.enableMask;
 
         panelFunctions.push_back(aPanelFunctionality);
     }
@@ -708,6 +803,121 @@ void PanelStateManager::displayFunc02() const
         }
     }
     utils::sendCurrDisplayToPanel(line1, line2, transport);
+}
+
+void PanelStateManager::updateFunctionStatus()
+{
+    for (auto& aFunction : panelFunctions)
+    {
+        if (aFunction.functionEnableMask != 0x00)
+        {
+            if ((systemState | aFunction.functionEnabledByPhyp) ==
+                aFunction.functionEnableMask)
+            {
+                aFunction.functionActiveState = true;
+            }
+            else
+            {
+                aFunction.functionActiveState = false;
+            }
+        }
+    }
+}
+
+void PanelStateManager::updateBMCState(const std::string& bmcState)
+{
+    // BMC state is anything other than NotReady
+    if (bmcState != "xyz.openbmc_project.State.BMC.BMCState.NotReady")
+    {
+        // if the bit is not set
+        if ((systemState & SystemStateMask::ENABLE_BMC_STANDBY_STATE) == 0x00)
+        {
+            // set the bit.
+            systemState =
+                systemState | SystemStateMask::ENABLE_BMC_STANDBY_STATE;
+            updateFunctionStatus();
+        }
+    }
+    // if the bit is already set and BMC state is NotReady
+    else if ((bmcState == "xyz.openbmc_project.State.BMC.BMCState.NotReady") &&
+             ((systemState & SystemStateMask::ENABLE_BMC_STANDBY_STATE) ==
+              SystemStateMask::ENABLE_BMC_STANDBY_STATE))
+    {
+        // if the bit is set unset the bit
+        systemState &= SystemStateMask::DISABLE_BMC_STANDBY_STATE;
+        updateFunctionStatus();
+    }
+}
+
+void PanelStateManager::updatePowerState(const std::string& powerState)
+{
+    if (powerState == "xyz.openbmc_project.State.Chassis.PowerState.On")
+    {
+        // if the bit is not set
+        if ((systemState & SystemStateMask::ENABLE_POWER_STATE) ==
+            SystemStateMask::NO_MASK)
+        {
+            // set the bit.
+            systemState |= SystemStateMask::ENABLE_POWER_STATE;
+
+            updateFunctionStatus();
+        }
+    }
+    // if the bit is already set and state is off
+    else if ((powerState ==
+              "xyz.openbmc_project.State.Chassis.PowerState.Off") &&
+             ((systemState & SystemStateMask::ENABLE_POWER_STATE) ==
+              SystemStateMask::ENABLE_POWER_STATE))
+    {
+        // unset the bit
+        systemState &= SystemStateMask::DISABLE_POWER_STATE;
+        updateFunctionStatus();
+    }
+}
+
+void PanelStateManager::updateBootProgressState(const std::string& bootState)
+{
+    // Phyp running.
+    if (bootState ==
+        "xyz.openbmc_project.State.Boot.Progress.ProgressStages.OSRunning")
+    {
+        // if the bit is not set
+        if ((systemState & SystemStateMask::ENABLE_PHYP_RUNTIME_STATE) == 0x00)
+        {
+            // set the bit
+            systemState |= SystemStateMask::ENABLE_PHYP_RUNTIME_STATE;
+
+            updateFunctionStatus();
+            return;
+        }
+    }
+    else if ((systemState & SystemStateMask::ENABLE_PHYP_RUNTIME_STATE) ==
+             SystemStateMask::ENABLE_PHYP_RUNTIME_STATE)
+    {
+        // unset the bit
+        systemState &= SystemStateMask::DISABLE_PHYP_RUNTIME_STATE;
+        updateFunctionStatus();
+    }
+}
+
+void PanelStateManager::setSystemOperatingMode(const std::string& operatingMode)
+{
+    if (operatingMode == "Manual")
+    {
+        // Check if the bit is already not set
+        if ((systemState & SystemStateMask::ENABLE_MANUAL_MODE) == 0x00)
+        {
+            // set the bit
+            systemState |= SystemStateMask::ENABLE_MANUAL_MODE;
+            updateFunctionStatus();
+        }
+    }
+    // check if the bit is already unset
+    else if ((systemState & SystemStateMask::ENABLE_MANUAL_MODE) != 0x00)
+    {
+        systemState &= SystemStateMask::DISABLE_MANUAL_MODE;
+        updateFunctionStatus();
+    }
 }
 } // namespace manager
 } // namespace state

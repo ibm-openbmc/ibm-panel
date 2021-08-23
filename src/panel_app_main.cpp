@@ -199,6 +199,9 @@ int main(int, char**)
         panel::BusHandler busHandle(lcdPanel, iface);
 
         iface->initialize();
+
+        panel::SystemStatus systemStatus(conn, stateManager);
+
         io->run();
     }
     catch (const std::exception& e)
