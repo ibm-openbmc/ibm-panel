@@ -81,6 +81,7 @@ void PanelStateManager::enableFunctonality(
                     [functionNumber](const PanelFunctionality& afunctionality) {
                         return afunctionality.functionNumber == functionNumber;
                     });
+
         if (pos != panelFunctions.end())
         {
             pos->functionActiveState = true;
