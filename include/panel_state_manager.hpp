@@ -27,6 +27,11 @@ class PanelStateManager
     PanelStateManager(const PanelStateManager&) = delete;
     PanelStateManager& operator=(const PanelStateManager&) = delete;
     PanelStateManager(PanelStateManager&&) = delete;
+    int default_state;
+    int increment_decremt;
+    int increment_decrement_loop;
+    int enter_exit_sub_range;
+    int enter_traverse_sub_range;
 
 #ifdef StateManagerTest
     PanelStateManager() = default;

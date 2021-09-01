@@ -90,6 +90,7 @@ void PanelStateManager::enableFunctonality(
         {
             std::cout << "Entry for function Number " << functionNumber
                       << " not found" << std::endl;
+            std::cout << "Check";
         }
     }
 }
