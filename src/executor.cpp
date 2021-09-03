@@ -36,6 +36,12 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
 {
     // test output, to be removed
     std::cout << funcNumber << std::endl;
+
+    if (!subFuncNumber.empty())
+    {
+        std::cout << subFuncNumber.at(0) << std::endl;
+    }
+
     try
     {
         switch (funcNumber)
@@ -50,6 +56,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
 
             case 3:
                 execute03();
+                break;
+
+            case 4:
+                execute04();
                 break;
 
             case 8:
@@ -895,6 +905,15 @@ void Executor::execute42()
     createDump(
         sdbusplus::message::object_path("/xyz/openbmc_project/dump/system"));
     displayExecutionStatus(42, std::vector<types::FunctionNumber>(), true);
+}
+
+void Executor::execute04()
+{
+    utils::writeBusProperty<bool>("xyz.openbmc_project.LED.GroupManager",
+                                  "/xyz/openbmc_project/led/groups/lamp_test",
+                                  "xyz.openbmc_project.Led.Group", "Asserted",
+                                  true);
+    utils::doLampTest(transport);
 }
 
 } // namespace panel

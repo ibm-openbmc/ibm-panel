@@ -136,5 +136,12 @@ std::vector<std::string> getBootSidePaths();
  * @param[out] nextBootSide -  Next selected boot side.
  */
 void getNextBootSide(std::string& nextBootSide);
+
+/**
+ * @brief Api which sends lamp test command to the panel.
+ * @param[in] transport - shared pointer object to transport class.
+ */
+void doLampTest(std::shared_ptr<Transport>& transport);
+
 } // namespace utils
 } // namespace panel
