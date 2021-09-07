@@ -10,7 +10,7 @@ project(
         'cpp_rtti=false',
     ],
     license: 'Apache-2.0',
-    version: '0.59',
+    version: '0.1',
     meson_version: '>= 0.57',
 )
 

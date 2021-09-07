@@ -14,8 +14,13 @@ namespace panel
 class Transport
 {
   public:
-    Transport& operator=(const Transport&) = delete;
-    Transport() = delete;
+    // Transport& operator=(const Transport&) = delete;
+    // Transport() = delete;
+    Transport() :
+        devPath(" "), devAddress(0), panelType(panel::types::PanelType::LCD)
+    {
+        setTransportKey(false);
+    }
 
     /**
      * A Constructor

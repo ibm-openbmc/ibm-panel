@@ -223,7 +223,7 @@ std::tuple<types::FunctionNumber, types::FunctionNumber>
     PanelStateManager::getPanelCurrentStateInfo() const
 {
     const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
-    return std::make_tuple(funcState.functionNumber, panelCurSubStates.at(0));
+    return std::make_tuple(funcState.functionNumber, (panelCurSubStates.at(0)));
 }
 
 // functionality 02
@@ -323,6 +323,7 @@ void PanelStateManager::incrementState()
             if (panelCurSubStates.at(0) < funcState.subFunctionUpperRange)
             {
                 // get the next entry in subRange
+                std::cout << " PanelState" << panelCurSubStates.at(0);
                 panelCurSubStates.at(0)++;
             }
         }
@@ -387,7 +388,9 @@ void PanelStateManager::decrementState()
             if (panelCurSubStates.at(0) > StateType::INITIAL_STATE)
             {
                 // get the next entry in subRange
+                std::cout << " PanelState before:" << panelCurSubStates.at(0);
                 panelCurSubStates.at(0)--;
+                std::cout << " PanelState after:" << panelCurSubStates.at(0);
             }
         }
     }
