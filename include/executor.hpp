@@ -170,6 +170,11 @@ class Executor
                                 const types::FunctionalityList& subFuncNumber,
                                 const bool result);
 
+    /** @brief API to execute function 55.
+     * @param[in] subFuncNumber - Sub function vector.
+     */
+    void execute55(const types::FunctionalityList& subFuncNumber);
+
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
 

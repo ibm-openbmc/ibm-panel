@@ -75,6 +75,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute30(subFuncNumber);
                 break;
 
+            case 55:
+                execute55(subFuncNumber);
+                break;
+
             case 63:
                 execute63(subFuncNumber.at(0));
                 break;
@@ -90,6 +94,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
     catch (BaseException& e)
     {
         std::cerr << e.what() << std::endl;
+        displayExecutionStatus(funcNumber, subFuncNumber, false);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
         displayExecutionStatus(funcNumber, subFuncNumber, false);
     }
 }
@@ -775,6 +783,50 @@ void Executor::execute64(const types::FunctionNumber subFuncNumber)
 
     std::cerr << "Sub function number should not have been enabled"
               << std::endl;
+}
+
+void Executor::execute55(const types::FunctionalityList& subFuncNumber)
+{
+    /** dump policy: true(01), false(02) */
+    if (subFuncNumber.at(0) == 0x00) // view dump policy
+    {
+        auto result = utils::readBusProperty<std::variant<bool>>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled");
+
+        if (auto val = std::get_if<bool>(&result))
+        {
+            std::string line1 = "5500 ";
+            line1 += *val ? "01" : "02";
+            utils::sendCurrDisplayToPanel(line1, "", transport);
+            return;
+        }
+        else
+        {
+            throw FunctionFailure("Dump policy collection failed.");
+        }
+    }
+    else if (subFuncNumber.at(0) == 0x01) // disable dump policy
+    {
+        utils::writeBusProperty<bool>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled", false);
+    }
+    else if (subFuncNumber.at(0) == 0x02) // enable dump policy
+    {
+        utils::writeBusProperty<bool>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled", true);
+    }
+    else
+    {
+        throw FunctionFailure("Function 55 failed. Unsupported sub function.");
+    }
+
+    displayExecutionStatus(55, subFuncNumber, true);
 }
 
 } // namespace panel

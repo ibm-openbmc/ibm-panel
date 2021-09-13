@@ -63,7 +63,7 @@ std::vector<FunctionalityAttributes> functionalityList = {
     {41, false, true, "A1003041", StateType::INITIAL_STATE},
     {42, false, true, "A1003042", StateType::INITIAL_STATE},
     {43, true, true, "A1003043", StateType::INITIAL_STATE},
-    {55, true, false, "NONE", 0x0D},
+    {55, true, false, "NONE", 0x02},
     {63, true, false, "NONE", 0x18},
     {64, true, false, "NONE", 0x18},
     {65, false, false, "NONE", StateType::INITIAL_STATE},
