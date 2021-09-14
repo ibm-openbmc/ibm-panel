@@ -44,7 +44,7 @@ configure_file(input: service_file,
 
 panel_app_a = static_library(
     'ibm_panel_a',
-    'src/panel_app.cpp',
+    'src/bus_handler.cpp',
     'src/panel_state_manager.cpp',
     'src/i2c_message_encoder.cpp',
     'src/button_handler.cpp',
