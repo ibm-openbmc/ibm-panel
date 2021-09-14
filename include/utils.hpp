@@ -74,5 +74,38 @@ types::SystemParameterValues readSystemParameters();
 types::GetManagedObjects getManagedObjects(const std::string& service,
                                            const std::string& object);
 
+/**
+ * @brief An api to write Bus property.
+ * @param[in] serviceName - Name of the service.
+ * @param[in] objectPath - Object path
+ * @param[in] infName - Interface name.
+ * @param[in] propertyName - Name of the property whose value is being fetched.
+ * @param[in] paramValue - The property value.
+ */
+template <typename T>
+void writeBusProperty(const std::string& serviceName,
+                      const std::string& objectPath, const std::string& infName,
+                      const std::string& propertyName,
+                      const std::variant<T>& paramValue)
+{
+    try
+    {
+        auto bus = sdbusplus::bus::new_default();
+        auto method =
+            bus.new_method_call(serviceName.c_str(), objectPath.c_str(),
+                                "org.freedesktop.DBus.Properties", "Set");
+        method.append(infName);
+        method.append(propertyName);
+        method.append(paramValue);
+
+        bus.call(method);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << e.what();
+        throw;
+    }
+}
+
 } // namespace utils
 } // namespace panel
