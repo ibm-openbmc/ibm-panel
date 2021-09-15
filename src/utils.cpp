@@ -6,6 +6,9 @@ namespace panel
 {
 namespace utils
 {
+// Global variables to restore state of display lines.
+std::string restoreLine1, restoreLine2;
+
 std::string binaryToHexString(const types::Binary& val)
 {
     std::ostringstream oss;
@@ -26,6 +29,10 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
     // couts are for debugging purpose. can be removed once the testing is done.
     // std::cout << "L1 : " << line1 << std::endl;
     // std::cout << "L2 : " << line2 << std::endl;
+
+    // Restore the values of display lines
+    restoreLine1 = line1;
+    restoreLine2 = line2;
 
     encoder::MessageEncoder encode;
 
@@ -292,6 +299,11 @@ void doLampTest(std::shared_ptr<Transport>& transport)
 {
     transport->panelI2CWrite(encoder::MessageEncoder().lampTest());
     std::cout << "\nPanel lamp test initiated." << std::endl;
+}
+
+void restoreDisplayOnPanel(std::shared_ptr<Transport>& transport)
+{
+    sendCurrDisplayToPanel(restoreLine1, restoreLine2, transport);
 }
 
 } // namespace utils

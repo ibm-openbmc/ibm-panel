@@ -188,7 +188,6 @@ int main(int, char**)
                       << std::endl;
         }
 
-        panel::BusHandler busHandle(iface);
 
         panel::PELListener pelEvent(conn, stateManager, executor);
         pelEvent.listenPelEvents();
@@ -196,6 +195,8 @@ int main(int, char**)
         // register property change call back for progress code.
         panel::BootProgressCode progressCode(lcdPanel, conn, executor);
         progressCode.listenProgressCode();
+
+        panel::BusHandler busHandle(lcdPanel, iface);
 
         iface->initialize();
         io->run();

@@ -21,15 +21,22 @@ class BusHandler
 
     /**
      * @brief Constructor.
-     * @param[in] iface - Pointer to dbus interface class.
+     * @param[in] transport - Transport class object.
+     * @param[in] iface - Pointer to Panel dbus interface.
      */
-    BusHandler(std::shared_ptr<sdbusplus::asio::dbus_interface>& iface) :
+    BusHandler(std::shared_ptr<Transport>& transport,
+               std::shared_ptr<sdbusplus::asio::dbus_interface>& iface) :
+        transport(transport),
         iface(iface)
     {
         iface->register_method("Display", [this](const std::string& line1,
                                                  const std::string& line2) {
             this->display(line1, line2);
         });
+
+        iface->register_method(
+            "TriggerPanelLampTest",
+            [this](const bool status) { this->triggerPanelLampTest(status); });
     }
 
   private:
@@ -45,6 +52,17 @@ class BusHandler
      */
     void display(const std::string& displayLine1,
                  const std::string& displayLine2);
+
+    /**
+     * @brief Dbus API to trigger panel lamp test.
+     * @param[in] state - If state is true, the panel lamp test command will be
+     * sent to the panel micro code. If false, then default function 01
+     * execution happens.
+     */
+    void triggerPanelLampTest(const bool state);
+
+    /* Pointer to transport class */
+    std::shared_ptr<Transport> transport;
 
     /* Pointer to interface */
     std::shared_ptr<sdbusplus::asio::dbus_interface> iface;
