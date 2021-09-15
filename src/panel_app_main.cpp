@@ -184,6 +184,7 @@ int main(int, char**)
         panel::BootProgressCode progressCode(lcdPanel, conn);
         progressCode.listenProgressCode();
 
+        iface->initialize();
         io->run();
     }
     catch (const std::exception& e)
