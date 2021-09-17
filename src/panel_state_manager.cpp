@@ -190,7 +190,7 @@ void PanelStateManager::processPanelButtonEvent(
             break;
     }
 
-    // printStates();
+    // printPanelStates();
 }
 
 void PanelStateManager::initPanelState()
@@ -224,10 +224,73 @@ std::tuple<types::FunctionNumber, types::FunctionNumber>
     return std::make_tuple(funcState.functionNumber, panelCurSubStates.at(0));
 }
 
+void PanelStateManager::initFunction02()
+{
+    try
+    {
+        auto sysValues = utils::readSystemParameters();
+
+        if (std::get<0>(sysValues).empty() || std::get<1>(sysValues).empty())
+        {
+            throw std::runtime_error("Error reading system values");
+        }
+
+        utils::getNextBootSide(nextBootSideSelected);
+
+        const auto& iplType = std::get<0>(sysValues);
+        if (iplType == "A_Mode")
+        {
+            panelCurSubStates.at(0) = 0;
+        }
+        else if (iplType == "B_Mode")
+        {
+            panelCurSubStates.at(0) = 1;
+        }
+        else if (iplType == "C_Mode")
+        {
+            panelCurSubStates.at(0) = 2;
+        }
+        else if (iplType == "D_Mode")
+        {
+            panelCurSubStates.at(0) = 3;
+        }
+        else
+        {
+            // TODO: Add elog here to detect invalid mode.
+            std::cout << "Invalid Mode" << std::endl;
+        }
+
+        const auto& systemOperatingMode = std::get<1>(sysValues);
+        if (systemOperatingMode == "Manual")
+        {
+            panelCurSubStates.at(1) = 0;
+        }
+        else if (systemOperatingMode == "Normal")
+        {
+            panelCurSubStates.at(1) = 1;
+        }
+
+        if (nextBootSideSelected == "P")
+        {
+            panelCurSubStates.at(2) = 0;
+        }
+        else
+        {
+            panelCurSubStates.at(2) = 1;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+        // TODO: Display FF once that commit is in.
+    }
+}
+
 // functionality 02
 void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
 {
     std::vector<std::string> subRange = functionality02.at(levelToOperate);
+    static std::tuple<types::index, types::index, types::index> initialValues;
 
     switch (button)
     {
@@ -259,15 +322,11 @@ void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
             {
                 isSubrangeActive = true;
 
-                // set sub states to initial value
-                // TODO: implement a method to get inital values of substate.
-                /* auto subStateInitialValue =
-                     getInitialValue(this function does not exist, figure out);
-                 lets say for test be it 2,1,1 index of functionality02 Map*/
-
-                panelCurSubStates.at(0) = 2;
-                panelCurSubStates.at(1) = 1;
-                panelCurSubStates.at(2) = 1;
+                // set initial values
+                initFunction02();
+                initialValues = std::make_tuple(panelCurSubStates.at(0),
+                                                panelCurSubStates.at(1),
+                                                panelCurSubStates.at(2));
             }
             else if (levelToOperate != 2) // max depth of sub state
             {
@@ -275,11 +334,42 @@ void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
             }
             else
             {
-                // reset all the flag and execute as we are at last depth of
-                // subsate and functionality needs to be executed.
-                panelCurSubStates.at(0) = StateType::INITIAL_STATE;
-                panelCurSubStates.at(1) = StateType::INVALID_STATE;
-                panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                // check if we need to toggle that parameter in write.
+                // We need to change value only when different value has been
+                // selected than the initial value.
+
+                if (panelCurSubStates.at(0) == std::get<0>(initialValues))
+                {
+                    panelCurSubStates.at(0) = StateType::INVALID_STATE;
+                }
+
+                if (panelCurSubStates.at(1) == std::get<1>(initialValues))
+                {
+                    panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                }
+
+                if (panelCurSubStates.at(2) == std::get<2>(initialValues))
+                {
+                    panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                }
+
+                // if any one selected value is different than its initial
+                // value, then only we need to execute.
+                if (panelCurSubStates.at(0) != StateType::INVALID_STATE ||
+                    panelCurSubStates.at(1) != StateType::INVALID_STATE ||
+                    panelCurSubStates.at(2) != StateType::INVALID_STATE)
+                {
+
+                    funcExecutor->executeFunction(
+                        panelFunctions.at(panelCurState).functionNumber,
+                        panelCurSubStates);
+
+                    // reset all the flag
+                    panelCurSubStates.at(0) = StateType::INITIAL_STATE;
+                    panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                    panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                }
+
                 levelToOperate = 0;
                 isSubrangeActive = false;
             }

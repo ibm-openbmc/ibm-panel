@@ -14,6 +14,7 @@ namespace types
 {
 
 using FunctionNumber = uint8_t;
+using index = uint8_t;
 using FunctionalityList = std::vector<FunctionNumber>;
 using Byte = uint8_t;
 using Binary = std::vector<Byte>;
@@ -65,6 +66,11 @@ using GetManagedObjects = std::vector<std::pair<
                  std::variant<std::string, bool, uint8_t, int16_t, uint16_t,
                               int32_t, uint32_t, int64_t, uint64_t, double,
                               std::vector<std::string>>>>>>>;
+
+using AttributeValueType = std::variant<int64_t, std::string>;
+using PendingAttributesItemType =
+    std::pair<std::string, std::tuple<std::string, AttributeValueType>>;
+using PendingAttributesType = std::vector<PendingAttributesItemType>;
 
 enum ButtonEvent
 {

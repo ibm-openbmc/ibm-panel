@@ -21,6 +21,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
             execute01();
             break;
 
+        case 2:
+            execute02(subFuncNumber);
+            break;
+
         case 11:
             execute11();
             break;
@@ -517,6 +521,157 @@ void Executor::execute14to19(const types::FunctionNumber funcNumber)
     // TODO: We need to decide whether to display FF to indicate failure.
     // send blank display if string is empty as function is enabled.
     utils::sendCurrDisplayToPanel(line1, line2, transport);
+}
+static std::string getIplType(const uint8_t index)
+{
+    switch (index)
+    {
+        case 0:
+            return "A_Mode";
+        case 1:
+            return "B_Mode";
+        case 2:
+            return "C_Mode";
+        default:
+            return "D_Mode";
+    }
+}
+
+static types::PendingAttributesItemType
+    setOperatingMode(const uint8_t sysOperatingModeIndex)
+{
+    // Normal mode is the default mode hence all the defaul values are as per
+    // normal mode.
+    types::AttributeValueType sysOperatingModeValue = "Normal";
+    bool QuiesceOnHwError = false;
+    std::string PowerRestorePolicy =
+        "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.Restore";
+    bool autoReboot = true;
+
+    if (sysOperatingModeIndex == 0)
+    {
+        sysOperatingModeValue = "Manual";
+        QuiesceOnHwError = true;
+        PowerRestorePolicy =
+            "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.AlwaysOff";
+        autoReboot = false;
+    }
+
+    utils::writeBusProperty<std::variant<bool>>(
+        "xyz.openbmc_project.Settings", "/xyz/openbmc_project/logging/settings",
+        "xyz.openbmc_project.Logging.Settings", "QuiesceOnHwError",
+        QuiesceOnHwError);
+
+    utils::writeBusProperty<std::variant<std::string>>(
+        "xyz.openbmc_project.Settings",
+        "/xyz/openbmc_project/control/host0/power_restore_policy",
+        "xyz.openbmc_project.Control.Power.RestorePolicy", "PowerRestorePolicy",
+        PowerRestorePolicy);
+
+    utils::writeBusProperty<std::variant<bool>>(
+        "xyz.openbmc_project.Settings",
+        "/xyz/openbmc_project/control/host0/auto_reboot",
+        "xyz.openbmc_project.Control.Boot.RebootPolicy", "AutoReboot",
+        autoReboot);
+
+    return std::make_pair(
+        "pvm_system_operating_mode",
+        std::make_tuple("xyz.openbmc_project.BIOSConfig.Manager."
+                        "AttributeType.Enumeration",
+                        sysOperatingModeValue));
+}
+
+static void bootSideSwitch()
+{
+    const auto bootSidePaths = utils::getBootSidePaths();
+
+    if (bootSidePaths.size() != 0)
+    {
+        if (bootSidePaths.size() > 2)
+        {
+            std::cout << "Received more than two boot paths, Setting the "
+                         "first path with priority 1 as next boot path"
+                      << std::endl;
+        }
+
+        for (const auto& path : bootSidePaths)
+        {
+            auto retVal = utils::readBusProperty<std::variant<uint8_t>>(
+                "xyz.openbmc_project.Software.BMC.Updater", path,
+                "xyz.openbmc_project.Software.RedundancyPriority", "Priority");
+
+            if (auto priority = std::get_if<uint8_t>(&retVal))
+            {
+                if (*priority != 0)
+                {
+                    uint8_t value = 0;
+                    utils::writeBusProperty<std::variant<uint8_t>>(
+                        "xyz.openbmc_project.Software.BMC.Updater", path,
+                        "xyz.openbmc_project.Software.RedundancyPriority",
+                        "Priority", value);
+
+                    // once the value is updated no need to check for other
+                    // paths.
+                    return;
+                }
+            }
+        }
+    }
+    std::cerr << "No boot paths returned by mapper call. Hence boot switch "
+                 "not executed"
+              << std::endl;
+}
+
+void Executor::execute02(const types::FunctionalityList& subFuncNumber)
+{
+    try
+    {
+        // 127 is sent in sub function number when the state is invalid.
+        static constexpr auto invalidState = 127;
+
+        // BIOS table attribute list.
+        types::PendingAttributesType listOfAttributeValue;
+
+        // change is needed only when state is not invalid.
+        if (subFuncNumber.at(0) != invalidState)
+        {
+            listOfAttributeValue.push_back(std::make_pair(
+                "pvm_os_ipl_type",
+                std::make_tuple("xyz.openbmc_project.BIOSConfig.Manager."
+                                "AttributeType.Enumeration",
+                                getIplType(subFuncNumber.at(0)))));
+        }
+
+        if (subFuncNumber.at(1) != invalidState)
+        {
+            listOfAttributeValue.push_back(
+                setOperatingMode(subFuncNumber.at(1)));
+        }
+
+        // Process boot side switch only when state is not invalid. Implies
+        // change required.
+        if (subFuncNumber.at(2) != invalidState)
+        {
+            // switch boot side.
+            bootSideSwitch();
+        }
+
+        if (listOfAttributeValue.size() > 0)
+        {
+            utils::writeBusProperty<std::variant<types::PendingAttributesType>>(
+                "xyz.openbmc_project.BIOSConfigManager",
+                "/xyz/openbmc_project/bios_config/manager",
+                "xyz.openbmc_project.BIOSConfig.Manager", "PendingAttributes",
+                std::move(listOfAttributeValue));
+        }
+    }
+    catch (const std::exception& e)
+    {
+        // write has failed. Show FF.
+        // TODO:Show FF once commit for FF is pushed.
+        std::cout << "Write failed for function 02. Show FF" << e.what()
+                  << std::endl;
+    }
 }
 
 } // namespace panel

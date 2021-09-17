@@ -142,6 +142,13 @@ class PanelStateManager
     void displayFunc02() const;
 
     /**
+     * @brief An api to initialise function 02 with its initial values.
+     * It will read the respective values from Dbus and set initial value of
+     * functionality 02 accordingly.
+     */
+    void initFunction02();
+
+    /**
      * @brief A structure to store information related to a particular
      * functionality. It will carry information like function number, its
      * subrange etc. It will also store active state of a functionality at a
@@ -191,6 +198,9 @@ class PanelStateManager
 
     /*shared pointer to executor object*/
     std::shared_ptr<Executor> funcExecutor;
+
+    /* Boot side selected for next boot.*/
+    std::string nextBootSideSelected = "P";
 }; // class PanelStateManager
 
 } // namespace manager
