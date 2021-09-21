@@ -122,11 +122,13 @@ class BootProgressCode
      * @brief Constructor.
      * @param[in] transport - pointer to transport class.
      * @param[in] con - Bus connection.
+     * @param[in] execute - pointer to Executor.
      */
     BootProgressCode(std::shared_ptr<Transport> transport,
-                     std::shared_ptr<sdbusplus::asio::connection> con) :
+                     std::shared_ptr<sdbusplus::asio::connection> con,
+                     std::shared_ptr<Executor> execute) :
         transport(transport),
-        conn(con)
+        conn(con), executor(execute)
     {
     }
 
@@ -148,6 +150,9 @@ class BootProgressCode
 
     /* D-Bus connection. */
     std::shared_ptr<sdbusplus::asio::connection> conn;
+
+    /* Executor */
+    std::shared_ptr<Executor> executor;
 
 }; // class BootProgressCode
 } // namespace panel

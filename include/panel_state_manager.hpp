@@ -84,10 +84,13 @@ class PanelStateManager
 
     /**
      * @brief Constructor.
-     * @param[in] transport - transport object to call transport functions.
+     * @param[in] transport - transport object to call transport functions
+     * @param[in] execute - pointer to executor class.
      */
-    PanelStateManager(std::shared_ptr<Transport> transport) :
-        transport(transport)
+    PanelStateManager(std::shared_ptr<Transport> transport,
+                      std::shared_ptr<Executor> execute) :
+        transport(transport),
+        funcExecutor(execute)
     {
         initPanelState();
     }
