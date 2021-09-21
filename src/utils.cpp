@@ -20,9 +20,12 @@ std::string binaryToHexString(const types::Binary& val)
 void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
                             std::shared_ptr<Transport> transport)
 {
+    // TODO: via https://github.com/ibm-openbmc/ibm-panel/issues/37
+    // Make these couts and other traces in the code configurable. Keeping
+    // these commented until then as they flood the systemd journal.
     // couts are for debugging purpose. can be removed once the testing is done.
-    std::cout << "L1 : " << line1 << std::endl;
-    std::cout << "L2 : " << line2 << std::endl;
+    // std::cout << "L1 : " << line1 << std::endl;
+    // std::cout << "L2 : " << line2 << std::endl;
 
     encoder::MessageEncoder encode;
 
