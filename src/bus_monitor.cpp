@@ -145,9 +145,6 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                         return;
                     }
                 }
-                // Store empty string if the evenId property is not found
-                // and log an error for reference.
-                executor->storePelEventId(std::string{});
                 std::cerr << "Event ID property not found" << std::endl;
             }
         }
