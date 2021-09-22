@@ -747,8 +747,17 @@ void PanelStateManager::executeState()
         panelCurSubStates.at(0) = StateType::INITIAL_STATE;
         std::cout << "Execute method" << std::endl;
 
-        funcExecutor->executeFunction(
-            panelFunctions.at(panelCurState).functionNumber, panelCurSubStates);
+        if (panelFunctions.at(panelCurState).functionNumber == 25 ||
+            panelFunctions.at(panelCurState).functionNumber == 26)
+        {
+            setCEState();
+        }
+        else
+        {
+            funcExecutor->executeFunction(
+                panelFunctions.at(panelCurState).functionNumber,
+                panelCurSubStates);
+        }
     }
 
     // perform what ever operations needs to be done here, execute does not
@@ -948,6 +957,58 @@ void PanelStateManager::setSystemOperatingMode(const std::string& operatingMode)
     {
         systemState &= SystemStateMask::DISABLE_MANUAL_MODE;
         updateFunctionStatus();
+    }
+}
+
+// TODO: Need to verify how deactivate mode work. Can any of 25 or 26 executed
+// when CE mode is active, deactivates CE mode or we need to follow a sequence?
+void PanelStateManager::setCEState()
+{
+    // Irrespective of function number 25 or 26 if CE mode is already set,
+    // disable it.
+    if ((systemState & SystemStateMask::ENABLE_CE_MODE))
+    {
+        systemState &= SystemStateMask::DISABLE_CE_MODE;
+        updateFunctionStatus();
+
+        // When CE mode is disabled, reset the state.
+        funcExecutor->executeFunction(
+            panelFunctions.at(panelCurState).functionNumber, panelCurSubStates);
+    }
+    else
+    {
+        // if service switch 1 is enabled, means function 25 state is already
+        // set. Subsequent calls to function 25 is neglected.
+        if (funcExecutor->getServiceSwitch1State())
+        {
+            // if current event is for function 26
+            if (panelFunctions.at(panelCurState).functionNumber == 26)
+            {
+                // set CE mode
+                systemState |= SystemStateMask::ENABLE_CE_MODE;
+                updateFunctionStatus();
+
+                // call to executor is required to reset the state.
+                funcExecutor->executeFunction(
+                    panelFunctions.at(panelCurState).functionNumber,
+                    panelCurSubStates);
+            }
+            else
+            {
+                // If this is subsequent call to function 25 just show 00.
+                utils::sendCurrDisplayToPanel("25    00", std::string{},
+                                              transport);
+            }
+        }
+        else
+        {
+            // If service switch 1 is not set, call the executor irrespective of
+            // function number to either set the state for function 25 or show
+            // FF display for function 26.
+            funcExecutor->executeFunction(
+                panelFunctions.at(panelCurState).functionNumber,
+                panelCurSubStates);
+        }
     }
 }
 } // namespace manager
