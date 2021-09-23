@@ -1,6 +1,7 @@
 #include "executor.hpp"
 
 #include "const.hpp"
+#include "exception.hpp"
 #include "utils.hpp"
 
 #include <boost/algorithm/string.hpp>
@@ -8,61 +9,96 @@
 
 namespace panel
 {
+void Executor::displayExecutionStatus(
+    const types::FunctionNumber funcNumber,
+    const types::FunctionalityList& subFuncNumber, const bool result)
+{
+    std::ostringstream convert;
+    convert << std::setfill('0') << std::setw(2)
+            << static_cast<int>(funcNumber);
+
+    if (!subFuncNumber.empty())
+    {
+        convert << std::setfill('0') << std::setw(2)
+                << static_cast<int>(subFuncNumber.at(0));
+    }
+    else
+    {
+        convert << "   ";
+    }
+
+    convert << (result ? " 00" : " FF");
+    utils::sendCurrDisplayToPanel(convert.str(), "", transport);
+}
 
 void Executor::executeFunction(const types::FunctionNumber funcNumber,
                                const types::FunctionalityList& subFuncNumber)
 {
     // test output, to be removed
     std::cout << funcNumber << std::endl;
-    std::cout << subFuncNumber.at(0) << std::endl;
-
-    switch (funcNumber)
+    try
     {
-        case 1:
-            execute01();
-            break;
+        switch (funcNumber)
+        {
+            case 1:
+                execute01();
+                break;
 
-        case 2:
-            execute02(subFuncNumber);
-            break;
+            case 2:
+                execute02(subFuncNumber);
+                break;
 
-        case 11:
-            execute11();
-            break;
+            case 11:
+                execute11();
+                break;
 
-        case 12:
-            execute12();
-            break;
+            case 12:
+                execute12();
+                break;
 
-        case 13:
-            execute13();
-            break;
+            case 13:
+                execute13();
+                break;
 
-        case 14:
-        case 15:
-        case 16:
-        case 17:
-        case 18:
-        case 19:
-            execute14to19(funcNumber);
-            break;
-        case 20:
-            execute20();
-            break;
-        case 30:
-            execute30(subFuncNumber);
-            break;
+            case 14:
+            case 15:
+            case 16:
+            case 17:
+            case 18:
+            case 19:
+                execute14to19(funcNumber);
+                break;
+            case 20:
+                execute20();
+                break;
+            case 30:
+                execute30(subFuncNumber);
+                break;
 
-        case 63:
-            execute63(subFuncNumber.at(0));
-            break;
+            case 55:
+                execute55(subFuncNumber);
+                break;
 
-        case 64:
-            execute64(subFuncNumber.at(0));
-            break;
+            case 63:
+                execute63(subFuncNumber.at(0));
+                break;
 
-        default:
-            break;
+            case 64:
+                execute64(subFuncNumber.at(0));
+                break;
+
+            default:
+                break;
+        }
+    }
+    catch (BaseException& e)
+    {
+        std::cerr << e.what() << std::endl;
+        displayExecutionStatus(funcNumber, subFuncNumber, false);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        displayExecutionStatus(funcNumber, subFuncNumber, false);
     }
 }
 
@@ -108,6 +144,11 @@ void Executor::execute20()
         line1.replace(11, constants::ccinDataLength, *model);
     }
 
+    if ((line1.compare(std::string(16, ' ')) == 0) &&
+        (line2.compare(std::string(16, ' ')) == 0))
+    {
+        throw FunctionFailure("Function 20 failed.");
+    }
     utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 
@@ -284,11 +325,6 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
             break;
         }
     }
-    if (line2.empty())
-    {
-        std::cerr << "\n IP address of the ethernet port is not found"
-                  << std::endl;
-    }
 
     // obtain the mac address of network ethernet object path. query mac
     // address of ethernet0&1 of inv manager objects. if mac of both the
@@ -314,6 +350,11 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         locCode = getPortSegment(locCode);
     }
 
+    if ((locCode.empty() && line2.empty()) || line2.empty())
+    {
+        throw FunctionFailure("Function 30 failed.");
+    }
+
     // create display
     std::string line1 = "SP: ";
     line1 += boost::to_upper_copy<std::string>(ethPort);
@@ -333,50 +374,48 @@ void Executor::execute01()
 {
     const auto sysValues = utils::readSystemParameters();
 
-    if (!std::get<0>(sysValues).empty() && !std::get<1>(sysValues).empty() &&
-        !std::get<2>(sysValues).empty() && !std::get<3>(sysValues).empty() &&
-        !std::get<4>(sysValues).empty())
+    std::string line1(16, ' ');
+    std::string line2(16, ' ');
+
+    if (isOSIPLTypeEnabled())
     {
-        std::string line1(16, ' ');
-        std::string line2(16, ' ');
-
-        // function number
-        line1.replace(0, 2, "01");
-
-        if (isOSIPLTypeEnabled())
-        {
-            // OS IPL Type
-            line1.replace(4, 1, std::get<0>(sysValues).substr(0, 1));
-        }
-
-        // Operating mode
-        line1.replace(7, 1, std::get<1>(sysValues).substr(0, 1));
-
-        // hypervisor type
-        if (std::get<4>(sysValues) == "PowerVM")
-        {
-            line1.replace(12, 3, "PVM");
-        }
-        else
-        {
-            line1.replace(12, std::get<4>(sysValues).length(),
-                          std::get<4>(sysValues));
-        }
-
-        // HMC Managed
-        if (std::get<2>(sysValues) == "1")
-        {
-            line2.replace(0, 5, "HMC=1");
-        }
-
-        // Boot side. This needs to be renamed later.
-        line2.replace(12, 1, std::get<3>(sysValues).substr(0, 1));
-
-        utils::sendCurrDisplayToPanel(line1, line2, transport);
-        return;
+        // OS IPL Type
+        line1.replace(4, 1, std::get<0>(sysValues).substr(0, 1));
     }
 
-    std::cerr << "Error reading system parameters" << std::endl;
+    // Operating mode
+    line1.replace(7, 1, std::get<1>(sysValues).substr(0, 1));
+
+    // hypervisor type
+    if (std::get<4>(sysValues) == "PowerVM")
+    {
+        line1.replace(12, 3, "PVM");
+    }
+    else
+    {
+        line1.replace(12, std::get<4>(sysValues).length(),
+                      std::get<4>(sysValues));
+    }
+
+    // HMC Managed
+    if (std::get<2>(sysValues) == "1")
+    {
+        line2.replace(0, 5, "HMC=1");
+    }
+
+    // Boot side. This needs to be renamed later.
+    line2.replace(12, 1, std::get<3>(sysValues).substr(0, 1));
+
+    if ((line1.compare(std::string(16, ' ')) == 0) &&
+        (line2.compare(std::string(16, ' ')) == 0))
+    {
+        throw FunctionFailure("Function 01 failed.");
+    }
+    // function number
+    line1.replace(0, 2, "01");
+
+    utils::sendCurrDisplayToPanel(line1, line2, transport);
+    return;
 }
 
 void Executor::execute12()
@@ -409,7 +448,8 @@ void Executor::execute13()
 {
     auto srcData = pelEventIdQueue.back();
 
-    // Need to show blank spaces in case of no srcData as function is enabled.
+    // Need to show blank spaces in case of no srcData as function is
+    // enabled.
     constexpr auto blankHexWord = "        ";
     std::vector<std::string> output(4, blankHexWord);
 
@@ -439,8 +479,8 @@ void Executor::execute14to19(const types::FunctionNumber funcNumber)
 
     switch (funcNumber)
     {
-        // size check is not done here as functions are enabled based on count
-        // of entries in this vector.
+        // size check is not done here as functions are enabled based on
+        // count of entries in this vector.
         case 14:
             aCallOut = callOutList.at(0);
             break;
@@ -511,8 +551,12 @@ void Executor::execute14to19(const types::FunctionNumber funcNumber)
         // TODO: Currently, CCIN is not in data recieved from D-Bus.
     }
 
-    // TODO: We need to decide whether to display FF to indicate failure.
-    // send blank display if string is empty as function is enabled.
+    if ((line1.compare(std::string(16, ' ')) == 0) &&
+        (line2.compare(std::string(16, ' ')) == 0))
+    {
+        throw FunctionFailure(
+            "Failed parsing resolution string during callout.");
+    }
     utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 static std::string getIplType(const uint8_t index)
@@ -533,8 +577,8 @@ static std::string getIplType(const uint8_t index)
 static types::PendingAttributesItemType
     setOperatingMode(const uint8_t sysOperatingModeIndex)
 {
-    // Normal mode is the default mode hence all the defaul values are as per
-    // normal mode.
+    // Normal mode is the default mode hence all the defaul values are as
+    // per normal mode.
     types::AttributeValueType sysOperatingModeValue = "Normal";
     bool QuiesceOnHwError = false;
     std::string PowerRestorePolicy =
@@ -545,8 +589,8 @@ static types::PendingAttributesItemType
     {
         sysOperatingModeValue = "Manual";
         QuiesceOnHwError = true;
-        PowerRestorePolicy =
-            "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.AlwaysOff";
+        PowerRestorePolicy = "xyz.openbmc_project.Control.Power."
+                             "RestorePolicy.Policy.AlwaysOff";
         autoReboot = false;
     }
 
@@ -739,6 +783,50 @@ void Executor::execute64(const types::FunctionNumber subFuncNumber)
 
     std::cerr << "Sub function number should not have been enabled"
               << std::endl;
+}
+
+void Executor::execute55(const types::FunctionalityList& subFuncNumber)
+{
+    /** dump policy: true(01), false(02) */
+    if (subFuncNumber.at(0) == 0x00) // view dump policy
+    {
+        auto result = utils::readBusProperty<std::variant<bool>>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled");
+
+        if (auto val = std::get_if<bool>(&result))
+        {
+            std::string line1 = "5500 ";
+            line1 += *val ? "01" : "02";
+            utils::sendCurrDisplayToPanel(line1, "", transport);
+            return;
+        }
+        else
+        {
+            throw FunctionFailure("Dump policy collection failed.");
+        }
+    }
+    else if (subFuncNumber.at(0) == 0x01) // disable dump policy
+    {
+        utils::writeBusProperty<bool>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled", false);
+    }
+    else if (subFuncNumber.at(0) == 0x02) // enable dump policy
+    {
+        utils::writeBusProperty<bool>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled", true);
+    }
+    else
+    {
+        throw FunctionFailure("Function 55 failed. Unsupported sub function.");
+    }
+
+    displayExecutionStatus(55, subFuncNumber, true);
 }
 
 } // namespace panel
