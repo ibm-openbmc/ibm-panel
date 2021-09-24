@@ -659,9 +659,13 @@ void PanelStateManager::displayDebounce() const
     std::string line2{};
     const auto& funcState = panelFunctions.at(panelCurState);
 
-    // if function 8 then additional msg to be displayed along with
+    // if function 3 or 8 then additional msg to be displayed along with
     // debounce.
-    if (funcState.functionNumber == 8)
+    if (funcState.functionNumber == 3)
+    {
+        line2 = "REBOOT SERVER?";
+    }
+    else if (funcState.functionNumber == 8)
     {
         line2 = "SHUTDOWN SERVER?";
     }

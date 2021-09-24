@@ -48,6 +48,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute02(subFuncNumber);
                 break;
 
+            case 3:
+                execute03();
+                break;
+
             case 8:
                 execute08();
                 break;
@@ -104,6 +108,16 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
     {
         displayExecutionStatus(funcNumber, subFuncNumber, false);
     }
+}
+
+void Executor::execute03()
+{
+    utils::writeBusProperty<std::string>(
+        "xyz.openbmc_project.State.Host", "/xyz/openbmc_project/state/host0",
+        "xyz.openbmc_project.State.Host", "RequestedHostTransition",
+        "xyz.openbmc_project.State.Host.Transition.GracefulWarmReboot");
+
+    utils::sendCurrDisplayToPanel("RESTART SERVER", "INITIATED", transport);
 }
 
 void Executor::execute20()
