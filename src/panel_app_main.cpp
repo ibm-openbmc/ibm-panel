@@ -63,8 +63,7 @@ std::string getInputDevicePath(const std::string& imValue)
     }
     else if (imValue == panel::constants::everestIM)
     {
-        // TODO: This path needs to be modified with Everest path.
-        return "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick";
+        return "/dev/input/by-path/platform-1e78a780.i2c-bus-event-joystick";
     }
 
     // default to tacoma
@@ -174,8 +173,22 @@ int main(int, char**)
             std::make_shared<panel::state::manager::PanelStateManager>(
                 lcdPanel, executor);
 
-        panel::ButtonHandler btnHandler(getInputDevicePath(imValue), io,
-                                        lcdPanel, stateManager);
+        // TODO: via https://github.com/ibm-openbmc/ibm-panel/issues/21
+        // Remove this try catch around the button handler once Everest device
+        // tree changes are ready.
+        std::unique_ptr<panel::ButtonHandler> btnHandler;
+        try
+        {
+            btnHandler = std::make_unique<panel::ButtonHandler>(
+                getInputDevicePath(imValue), io, lcdPanel, stateManager);
+        }
+        catch (const std::runtime_error& e)
+        {
+            std::cerr << e.what() << std::endl;
+            std::cerr << "Could not initialize button handler, panel buttons "
+                         "will not work!"
+                      << std::endl;
+        }
 
         panel::PELListener pelEvent(conn, stateManager, executor);
         pelEvent.listenPelEvents();
@@ -191,6 +204,7 @@ int main(int, char**)
     {
         std::cerr << e.what();
         std::cerr << "Panel app exiting..." << std::endl;
+        return 0;
         // TODO: Need to rethrow here so that systemd can mark the service a
         // failure. We will do that once Everest hardware is ready.
         // https://github.com/ibm-openbmc/ibm-panel/issues/21
