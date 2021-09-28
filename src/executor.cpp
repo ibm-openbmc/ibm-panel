@@ -1,55 +1,104 @@
 #include "executor.hpp"
 
 #include "const.hpp"
+#include "exception.hpp"
 #include "utils.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <string_view>
 
 namespace panel
 {
+void Executor::displayExecutionStatus(
+    const types::FunctionNumber funcNumber,
+    const types::FunctionalityList& subFuncNumber, const bool result)
+{
+    std::ostringstream convert;
+    convert << std::setfill('0') << std::setw(2)
+            << static_cast<int>(funcNumber);
+
+    if (!subFuncNumber.empty())
+    {
+        convert << std::setfill('0') << std::setw(2)
+                << static_cast<int>(subFuncNumber.at(0));
+    }
+    else
+    {
+        convert << "   ";
+    }
+
+    convert << (result ? " 00" : " FF");
+    utils::sendCurrDisplayToPanel(convert.str(), "", transport);
+}
 
 void Executor::executeFunction(const types::FunctionNumber funcNumber,
                                const types::FunctionalityList& subFuncNumber)
 {
     // test output, to be removed
     std::cout << funcNumber << std::endl;
-    std::cout << subFuncNumber.at(0) << std::endl;
-
-    switch (funcNumber)
+    try
     {
-        case 1:
-            execute01();
-            break;
+        switch (funcNumber)
+        {
+            case 1:
+                execute01();
+                break;
 
-        case 11:
-            execute11();
-            break;
+            case 2:
+                execute02(subFuncNumber);
+                break;
 
-        case 12:
-            execute12();
-            break;
+            case 11:
+                execute11();
+                break;
 
-        case 13:
-            execute13();
-            break;
+            case 12:
+                execute12();
+                break;
 
-        case 14:
-        case 15:
-        case 16:
-        case 17:
-        case 18:
-        case 19:
-            execute14to19(funcNumber);
-            break;
-        case 20:
-            execute20();
-            break;
-        case 30:
-            execute30(subFuncNumber);
-            break;
+            case 13:
+                execute13();
+                break;
 
-        default:
-            break;
+            case 14:
+            case 15:
+            case 16:
+            case 17:
+            case 18:
+            case 19:
+                execute14to19(funcNumber);
+                break;
+            case 20:
+                execute20();
+                break;
+            case 30:
+                execute30(subFuncNumber);
+                break;
+
+            case 55:
+                execute55(subFuncNumber);
+                break;
+
+            case 63:
+                execute63(subFuncNumber.at(0));
+                break;
+
+            case 64:
+                execute64(subFuncNumber.at(0));
+                break;
+
+            default:
+                break;
+        }
+    }
+    catch (BaseException& e)
+    {
+        std::cerr << e.what() << std::endl;
+        displayExecutionStatus(funcNumber, subFuncNumber, false);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        displayExecutionStatus(funcNumber, subFuncNumber, false);
     }
 }
 
@@ -95,28 +144,17 @@ void Executor::execute20()
         line1.replace(11, constants::ccinDataLength, *model);
     }
 
-    utils::sendCurrDisplayToPanel(line1, line2, transport);
-}
-
-std::string Executor::getSrcDataForPEL()
-{
-    auto res = utils::readBusProperty<std::variant<std::string>>(
-        "xyz.openbmc_project.Logging", pelEventPath,
-        "xyz.openbmc_project.Logging.Entry", "EventId");
-
-    auto srcData = std::get_if<std::string>(&res);
-
-    if (srcData != nullptr)
+    if ((line1.compare(std::string(16, ' ')) == 0) &&
+        (line2.compare(std::string(16, ' ')) == 0))
     {
-        return *srcData;
+        throw FunctionFailure("Function 20 failed.");
     }
-
-    return "";
+    utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 
 void Executor::execute11()
 {
-    auto srcData = getSrcDataForPEL();
+    auto srcData = pelEventIdQueue.back();
 
     if (!srcData.empty())
     {
@@ -287,11 +325,6 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
             break;
         }
     }
-    if (line2.empty())
-    {
-        std::cerr << "\n IP address of the ethernet port is not found"
-                  << std::endl;
-    }
 
     // obtain the mac address of network ethernet object path. query mac
     // address of ethernet0&1 of inv manager objects. if mac of both the
@@ -317,6 +350,11 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         locCode = getPortSegment(locCode);
     }
 
+    if ((locCode.empty() && line2.empty()) || line2.empty())
+    {
+        throw FunctionFailure("Function 30 failed.");
+    }
+
     // create display
     std::string line1 = "SP: ";
     line1 += boost::to_upper_copy<std::string>(ethPort);
@@ -336,55 +374,53 @@ void Executor::execute01()
 {
     const auto sysValues = utils::readSystemParameters();
 
-    if (!std::get<0>(sysValues).empty() && !std::get<1>(sysValues).empty() &&
-        !std::get<2>(sysValues).empty() && !std::get<3>(sysValues).empty() &&
-        !std::get<4>(sysValues).empty())
+    std::string line1(16, ' ');
+    std::string line2(16, ' ');
+
+    if (isOSIPLTypeEnabled())
     {
-        std::string line1(16, ' ');
-        std::string line2(16, ' ');
-
-        // function number
-        line1.replace(0, 2, "01");
-
-        if (isOSIPLTypeEnabled())
-        {
-            // OS IPL Type
-            line1.replace(4, 1, std::get<0>(sysValues).substr(0, 1));
-        }
-
-        // Operating mode
-        line1.replace(7, 1, std::get<1>(sysValues).substr(0, 1));
-
-        // hypervisor type
-        if (std::get<4>(sysValues) == "PowerVM")
-        {
-            line1.replace(12, 3, "PVM");
-        }
-        else
-        {
-            line1.replace(12, std::get<4>(sysValues).length(),
-                          std::get<4>(sysValues));
-        }
-
-        // HMC Managed
-        if (std::get<2>(sysValues) == "1")
-        {
-            line2.replace(0, 5, "HMC=1");
-        }
-
-        // Boot side. This needs to be renamed later.
-        line2.replace(12, 1, std::get<3>(sysValues).substr(0, 1));
-
-        utils::sendCurrDisplayToPanel(line1, line2, transport);
-        return;
+        // OS IPL Type
+        line1.replace(4, 1, std::get<0>(sysValues).substr(0, 1));
     }
 
-    std::cerr << "Error reading system parameters" << std::endl;
+    // Operating mode
+    line1.replace(7, 1, std::get<1>(sysValues).substr(0, 1));
+
+    // hypervisor type
+    if (std::get<4>(sysValues) == "PowerVM")
+    {
+        line1.replace(12, 3, "PVM");
+    }
+    else
+    {
+        line1.replace(12, std::get<4>(sysValues).length(),
+                      std::get<4>(sysValues));
+    }
+
+    // HMC Managed
+    if (std::get<2>(sysValues) == "1")
+    {
+        line2.replace(0, 5, "HMC=1");
+    }
+
+    // Boot side. This needs to be renamed later.
+    line2.replace(12, 1, std::get<3>(sysValues).substr(0, 1));
+
+    if ((line1.compare(std::string(16, ' ')) == 0) &&
+        (line2.compare(std::string(16, ' ')) == 0))
+    {
+        throw FunctionFailure("Function 01 failed.");
+    }
+    // function number
+    line1.replace(0, 2, "01");
+
+    utils::sendCurrDisplayToPanel(line1, line2, transport);
+    return;
 }
 
 void Executor::execute12()
 {
-    auto srcData = getSrcDataForPEL();
+    auto srcData = pelEventIdQueue.back();
 
     // Need to show blank spaces in case no srcData as function is enabled.
     constexpr auto blankHexWord = "        ";
@@ -410,9 +446,10 @@ void Executor::execute12()
 
 void Executor::execute13()
 {
-    auto srcData = getSrcDataForPEL();
+    auto srcData = pelEventIdQueue.back();
 
-    // Need to show blank spaces in case of no srcData as function is enabled.
+    // Need to show blank spaces in case of no srcData as function is
+    // enabled.
     constexpr auto blankHexWord = "        ";
     std::vector<std::string> output(4, blankHexWord);
 
@@ -442,8 +479,8 @@ void Executor::execute14to19(const types::FunctionNumber funcNumber)
 
     switch (funcNumber)
     {
-        // size check is not done here as functions are enabled based on count
-        // of entries in this vector.
+        // size check is not done here as functions are enabled based on
+        // count of entries in this vector.
         case 14:
             aCallOut = callOutList.at(0);
             break;
@@ -514,9 +551,282 @@ void Executor::execute14to19(const types::FunctionNumber funcNumber)
         // TODO: Currently, CCIN is not in data recieved from D-Bus.
     }
 
-    // TODO: We need to decide whether to display FF to indicate failure.
-    // send blank display if string is empty as function is enabled.
+    if ((line1.compare(std::string(16, ' ')) == 0) &&
+        (line2.compare(std::string(16, ' ')) == 0))
+    {
+        throw FunctionFailure(
+            "Failed parsing resolution string during callout.");
+    }
     utils::sendCurrDisplayToPanel(line1, line2, transport);
+}
+static std::string getIplType(const uint8_t index)
+{
+    switch (index)
+    {
+        case 0:
+            return "A_Mode";
+        case 1:
+            return "B_Mode";
+        case 2:
+            return "C_Mode";
+        default:
+            return "D_Mode";
+    }
+}
+
+static types::PendingAttributesItemType
+    setOperatingMode(const uint8_t sysOperatingModeIndex)
+{
+    // Normal mode is the default mode hence all the defaul values are as
+    // per normal mode.
+    types::AttributeValueType sysOperatingModeValue = "Normal";
+    bool QuiesceOnHwError = false;
+    std::string PowerRestorePolicy =
+        "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.Restore";
+    bool autoReboot = true;
+
+    if (sysOperatingModeIndex == 0)
+    {
+        sysOperatingModeValue = "Manual";
+        QuiesceOnHwError = true;
+        PowerRestorePolicy = "xyz.openbmc_project.Control.Power."
+                             "RestorePolicy.Policy.AlwaysOff";
+        autoReboot = false;
+    }
+
+    utils::writeBusProperty<std::variant<bool>>(
+        "xyz.openbmc_project.Settings", "/xyz/openbmc_project/logging/settings",
+        "xyz.openbmc_project.Logging.Settings", "QuiesceOnHwError",
+        QuiesceOnHwError);
+
+    utils::writeBusProperty<std::variant<std::string>>(
+        "xyz.openbmc_project.Settings",
+        "/xyz/openbmc_project/control/host0/power_restore_policy",
+        "xyz.openbmc_project.Control.Power.RestorePolicy", "PowerRestorePolicy",
+        PowerRestorePolicy);
+
+    utils::writeBusProperty<std::variant<bool>>(
+        "xyz.openbmc_project.Settings",
+        "/xyz/openbmc_project/control/host0/auto_reboot",
+        "xyz.openbmc_project.Control.Boot.RebootPolicy", "AutoReboot",
+        autoReboot);
+
+    return std::make_pair(
+        "pvm_system_operating_mode",
+        std::make_tuple("xyz.openbmc_project.BIOSConfig.Manager."
+                        "AttributeType.Enumeration",
+                        sysOperatingModeValue));
+}
+
+static void bootSideSwitch()
+{
+    const auto bootSidePaths = utils::getBootSidePaths();
+
+    if (bootSidePaths.size() != 0)
+    {
+        if (bootSidePaths.size() > 2)
+        {
+            std::cout << "Received more than two boot paths, Setting the "
+                         "first path with priority 1 as next boot path"
+                      << std::endl;
+        }
+
+        for (const auto& path : bootSidePaths)
+        {
+            auto retVal = utils::readBusProperty<std::variant<uint8_t>>(
+                "xyz.openbmc_project.Software.BMC.Updater", path,
+                "xyz.openbmc_project.Software.RedundancyPriority", "Priority");
+
+            if (auto priority = std::get_if<uint8_t>(&retVal))
+            {
+                if (*priority != 0)
+                {
+                    uint8_t value = 0;
+                    utils::writeBusProperty<std::variant<uint8_t>>(
+                        "xyz.openbmc_project.Software.BMC.Updater", path,
+                        "xyz.openbmc_project.Software.RedundancyPriority",
+                        "Priority", value);
+
+                    // once the value is updated no need to check for other
+                    // paths.
+                    return;
+                }
+            }
+        }
+    }
+    std::cerr << "No boot paths returned by mapper call. Hence boot switch "
+                 "not executed"
+              << std::endl;
+}
+
+void Executor::execute02(const types::FunctionalityList& subFuncNumber)
+{
+    try
+    {
+        // 127 is sent in sub function number when the state is invalid.
+        static constexpr auto invalidState = 127;
+
+        // BIOS table attribute list.
+        types::PendingAttributesType listOfAttributeValue;
+
+        // change is needed only when state is not invalid.
+        if (subFuncNumber.at(0) != invalidState)
+        {
+            listOfAttributeValue.push_back(std::make_pair(
+                "pvm_os_ipl_type",
+                std::make_tuple("xyz.openbmc_project.BIOSConfig.Manager."
+                                "AttributeType.Enumeration",
+                                getIplType(subFuncNumber.at(0)))));
+        }
+
+        if (subFuncNumber.at(1) != invalidState)
+        {
+            listOfAttributeValue.push_back(
+                setOperatingMode(subFuncNumber.at(1)));
+        }
+
+        // Process boot side switch only when state is not invalid. Implies
+        // change required.
+        if (subFuncNumber.at(2) != invalidState)
+        {
+            // switch boot side.
+            bootSideSwitch();
+        }
+
+        if (listOfAttributeValue.size() > 0)
+        {
+            utils::writeBusProperty<std::variant<types::PendingAttributesType>>(
+                "xyz.openbmc_project.BIOSConfigManager",
+                "/xyz/openbmc_project/bios_config/manager",
+                "xyz.openbmc_project.BIOSConfig.Manager", "PendingAttributes",
+                std::move(listOfAttributeValue));
+        }
+    }
+    catch (const std::exception& e)
+    {
+        // write has failed. Show FF.
+        // TODO:Show FF once commit for FF is pushed.
+        std::cout << "Write failed for function 02. Show FF" << e.what()
+                  << std::endl;
+    }
+}
+
+void Executor::storeIPLSRC(const std::string& progressCode)
+{
+    // Need to store last 25 IPL SRCs.
+    if (iplSrcs.size() == 25)
+    {
+        iplSrcs.pop_front();
+    }
+    iplSrcs.push_back(progressCode);
+}
+
+void Executor::execute63(const types::FunctionNumber subFuncNumber)
+{
+    // 0th Sub function is always enabled and should show blank screen if
+    // required.
+    if ((subFuncNumber == 0) && (iplSrcs.size() == 0))
+    {
+        utils::sendCurrDisplayToPanel(std::string{}, std::string{}, transport);
+        return;
+    }
+    else
+    {
+        if ((iplSrcs.size() - 1) >= subFuncNumber)
+        {
+            utils::sendCurrDisplayToPanel(iplSrcs.at(subFuncNumber),
+                                          std::string{}, transport);
+            return;
+        }
+    }
+
+    std::cerr << "Sub function number should not have been enabled"
+              << std::endl;
+}
+
+void Executor::storePelEventId(const std::string& pelEventId)
+{
+    // Need to store last 25 PEL SRCs.
+    if (pelEventIdQueue.size() == 25)
+    {
+        pelEventIdQueue.pop_front();
+    }
+    pelEventIdQueue.push_back(pelEventId);
+}
+
+void Executor::execute64(const types::FunctionNumber subFuncNumber)
+{
+    // 0th Sub function is always enabled and should show blank screen if
+    // required.
+    if ((subFuncNumber == 0) && (pelEventIdQueue.size() == 0))
+    {
+        utils::sendCurrDisplayToPanel(std::string{}, std::string{}, transport);
+        return;
+    }
+    else
+    {
+        if ((pelEventIdQueue.size() - 1) >= subFuncNumber)
+        {
+            std::string_view src(pelEventIdQueue.at(subFuncNumber));
+            if (src.length() < 8)
+            {
+                std::cerr << "Bad error event data" << std::endl;
+                return;
+            }
+            // TODO: via https://github.com/ibm-openbmc/ibm-panel/issues/34.
+            // avoid temp string object creation by using a std::string_view
+            utils::sendCurrDisplayToPanel(std::string{src.substr(0, 8)},
+                                          std::string{}, transport);
+            return;
+        }
+    }
+
+    std::cerr << "Sub function number should not have been enabled"
+              << std::endl;
+}
+
+void Executor::execute55(const types::FunctionalityList& subFuncNumber)
+{
+    /** dump policy: true(01), false(02) */
+    if (subFuncNumber.at(0) == 0x00) // view dump policy
+    {
+        auto result = utils::readBusProperty<std::variant<bool>>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled");
+
+        if (auto val = std::get_if<bool>(&result))
+        {
+            std::string line1 = "5500 ";
+            line1 += *val ? "01" : "02";
+            utils::sendCurrDisplayToPanel(line1, "", transport);
+            return;
+        }
+        else
+        {
+            throw FunctionFailure("Dump policy collection failed.");
+        }
+    }
+    else if (subFuncNumber.at(0) == 0x01) // disable dump policy
+    {
+        utils::writeBusProperty<bool>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled", false);
+    }
+    else if (subFuncNumber.at(0) == 0x02) // enable dump policy
+    {
+        utils::writeBusProperty<bool>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/dump/system_dump_policy",
+            "xyz.openbmc_project.Object.Enable", "Enabled", true);
+    }
+    else
+    {
+        throw FunctionFailure("Function 55 failed. Unsupported sub function.");
+    }
+
+    displayExecutionStatus(55, subFuncNumber, true);
 }
 
 } // namespace panel

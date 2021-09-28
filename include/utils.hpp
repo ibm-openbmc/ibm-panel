@@ -60,6 +60,24 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
                             std::shared_ptr<Transport> transport);
 
 /**
+ * @brief An api to read System operating mode.
+ * It will use combination of below mentioned three parameters to
+ * decide the operating mode of the system.
+ *
+ * By default it will be "Normal " mode.
+ * Value of three parameters in "Manual" mode would be,
+ * QuiesceOnHwError - true.
+ * PowerRestorePolicy -
+ * "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.AlwaysOff".
+ * AutoReboot - false.
+ *
+ * Any other value combination will set the system to "Normal" mode.
+ *
+ * @param[out] sysOperatingMode - Operating mode.
+ */
+void readSystemOperatingMode(std::string& sysOperatingMode);
+
+/**
  * @brief An api to read initial values of OS IPL types, System operating
  * mode, firmware IPL type, Hypervisor type and HMC indicator.
  * @return - Values of required system parameters.
@@ -74,5 +92,49 @@ types::SystemParameterValues readSystemParameters();
 types::GetManagedObjects getManagedObjects(const std::string& service,
                                            const std::string& object);
 
+/**
+ * @brief An api to write Bus property.
+ * @param[in] serviceName - Name of the service.
+ * @param[in] objectPath - Object path
+ * @param[in] infName - Interface name.
+ * @param[in] propertyName - Name of the property whose value is being fetched.
+ * @param[in] paramValue - The property value.
+ */
+template <typename T>
+void writeBusProperty(const std::string& serviceName,
+                      const std::string& objectPath, const std::string& infName,
+                      const std::string& propertyName,
+                      const std::variant<T>& paramValue)
+{
+    try
+    {
+        auto bus = sdbusplus::bus::new_default();
+        auto method =
+            bus.new_method_call(serviceName.c_str(), objectPath.c_str(),
+                                "org.freedesktop.DBus.Properties", "Set");
+        method.append(infName);
+        method.append(propertyName);
+        method.append(paramValue);
+
+        bus.call(method);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << e.what();
+        throw;
+    }
+}
+
+/**
+ * @brief Make mapper call to get boot side paths.
+ * @return List of all image object paths.
+ */
+std::vector<std::string> getBootSidePaths();
+
+/**
+ * @brief Get next marked boot side.
+ * @param[out] nextBootSide -  Next selected boot side.
+ */
+void getNextBootSide(std::string& nextBootSide);
 } // namespace utils
 } // namespace panel

@@ -20,6 +20,8 @@ enum StateType
 };
 
 static constexpr auto FUNCTION_02 = 2;
+static constexpr auto FUNCTION_63 = 63;
+static constexpr auto FUNCTION_64 = 64;
 
 // structure defines fincttionaliy attributes.
 struct FunctionalityAttributes
@@ -61,7 +63,7 @@ std::vector<FunctionalityAttributes> functionalityList = {
     {41, false, true, "A1003041", StateType::INITIAL_STATE},
     {42, false, true, "A1003042", StateType::INITIAL_STATE},
     {43, true, true, "A1003043", StateType::INITIAL_STATE},
-    {55, true, false, "NONE", 0x0D},
+    {55, true, false, "NONE", 0x02},
     {63, true, false, "NONE", 0x18},
     {64, true, false, "NONE", 0x18},
     {65, false, false, "NONE", StateType::INITIAL_STATE},
@@ -192,7 +194,7 @@ void PanelStateManager::processPanelButtonEvent(
             break;
     }
 
-    // printStates();
+    // printPanelStates();
 }
 
 void PanelStateManager::initPanelState()
@@ -214,9 +216,6 @@ void PanelStateManager::initPanelState()
     panelCurSubStates.push_back(StateType::INITIAL_STATE);
     panelCurSubStates.push_back(StateType::INVALID_STATE);
     panelCurSubStates.push_back(StateType::INVALID_STATE);
-
-    // create executorclass
-    funcExecutor = std::make_shared<Executor>(transport);
 }
 
 std::tuple<types::FunctionNumber, types::FunctionNumber>
@@ -226,10 +225,73 @@ std::tuple<types::FunctionNumber, types::FunctionNumber>
     return std::make_tuple(funcState.functionNumber, (panelCurSubStates.at(0)));
 }
 
+void PanelStateManager::initFunction02()
+{
+    try
+    {
+        auto sysValues = utils::readSystemParameters();
+
+        if (std::get<0>(sysValues).empty() || std::get<1>(sysValues).empty())
+        {
+            throw std::runtime_error("Error reading system values");
+        }
+
+        utils::getNextBootSide(nextBootSideSelected);
+
+        const auto& iplType = std::get<0>(sysValues);
+        if (iplType == "A_Mode")
+        {
+            panelCurSubStates.at(0) = 0;
+        }
+        else if (iplType == "B_Mode")
+        {
+            panelCurSubStates.at(0) = 1;
+        }
+        else if (iplType == "C_Mode")
+        {
+            panelCurSubStates.at(0) = 2;
+        }
+        else if (iplType == "D_Mode")
+        {
+            panelCurSubStates.at(0) = 3;
+        }
+        else
+        {
+            // TODO: Add elog here to detect invalid mode.
+            std::cout << "Invalid Mode" << std::endl;
+        }
+
+        const auto& systemOperatingMode = std::get<1>(sysValues);
+        if (systemOperatingMode == "Manual")
+        {
+            panelCurSubStates.at(1) = 0;
+        }
+        else if (systemOperatingMode == "Normal")
+        {
+            panelCurSubStates.at(1) = 1;
+        }
+
+        if (nextBootSideSelected == "P")
+        {
+            panelCurSubStates.at(2) = 0;
+        }
+        else
+        {
+            panelCurSubStates.at(2) = 1;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+        // TODO: Display FF once that commit is in.
+    }
+}
+
 // functionality 02
 void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
 {
     std::vector<std::string> subRange = functionality02.at(levelToOperate);
+    static std::tuple<types::index, types::index, types::index> initialValues;
 
     switch (button)
     {
@@ -261,15 +323,11 @@ void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
             {
                 isSubrangeActive = true;
 
-                // set sub states to initial value
-                // TODO: implement a method to get inital values of substate.
-                /* auto subStateInitialValue =
-                     getInitialValue(this function does not exist, figure out);
-                 lets say for test be it 2,1,1 index of functionality02 Map*/
-
-                panelCurSubStates.at(0) = 2;
-                panelCurSubStates.at(1) = 1;
-                panelCurSubStates.at(2) = 1;
+                // set initial values
+                initFunction02();
+                initialValues = std::make_tuple(panelCurSubStates.at(0),
+                                                panelCurSubStates.at(1),
+                                                panelCurSubStates.at(2));
             }
             else if (levelToOperate != 2) // max depth of sub state
             {
@@ -277,11 +335,42 @@ void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
             }
             else
             {
-                // reset all the flag and execute as we are at last depth of
-                // subsate and functionality needs to be executed.
-                panelCurSubStates.at(0) = StateType::INITIAL_STATE;
-                panelCurSubStates.at(1) = StateType::INVALID_STATE;
-                panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                // check if we need to toggle that parameter in write.
+                // We need to change value only when different value has been
+                // selected than the initial value.
+
+                if (panelCurSubStates.at(0) == std::get<0>(initialValues))
+                {
+                    panelCurSubStates.at(0) = StateType::INVALID_STATE;
+                }
+
+                if (panelCurSubStates.at(1) == std::get<1>(initialValues))
+                {
+                    panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                }
+
+                if (panelCurSubStates.at(2) == std::get<2>(initialValues))
+                {
+                    panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                }
+
+                // if any one selected value is different than its initial
+                // value, then only we need to execute.
+                if (panelCurSubStates.at(0) != StateType::INVALID_STATE ||
+                    panelCurSubStates.at(1) != StateType::INVALID_STATE ||
+                    panelCurSubStates.at(2) != StateType::INVALID_STATE)
+                {
+
+                    funcExecutor->executeFunction(
+                        panelFunctions.at(panelCurState).functionNumber,
+                        panelCurSubStates);
+
+                    // reset all the flag
+                    panelCurSubStates.at(0) = StateType::INITIAL_STATE;
+                    panelCurSubStates.at(1) = StateType::INVALID_STATE;
+                    panelCurSubStates.at(2) = StateType::INVALID_STATE;
+                }
+
                 levelToOperate = 0;
                 isSubrangeActive = false;
             }
@@ -303,9 +392,8 @@ void PanelStateManager::incrementState()
         return;
     }
 
-    // check if current state has sub range and if it is active.
-    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE &&
-        isSubrangeActive)
+    // If sub range is active, it implies function has Sub functions.
+    if (isSubrangeActive)
     {
         if (panelCurSubStates.at(0) == StateType::STAR_STATE)
         {
@@ -369,10 +457,8 @@ void PanelStateManager::decrementState()
         return;
     }
 
-    // if the functionality has sub range and is in active state, loop in
-    // sub range
-    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE &&
-        isSubrangeActive)
+    // If sub range is active it implies that function has sub-range.
+    if (isSubrangeActive)
     {
         if (panelCurSubStates.at(0) == StateType::INITIAL_STATE)
         {
@@ -430,7 +516,7 @@ void PanelStateManager::decrementState()
 
 void PanelStateManager::executeState()
 {
-    const PanelFunctionality& funcState = panelFunctions.at(panelCurState);
+    PanelFunctionality& funcState = panelFunctions.at(panelCurState);
 
     if (funcState.functionNumber == FUNCTION_02)
     {
@@ -446,8 +532,15 @@ void PanelStateManager::executeState()
         return;
     }
 
-    // check if the current state has a subrange.
-    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE)
+    // check if the current state has a subrange or function is 63. This
+    // can be a situaton for function 63 where upper range is eqaul to
+    // StateType::INITIAL_STATE and still the function has sub range.
+    // Sub fubctions of function 63 gets enabled at runtime based on number of
+    // progress codes received.
+    // This will be the case when number of Progress code recieved is 0. In that
+    // case only 00 sub function needs to remain activated.
+    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE ||
+        funcState.functionNumber == FUNCTION_63)
     {
         // Then check if it already active
         if (isSubrangeActive)
@@ -479,6 +572,37 @@ void PanelStateManager::executeState()
         // if not active, activate it and point to star method
         else
         {
+            if (funcState.functionNumber == FUNCTION_63 ||
+                funcState.functionNumber == FUNCTION_64)
+            {
+                uint8_t count = 0;
+
+                // If function is 63 then sub function is enabled based on
+                // number of IPL SRCs.
+                if (funcState.functionNumber == FUNCTION_63)
+                {
+                    count = funcExecutor->getIPLSRCCount();
+                }
+
+                // If function is 64 then sub function is enabled based on
+                // number of Pel event received so far.
+                if (funcState.functionNumber == FUNCTION_64)
+                {
+                    count = funcExecutor->getPelEventIdCount();
+                }
+
+                if (count != 0)
+                {
+                    //-1 to match the index
+                    funcState.subFunctionUpperRange = count - 1;
+                }
+                else
+                {
+                    // since 0th sub function will always be enabled.
+                    funcState.subFunctionUpperRange = count;
+                }
+            }
+
             isSubrangeActive = true;
             panelCurSubStates.at(0) = StateType::STAR_STATE;
             createDisplayString();
@@ -517,8 +641,7 @@ void PanelStateManager::createDisplayString() const
        << std::to_string(funcState.functionNumber);
     line1 += ss.str();
 
-    if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE &&
-        isSubrangeActive)
+    if (isSubrangeActive)
     {
         if (panelCurSubStates.at(0) == StateType::STAR_STATE)
         {
