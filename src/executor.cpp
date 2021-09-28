@@ -48,6 +48,14 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute02(subFuncNumber);
                 break;
 
+            case 3:
+                execute03();
+                break;
+
+            case 8:
+                execute08();
+                break;
+
             case 11:
                 execute11();
                 break;
@@ -100,6 +108,16 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
     {
         displayExecutionStatus(funcNumber, subFuncNumber, false);
     }
+}
+
+void Executor::execute03()
+{
+    utils::writeBusProperty<std::string>(
+        "xyz.openbmc_project.State.Host", "/xyz/openbmc_project/state/host0",
+        "xyz.openbmc_project.State.Host", "RequestedHostTransition",
+        "xyz.openbmc_project.State.Host.Transition.GracefulWarmReboot");
+
+    utils::sendCurrDisplayToPanel("RESTART SERVER", "INITIATED", transport);
 }
 
 void Executor::execute20()
@@ -827,6 +845,18 @@ void Executor::execute55(const types::FunctionalityList& subFuncNumber)
     }
 
     displayExecutionStatus(55, subFuncNumber, true);
+}
+
+void Executor::execute08()
+{
+    // set the transition state of chassis to poweroff.
+    panel::utils::writeBusProperty<std::string>(
+        "xyz.openbmc_project.State.Chassis",
+        "/xyz/openbmc_project/state/chassis0",
+        "xyz.openbmc_project.State.Chassis", "RequestedPowerTransition",
+        "xyz.openbmc_project.State.Chassis.Transition.Off");
+
+    utils::sendCurrDisplayToPanel("SHUTDOWN SERVER", "INITIATED", transport);
 }
 
 } // namespace panel

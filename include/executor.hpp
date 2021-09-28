@@ -107,6 +107,16 @@ class Executor
     void execute02(const types::FunctionalityList& subFuncNumber);
 
     /**
+     * @brief An api to execute function 03.
+     */
+    void execute03();
+
+    /**
+     * @brief An api to execute function 08.
+     */
+    void execute08();
+
+    /**
      * @brief An api to execute function 11.
      */
     void execute11();
