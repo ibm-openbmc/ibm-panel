@@ -83,6 +83,14 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute30(subFuncNumber);
                 break;
 
+            case 42:
+                execute42();
+                break;
+
+            case 43:
+                execute43();
+                break;
+
             case 55:
                 execute55(subFuncNumber);
                 break;
@@ -106,6 +114,7 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
+        std::cerr << e.what() << std::endl;
         displayExecutionStatus(funcNumber, subFuncNumber, false);
     }
 }
@@ -857,6 +866,35 @@ void Executor::execute08()
         "xyz.openbmc_project.State.Chassis.Transition.Off");
 
     utils::sendCurrDisplayToPanel("SHUTDOWN SERVER", "INITIATED", transport);
+}
+
+static void createDump(const sdbusplus::message::object_path& object)
+{
+    sdbusplus::message::object_path retVal{};
+    auto bus = sdbusplus::bus::new_default();
+    auto properties = bus.new_method_call(
+        "xyz.openbmc_project.Dump.Manager", std::string(object).c_str(),
+        "xyz.openbmc_project.Dump.Create", "CreateDump");
+    properties.append(
+        std::vector<
+            std::pair<std::string, std::variant<std::string, uint64_t>>>());
+    auto result = bus.call(properties);
+    result.read(retVal);
+    std::cout << "Dump initiated. " << std::string(retVal) << std::endl;
+}
+
+void Executor::execute43()
+{
+    createDump(
+        sdbusplus::message::object_path("/xyz/openbmc_project/dump/bmc"));
+    displayExecutionStatus(43, std::vector<types::FunctionNumber>(), true);
+}
+
+void Executor::execute42()
+{
+    createDump(
+        sdbusplus::message::object_path("/xyz/openbmc_project/dump/system"));
+    displayExecutionStatus(42, std::vector<types::FunctionNumber>(), true);
 }
 
 } // namespace panel

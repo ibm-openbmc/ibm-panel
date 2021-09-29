@@ -180,10 +180,23 @@ class Executor
                                 const types::FunctionalityList& subFuncNumber,
                                 const bool result);
 
-    /** @brief API to execute function 55.
+    /**
+     * @brief API to initiate disruptive platform system dump.
+     */
+    void execute42();
+
+    /**
+     * @brief API to execute function 55.
      * @param[in] subFuncNumber - Sub function vector.
      */
     void execute55(const types::FunctionalityList& subFuncNumber);
+
+    /**
+     * @brief Api to initiate service processor dump.
+     * This method triggers a service processor dump when function 43 is pressed
+     * in panel.
+     */
+    void execute43();
 
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
