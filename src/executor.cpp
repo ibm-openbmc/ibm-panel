@@ -113,6 +113,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute64(subFuncNumber.at(0));
                 break;
 
+            case 73:
+                execute73();
+                break;
+
             default:
                 break;
         }
@@ -914,6 +918,30 @@ void Executor::execute04()
                                   "xyz.openbmc_project.Led.Group", "Asserted",
                                   true);
     utils::doLampTest(transport);
+}
+
+static void doBMCGracefulRestart()
+{
+    utils::writeBusProperty<std::string>(
+        "xyz.openbmc_project.State.BMC", "/xyz/openbmc_project/state/bmc0",
+        "xyz.openbmc_project.State.BMC", "RequestedBMCTransition",
+        "xyz.openbmc_project.State.BMC.Transition.Reboot");
+}
+
+void Executor::execute73()
+{
+    // factory reset BMC by calling
+    // BMC code updater factory reset followed by a BMC reboot.
+    auto bus = sdbusplus::bus::new_default();
+    auto factoryResetCall =
+        bus.new_method_call("xyz.openbmc_project.Software.BMC.Updater",
+                            "/xyz/openbmc_project/software",
+                            "xyz.openbmc_project.Common.FactoryReset", "Reset");
+
+    bus.call(factoryResetCall);
+
+    // Factory Reset doesn't actually happen until a reboot
+    doBMCGracefulRestart();
 }
 
 } // namespace panel
