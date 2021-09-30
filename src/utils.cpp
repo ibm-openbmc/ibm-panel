@@ -288,5 +288,11 @@ void getNextBootSide(std::string& nextBootSide)
     }
 }
 
+void doLampTest(std::shared_ptr<Transport>& transport)
+{
+    transport->panelI2CWrite(encoder::MessageEncoder().lampTest());
+    std::cout << "\nPanel lamp test initiated." << std::endl;
+}
+
 } // namespace utils
 } // namespace panel
