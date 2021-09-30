@@ -527,15 +527,16 @@ void PanelStateManager::executeState()
         return;
     }
 
-    // check if the current state has a subrange or function is 63. This
-    // can be a situaton for function 63 where upper range is eqaul to
+    // check if the current state has a subrange or function is 63 or 64. This
+    // can be a situation for function 63 or 64 where upper range is equal to
     // StateType::INITIAL_STATE and still the function has sub range.
-    // Sub fubctions of function 63 gets enabled at runtime based on number of
-    // progress codes received.
-    // This will be the case when number of Progress code recieved is 0. In that
-    // case only 00 sub function needs to remain activated.
+    // Sub functions of function 63 and 64 gets enabled at runtime based on
+    // number of progress codes/SRC received respectively.
+    // Below will be the case when number of Progress code or SRC received is 0.
+    // In that case only 00 sub function needs to remain activated.
     if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE ||
-        funcState.functionNumber == FUNCTION_63)
+        funcState.functionNumber == FUNCTION_63 ||
+        funcState.functionNumber == FUNCTION_64)
     {
         // Then check if it already active
         if (isSubrangeActive)
