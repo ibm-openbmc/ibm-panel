@@ -28,10 +28,6 @@ class PanelStateManager
     PanelStateManager& operator=(const PanelStateManager&) = delete;
     PanelStateManager(PanelStateManager&&) = delete;
 
-#ifdef StateManagerTest
-    PanelStateManager() = default;
-#endif
-
     ~PanelStateManager() = default;
 
     /**
