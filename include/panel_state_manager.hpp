@@ -54,6 +54,15 @@ class PanelStateManager
         const types::FunctionalityList& listOfFunctionalities);
 
     /**
+     * @brief API to toggle function(s) state from Phyp.
+     * This api will be called when phyp enables/diables any function(s) from
+     * its end.
+     * @param[in] list - A byte array, where each bit corresponds to a panel
+     * function.
+     */
+    void toggleFuncStateFromPhyp(const types::FunctionalityList& list);
+
+    /**
      * @brief Api to disable function(s).
      * @param[in] listOfFunctionalities - A list of function(s) to be disabled.
      * */

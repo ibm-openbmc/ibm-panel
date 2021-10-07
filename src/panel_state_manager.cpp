@@ -214,6 +214,37 @@ void PanelStateManager::disableFunctonality(
     }
 }
 
+void PanelStateManager::toggleFuncStateFromPhyp(
+    const types::FunctionalityList& list)
+{
+    // List contain function(s) which has been set as enabled by phyp. Rest all
+    // other functions whose "functionEnabledByPhyp" flag is set as enabled
+    // should be reset to disabled.
+    for (auto& aFunction : panelFunctions)
+    {
+        auto pos = find_if(list.begin(), list.end(),
+                           [&aFunction](const types::FunctionNumber funNum) {
+                               return funNum == aFunction.functionNumber;
+                           });
+
+        if (pos != list.end())
+        {
+            // then the cout can be used to test the function number.
+            std::cout << "Function to be enabled"
+                      << (int)aFunction.functionNumber << std::endl;
+
+            aFunction.functionEnabledByPhyp = SystemStateMask::ENABLE_BY_PHYP;
+        }
+        else
+        {
+            // If the function is not in the list it
+            // should be in disabled state.
+            aFunction.functionEnabledByPhyp = SystemStateMask::DISABLE_BY_PHYP;
+        }
+    }
+    updateFunctionStatus();
+}
+
 void PanelStateManager::printPanelStates()
 {
     const PanelFunctionality& funcState = panelFunctions.at(panelCurState);

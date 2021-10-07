@@ -27,4 +27,24 @@ void BusHandler::triggerPanelLampTest(const bool state)
     }
 }
 
+void BusHandler::toggleFunctionState(types::FunctionalityList functionBitMap)
+{
+    types::FunctionalityList functionList;
+
+    for (types::Byte bitIndex = 1; bitIndex < functionBitMap.size() * 8;
+         bitIndex++)
+    {
+        types::Byte byteIndex = bitIndex / 8;
+        types::Byte bitIndexInsideByte = bitIndex % 8;
+
+        if (functionBitMap[byteIndex] & (1 << bitIndexInsideByte))
+        {
+            functionList.push_back((byteIndex * 8) + bitIndexInsideByte);
+        }
+    }
+
+    // should be called even if the function list is empty, in case phyp wants
+    // to disable all the functions.
+    stateManager->toggleFuncStateFromPhyp(functionList);
+}
 } // namespace panel

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "panel_state_manager.hpp"
 #include "transport.hpp"
 
 #include <sdbusplus/asio/object_server.hpp>
@@ -23,11 +24,13 @@ class BusHandler
      * @brief Constructor.
      * @param[in] transport - Transport class object.
      * @param[in] iface - Pointer to Panel dbus interface.
+     * @param[in] manager - Pointer to state manager.
      */
     BusHandler(std::shared_ptr<Transport>& transport,
-               std::shared_ptr<sdbusplus::asio::dbus_interface>& iface) :
+               std::shared_ptr<sdbusplus::asio::dbus_interface>& iface,
+               std::shared_ptr<state::manager::PanelStateManager>& manager) :
         transport(transport),
-        iface(iface)
+        iface(iface), stateManager(manager)
     {
         iface->register_method("Display", [this](const std::string& line1,
                                                  const std::string& line2) {
@@ -37,6 +40,11 @@ class BusHandler
         iface->register_method(
             "TriggerPanelLampTest",
             [this](const bool status) { this->triggerPanelLampTest(status); });
+
+        iface->register_method("toggleFunctionState",
+                               [this](const types::FunctionalityList& list) {
+                                   this->toggleFunctionState(list);
+                               });
     }
 
   private:
@@ -61,11 +69,23 @@ class BusHandler
      */
     void triggerPanelLampTest(const bool state);
 
+    /**
+     * @brief An api to toggle panel function state.
+     * Ths api is exposed on bus and is to be used to enable/disable panel
+     * functions.
+     * @param[in] list - A byte array, where each bit corresponds to a panel
+     * function.
+     */
+    void toggleFunctionState(types::FunctionalityList list);
+
     /* Pointer to transport class */
     std::shared_ptr<Transport> transport;
 
     /* Pointer to interface */
     std::shared_ptr<sdbusplus::asio::dbus_interface> iface;
+
+    /* Pointer to state manager class */
+    std::shared_ptr<state::manager::PanelStateManager> stateManager;
 };
 
 } // namespace panel
