@@ -44,7 +44,6 @@ class PldmFramework
     static constexpr auto mctpEid = (types::Byte)9;
 
     // Constants required for PLDM packet.
-    static constexpr auto phypTerminusID = (types::Byte)208;
     static constexpr auto frontPanelBoardEntityId = (uint16_t)32837;
     static constexpr auto stateIdToEnablePanelFunc = (uint16_t)32778;
 

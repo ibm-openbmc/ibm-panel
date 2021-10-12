@@ -2,6 +2,7 @@
 #include "bus_monitor.hpp"
 #include "button_handler.hpp"
 #include "const.hpp"
+#include "pldm_dbus_signals.hpp"
 #include "utils.hpp"
 
 #include <exception>
@@ -163,8 +164,11 @@ int main(int, char**)
             lcdPanel->setTransportKey(true);
         }
 
+        auto sensorEvents = std::make_shared<panel::PLDMSensorEvents>(conn);
+
         // create executor class
-        auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io);
+        auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io,
+                                                          sensorEvents);
 
         // create state manager object
         auto stateManager =

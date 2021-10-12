@@ -171,7 +171,6 @@ types::PdrList getPDR(const uint8_t& terminusId, const uint16_t& entityId,
  * @brief Get sensor data like sensor id from the PDR.
  * @param[in] stateSensorPdr - sensor PDR.
  * @param[out] sensorId - sensor id fetched from sensor PDR.
- * PDR.
  */
 void getSensorDataFromPdr(const types::PdrList& stateSensorPdr,
                           uint16_t& sensorId);
