@@ -1,5 +1,6 @@
 #include "pldm_fw.hpp"
 
+#include "const.hpp"
 #include "exception.hpp"
 #include "utils.hpp"
 
@@ -114,7 +115,7 @@ void PldmFramework::sendPanelFunctionToPhyp(
     const types::FunctionNumber& funcNumber)
 {
     types::PdrList pdrs =
-        utils::getPDR(phypTerminusID, frontPanelBoardEntityId,
+        utils::getPDR(constants::phypTerminusID, frontPanelBoardEntityId,
                       stateIdToEnablePanelFunc, "FindStateEffecterPDR");
 
     if (pdrs.empty())
