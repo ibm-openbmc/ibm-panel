@@ -71,7 +71,10 @@ std::vector<FunctionalityAttributes> functionalityList = {
     {67, false, false, "NONE", StateType::INITIAL_STATE},
     {68, false, false, "NONE", StateType::INITIAL_STATE},
     {69, false, false, "NONE", StateType::INITIAL_STATE},
-    {70, false, false, "NONE", StateType::INITIAL_STATE}};
+    {70, false, false, "NONE", StateType::INITIAL_STATE},
+    // TODO: func 73 is enabled only after a certain condition, needs to be
+    // updated once the commit with enable/disable mask is in
+    {73, false, true, "A170800B", StateType::INITIAL_STATE}};
 
 void PanelStateManager::enableFunctonality(
     const types::FunctionalityList& listOfFunctionalities)

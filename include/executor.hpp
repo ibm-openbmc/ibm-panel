@@ -155,6 +155,11 @@ class Executor
     void execute64(const types::FunctionNumber subFuncNumber);
 
     /**
+     * @brief An api to execute function 73.
+     */
+    void execute73();
+
+    /**
      * @brief Api to get PEL eventId.
      *
      * This is a helper function to get the eventId(SRC) data for the PEL
