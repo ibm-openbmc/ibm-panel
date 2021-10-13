@@ -188,7 +188,7 @@ int main(int, char**)
                       << std::endl;
         }
 
-        panel::PELListener pelEvent(conn, stateManager, executor);
+        panel::PELListener pelEvent(conn, stateManager, executor, lcdPanel);
         pelEvent.listenPelEvents();
 
         // register property change call back for progress code.

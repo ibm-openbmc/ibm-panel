@@ -74,12 +74,14 @@ class PELListener
      * @param[in] con - Bus connection.
      * @param[in] manager - Pointer to State manager.
      * @param[in] execute - pointer to Executor.
+     * @param[in] transport - pointer to transport class.
      */
     PELListener(std::shared_ptr<sdbusplus::asio::connection> con,
                 std::shared_ptr<state::manager::PanelStateManager> manager,
-                std::shared_ptr<Executor> execute) :
+                std::shared_ptr<Executor> execute,
+                std::shared_ptr<Transport>& transport) :
         conn(con),
-        stateManager(manager), executor(execute)
+        stateManager(manager), executor(execute), transport(transport)
     {
     }
 
@@ -100,6 +102,9 @@ class PELListener
 
     /* Executor */
     std::shared_ptr<Executor> executor;
+
+    /* pointer to Transport class*/
+    std::shared_ptr<Transport> transport;
 
     /* Check if respective functions are enabled */
     bool functionStateEnabled = false;
