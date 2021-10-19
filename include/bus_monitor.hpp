@@ -94,6 +94,24 @@ class PELListener
     /* Callback to listen for PEL event log */
     void PELEventCallBack(sdbusplus::message::message& msg);
 
+    /**
+     * @brief An Api to set panel function state based on PEL data.
+     * @param[in]propValueMap - Map of property and value for the PEL.
+     */
+    void
+        setPelRelatedFunctionState(const types::PropertyValueMap& propValueMap);
+
+    /**
+     * @brief An Api to get list of PELs logged in the system.
+     */
+    void getListOfExistingPels();
+
+    /**
+     * @brief An Api to filter PELs of desired severity and eventId.
+     * @param[in] listOfPels - List of existing PELs in the system.
+     */
+    void filterPel(const types::GetManagedObjects& listOfPels);
+
     /* Dbus connection */
     std::shared_ptr<sdbusplus::asio::connection> conn;
 
