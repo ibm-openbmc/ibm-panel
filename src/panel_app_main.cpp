@@ -1,7 +1,7 @@
+#include "bus_handler.hpp"
 #include "bus_monitor.hpp"
 #include "button_handler.hpp"
 #include "const.hpp"
-#include "panel_app.hpp"
 #include "utils.hpp"
 
 #include <exception>
@@ -118,8 +118,6 @@ int main(int, char**)
         std::shared_ptr<sdbusplus::asio::dbus_interface> iface =
             server.add_interface("/com/ibm/panel_app", "com.ibm.panel");
 
-        iface->register_method("Display", display);
-
         const std::string imValue = getIM();
 
         std::string lcdDevPath{}, lcdObjPath{};
@@ -189,6 +187,8 @@ int main(int, char**)
                          "will not work!"
                       << std::endl;
         }
+
+        panel::BusHandler busHandle(iface);
 
         panel::PELListener pelEvent(conn, stateManager, executor);
         pelEvent.listenPelEvents();

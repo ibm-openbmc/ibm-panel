@@ -71,7 +71,10 @@ std::vector<FunctionalityAttributes> functionalityList = {
     {67, false, false, "NONE", StateType::INITIAL_STATE},
     {68, false, false, "NONE", StateType::INITIAL_STATE},
     {69, false, false, "NONE", StateType::INITIAL_STATE},
-    {70, false, false, "NONE", StateType::INITIAL_STATE}};
+    {70, false, false, "NONE", StateType::INITIAL_STATE},
+    // TODO: func 73 is enabled only after a certain condition, needs to be
+    // updated once the commit with enable/disable mask is in
+    {73, false, true, "A170800B", StateType::INITIAL_STATE}};
 
 void PanelStateManager::enableFunctonality(
     const types::FunctionalityList& listOfFunctionalities)
@@ -532,15 +535,16 @@ void PanelStateManager::executeState()
         return;
     }
 
-    // check if the current state has a subrange or function is 63. This
-    // can be a situaton for function 63 where upper range is eqaul to
+    // check if the current state has a subrange or function is 63 or 64. This
+    // can be a situation for function 63 or 64 where upper range is equal to
     // StateType::INITIAL_STATE and still the function has sub range.
-    // Sub fubctions of function 63 gets enabled at runtime based on number of
-    // progress codes received.
-    // This will be the case when number of Progress code recieved is 0. In that
-    // case only 00 sub function needs to remain activated.
+    // Sub functions of function 63 and 64 gets enabled at runtime based on
+    // number of progress codes/SRC received respectively.
+    // Below will be the case when number of Progress code or SRC received is 0.
+    // In that case only 00 sub function needs to remain activated.
     if (funcState.subFunctionUpperRange != StateType::INITIAL_STATE ||
-        funcState.functionNumber == FUNCTION_63)
+        funcState.functionNumber == FUNCTION_63 ||
+        funcState.functionNumber == FUNCTION_64)
     {
         // Then check if it already active
         if (isSubrangeActive)
@@ -661,17 +665,21 @@ void PanelStateManager::createDisplayString() const
 
 void PanelStateManager::displayDebounce() const
 {
-    std::string line1{};
-
+    std::string line2{};
     const auto& funcState = panelFunctions.at(panelCurState);
 
-    if ((panelCurSubStates.at(0) == StateType::DEBOUCNE_SRC_STATE) &&
-        (funcState.debouceSrc != "NONE"))
+    // if function 3 or 8 then additional msg to be displayed along with
+    // debounce.
+    if (funcState.functionNumber == 3)
     {
-        line1 += funcState.debouceSrc;
+        line2 = "REBOOT SERVER?";
+    }
+    else if (funcState.functionNumber == 8)
+    {
+        line2 = "SHUTDOWN SERVER?";
     }
 
-    utils::sendCurrDisplayToPanel(line1, std::string{}, transport);
+    utils::sendCurrDisplayToPanel(funcState.debouceSrc, line2, transport);
 }
 
 /**

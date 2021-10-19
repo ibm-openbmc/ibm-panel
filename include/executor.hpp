@@ -102,9 +102,24 @@ class Executor
     void execute01();
 
     /**
+     * @brief An api to execute function 04.
+     */
+    void execute04();
+
+    /**
      * @brief An api to execute function 02.
      */
     void execute02(const types::FunctionalityList& subFuncNumber);
+
+    /**
+     * @brief An api to execute function 03.
+     */
+    void execute03();
+
+    /**
+     * @brief An api to execute function 08.
+     */
+    void execute08();
 
     /**
      * @brief An api to execute function 11.
@@ -140,6 +155,11 @@ class Executor
     void execute64(const types::FunctionNumber subFuncNumber);
 
     /**
+     * @brief An api to execute function 73.
+     */
+    void execute73();
+
+    /**
      * @brief Api to get PEL eventId.
      *
      * This is a helper function to get the eventId(SRC) data for the PEL
@@ -170,10 +190,23 @@ class Executor
                                 const types::FunctionalityList& subFuncNumber,
                                 const bool result);
 
-    /** @brief API to execute function 55.
+    /**
+     * @brief API to initiate disruptive platform system dump.
+     */
+    void execute42();
+
+    /**
+     * @brief API to execute function 55.
      * @param[in] subFuncNumber - Sub function vector.
      */
     void execute55(const types::FunctionalityList& subFuncNumber);
+
+    /**
+     * @brief Api to initiate service processor dump.
+     * This method triggers a service processor dump when function 43 is pressed
+     * in panel.
+     */
+    void execute43();
 
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
