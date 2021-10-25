@@ -64,11 +64,6 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
             std::cerr << "\n Buffer empty. Skipping I2C Write." << std::endl;
         }
     }
-    else
-    {
-        std::cout << "\n Transport Key is inactive. Cannot do raw i2c writes."
-                  << std::endl;
-    }
 }
 
 void Transport::doButtonConfig()
