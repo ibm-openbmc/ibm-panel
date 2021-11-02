@@ -143,5 +143,12 @@ void getNextBootSide(std::string& nextBootSide);
  */
 void doLampTest(std::shared_ptr<Transport>& transport);
 
+/**
+ * @brief Api to restore the current display state on panel.
+ * @param[in] transport - shared pointer object to transport class to send the
+ * display lines.
+ */
+void restoreDisplayOnPanel(std::shared_ptr<Transport>& transport);
+
 } // namespace utils
 } // namespace panel
