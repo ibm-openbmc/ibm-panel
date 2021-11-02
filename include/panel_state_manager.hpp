@@ -54,6 +54,15 @@ class PanelStateManager
         const types::FunctionalityList& listOfFunctionalities);
 
     /**
+     * @brief API to toggle function(s) state from Phyp.
+     * This api will be called when phyp enables/diables any function(s) from
+     * its end.
+     * @param[in] list - A byte array, where each bit corresponds to a panel
+     * function.
+     */
+    void toggleFuncStateFromPhyp(const types::FunctionalityList& list);
+
+    /**
      * @brief Api to disable function(s).
      * @param[in] listOfFunctionalities - A list of function(s) to be disabled.
      * */
@@ -90,6 +99,30 @@ class PanelStateManager
     {
         initPanelState();
     }
+
+    /**
+     * @brief Api to toggle bmc state bit in member variable "systemState".
+     * @param[in] bmcState - Bmc state.
+     */
+    void updateBMCState(const std::string& bmcState);
+
+    /**
+     * @brief Api to toggle power state bit in member variable "systemState".
+     * @param[in] powerState - Power state.
+     */
+    void updatePowerState(const std::string& powerState);
+
+    /**
+     * @brief Api to toggle boot progress state bit.
+     * @param[in] bootState - Boot progress state.
+     */
+    void updateBootProgressState(const std::string& bootState);
+
+    /**
+     * @brief Api to set system operating mode.
+     * @param[in] operatingMode - Current mode of system.
+     */
+    void setSystemOperatingMode(const std::string& operatingMode);
 
   private:
     /**
@@ -148,6 +181,13 @@ class PanelStateManager
     void initFunction02();
 
     /**
+     * @brief An api to toggle state of panel functons.
+     * This api will be called everytime any bit changes in system state to
+     * check if any panel function can be enabled/disabled based on that.
+     */
+    void updateFunctionStatus();
+
+    /**
      * @brief A structure to store information related to a particular
      * functionality. It will carry information like function number, its
      * subrange etc. It will also store active state of a functionality at a
@@ -166,6 +206,12 @@ class PanelStateManager
 
         // Upper range in sub function list.
         types::FunctionNumber subFunctionUpperRange;
+
+        // conditions to enable a particular function.
+        types::Byte functionEnableMask = 0x00;
+
+        // If function require enabling by PHYP.
+        types::Byte functionEnabledByPhyp = 0x00;
     };
 
     // A list of functions provided by the panel.
@@ -200,6 +246,23 @@ class PanelStateManager
 
     /* Boot side selected for next boot.*/
     std::string nextBootSideSelected = "P";
+
+    /* A variable to store state of specific modules required to enable/disable
+     * panel functions.
+     * Each bit represent state of a particular module.
+     * Bitwise AND this variable with bit mask of that function from table to
+     * enable/disable the function.
+     * Representation as in Big Endian.
+     * 0th bit - Reserved. PHYP enable bit set in the function structure.
+     * 1st bit - Operation mode Normal/Manual 0/1
+     * 2nd bit - Power on state On/Off 1/0
+     * 3rd bit - Is Runtime No/Yes 0/1
+     * 4th bit - CE No/Yes 0/1
+     * 5th bit - At standby No/Yes 0/1
+     * 6th bit - Reserved.
+     * 7th bit - Reserved.
+     */
+    types::Byte systemState = 0;
 }; // class PanelStateManager
 
 } // namespace manager

@@ -188,7 +188,6 @@ int main(int, char**)
                       << std::endl;
         }
 
-
         panel::PELListener pelEvent(conn, stateManager, executor);
         pelEvent.listenPelEvents();
 
@@ -196,9 +195,12 @@ int main(int, char**)
         panel::BootProgressCode progressCode(lcdPanel, conn, executor);
         progressCode.listenProgressCode();
 
-        panel::BusHandler busHandle(lcdPanel, iface);
+        panel::BusHandler busHandle(lcdPanel, iface, stateManager);
 
         iface->initialize();
+
+        panel::SystemStatus systemStatus(conn, stateManager);
+
         io->run();
     }
     catch (const std::exception& e)
