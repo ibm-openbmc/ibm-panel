@@ -53,6 +53,7 @@ panel_app_a = static_library(
     'src/utils.cpp',
     'src/bus_monitor.cpp',
     'src/executor.cpp',
+    'src/pldm_fw.cpp',
     include_directories: 'include'
 )
 
@@ -61,6 +62,7 @@ executable(
     'src/panel_app_main.cpp',
     dependencies: [
       sdbusplus,
+      dependency('libpldm')
     ],
     include_directories: 'include',
     install: true,
