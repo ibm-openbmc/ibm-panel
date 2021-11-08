@@ -208,6 +208,16 @@ class Executor
      */
     void execute43();
 
+    /**
+     * @brief API to send function number to PHYP.
+     * Some of the functions(like 21,22,34,41,65-70) needs to be executed by
+     * PHYP. This method sends the function number to phyp via the PldmFramework
+     * api and displays 00 on a successful send and FF on a failure.
+     *
+     * @param[in] funcNumber - Function number.
+     */
+    void sendFuncNumToPhyp(const types::FunctionNumber& funcNumber);
+
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
 

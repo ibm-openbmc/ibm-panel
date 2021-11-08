@@ -83,6 +83,7 @@ if get_option('tests').enabled()
           sdbusplus,
           gmock,
           gtest,
+          dependency('libpldm')
       ],
       include_directories: [
           'include',
