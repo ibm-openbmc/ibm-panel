@@ -137,19 +137,6 @@ types::SystemParameterValues readSystemParameters()
                 {
                     HMCManaged = *val;
                 }
-                // TODO: needs to be updated. Now phyp does not use P/T.
-                // BIOS table will not be used for this. Will be stored at the
-                // panel end.
-                // Have to come up woth new terminology. BMC does not
-                // have P/T boot side.
-                // To Check: When user updates the value to
-                // backup image using function 02 if the display of function 01
-                // does not changes accordingly then we do not need to show this
-                // at all in function 01.
-                else if (attributeName == "pvm_fw_boot_side")
-                {
-                    FWIPLType = *val;
-                }
                 else if (attributeName == "hb_hyp_switch")
                 {
                     hypType = *val;
