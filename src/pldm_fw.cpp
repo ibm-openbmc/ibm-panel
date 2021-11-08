@@ -14,7 +14,10 @@
 namespace panel
 {
 
-PdrList PldmFramework::getPanelStateEffecterPDR()
+PdrList PldmFramework::getPDR(const uint8_t& terminusId,
+                              const uint16_t& entityId,
+                              const uint16_t& stateSetId,
+                              const std::string& pdrMethod)
 {
     PdrList pdrs{};
     try
@@ -22,17 +25,15 @@ PdrList PldmFramework::getPanelStateEffecterPDR()
         auto bus = sdbusplus::bus::new_default();
         auto method = bus.new_method_call(
             "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
-            "xyz.openbmc_project.PLDM.PDR", "FindStateEffecterPDR");
-        method.append(phypTerminusID, frontPanelBoardEntityId,
-                      stateIdToEnablePanelFunc);
+            "xyz.openbmc_project.PLDM.PDR", pdrMethod.c_str());
+        method.append(terminusId, entityId, stateSetId);
         auto responseMsg = bus.call(method);
         responseMsg.read(pdrs);
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
         std::cerr << e.what() << std::endl;
-        throw FunctionFailure(
-            "pldm: Failed to fetch the Panel state effecter PDRs.");
+        throw FunctionFailure("pldm: Failed to fetch the PDR.");
     }
     return pdrs;
 }
@@ -136,7 +137,8 @@ types::PldmPacket
 void PldmFramework::sendPanelFunctionToPhyp(
     const types::FunctionNumber& funcNumber)
 {
-    PdrList pdrs = getPanelStateEffecterPDR();
+    PdrList pdrs = getPDR(phypTerminusID, frontPanelBoardEntityId,
+                          stateIdToEnablePanelFunc, "FindStateEffecterPDR");
 
     if (pdrs.empty())
     {
