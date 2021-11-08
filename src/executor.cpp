@@ -2,6 +2,7 @@
 
 #include "const.hpp"
 #include "exception.hpp"
+#include "pldm_fw.hpp"
 #include "utils.hpp"
 
 #include <boost/algorithm/string.hpp>
@@ -89,6 +90,20 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
             case 20:
                 execute20();
                 break;
+
+            case 21:
+            case 22:
+            case 34:
+            case 41:
+            case 65:
+            case 66:
+            case 67:
+            case 68:
+            case 69:
+            case 70:
+                sendFuncNumToPhyp(funcNumber);
+                break;
+
             case 30:
                 execute30(subFuncNumber);
                 break;
@@ -935,6 +950,14 @@ void Executor::execute73()
 
     // Factory Reset doesn't actually happen until a reboot
     doBMCGracefulRestart();
+}
+
+void Executor::sendFuncNumToPhyp(const types::FunctionNumber& funcNumber)
+{
+    PldmFramework obj;
+    obj.sendPanelFunctionToPhyp(funcNumber);
+    displayExecutionStatus(funcNumber, std::vector<types::FunctionNumber>(),
+                           true);
 }
 
 } // namespace panel
