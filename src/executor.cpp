@@ -6,6 +6,7 @@
 #include "utils.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <string_view>
 
 namespace panel
@@ -150,6 +151,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute73();
                 break;
 
+            case 74:
+                execute74();
+                break;
+
             default:
                 break;
         }
@@ -162,6 +167,11 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
     catch (const sdbusplus::exception::SdBusError& e)
     {
         std::cerr << e.what() << std::endl;
+        displayExecutionStatus(funcNumber, subFuncNumber, false);
+    }
+    catch (const boost::system::system_error& err)
+    {
+        std::cerr << "Boost throwing exception" << err.what() << std::endl;
         displayExecutionStatus(funcNumber, subFuncNumber, false);
     }
 }
@@ -1003,6 +1013,39 @@ void Executor::sendFuncNumToPhyp(const types::FunctionNumber& funcNumber)
     obj.sendPanelFunctionToPhyp(funcNumber);
     displayExecutionStatus(funcNumber, std::vector<types::FunctionNumber>(),
                            true);
+}
+
+void Executor::execute74()
+{
+    static boost::asio::steady_timer timeout(*io_context);
+    // timer for 30 minutes
+    auto asyncCancelled = timeout.expires_after(std::chrono::minutes(30));
+
+    (asyncCancelled == 0) ? std::cout << "Timer started" << std::endl
+                          : std::cout << "Timer re-started" << std::endl;
+
+    timeout.async_wait([this](const boost::system::error_code& ec) {
+        if (ec == boost::asio::error::operation_aborted)
+        {
+            return;
+        }
+
+        if (ec)
+        {
+            std::cerr << "Timer wait failed for function 74" << ec.message();
+        }
+        iface->set_property("ACFWindowActive", false);
+    });
+
+    if (!asyncCancelled)
+    {
+        if (!iface->set_property("ACFWindowActive", true))
+        {
+            timeout.cancel();
+            throw FunctionFailure("Failed to set the window property");
+        }
+    }
+    displayExecutionStatus(74, std::vector<types::FunctionNumber>(), true);
 }
 
 } // namespace panel

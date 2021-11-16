@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <memory>
+#include <sdbusplus/asio/object_server.hpp>
 #include <sdbusplus/message/native_types.hpp>
 
 namespace panel
@@ -26,8 +27,14 @@ class Executor
     /**
      * @brief Constructor
      * @param[in] transport - Pointer to transport class.
+     * @param[in] iface - Pointer to Panel dbus interface.
+     * @param[in] io - reference to io context class.
      */
-    Executor(std::shared_ptr<Transport> transport) : transport(transport)
+    Executor(std::shared_ptr<Transport> transport,
+             std::shared_ptr<sdbusplus::asio::dbus_interface>& iface,
+             std::shared_ptr<boost::asio::io_context>& io) :
+        transport(transport),
+        iface(iface), io_context(io)
     {
     }
 
@@ -186,6 +193,11 @@ class Executor
     void execute73();
 
     /**
+     * @brief An api to execute function 74.
+     */
+    void execute74();
+
+    /**
      * @brief Api to get PEL eventId.
      *
      * This is a helper function to get the eventId(SRC) data for the PEL
@@ -258,5 +270,12 @@ class Executor
 
     /*State of function 25 excution. Needed for function 26*/
     bool serviceSwitch1State = false;
+
+    /* Pointer to interface */
+    std::shared_ptr<sdbusplus::asio::dbus_interface> iface;
+
+    /* Event for timer required in function 74 */
+    std::shared_ptr<boost::asio::io_context> io_context;
+
 }; // class Executor
 } // namespace panel

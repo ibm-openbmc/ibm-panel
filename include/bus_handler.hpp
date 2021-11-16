@@ -45,6 +45,10 @@ class BusHandler
                                [this](const types::FunctionalityList& list) {
                                    this->toggleFunctionState(list);
                                });
+
+        iface->register_property(
+            "ACFWindowActive", false,
+            sdbusplus::asio::PropertyPermission::readWrite);
     }
 
   private:
