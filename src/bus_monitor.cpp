@@ -141,9 +141,51 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                     if (const auto eventId =
                             std::get_if<std::string>(&propItr->second))
                     {
-                        executor->storePelEventId(*eventId);
-                        return;
+                        // Terminating src detection.
+                        // Terminating bit is the bit 2(starting from 0) from
+                        // MSB end (Big Endian) of 5th Hex word.
+
+                        // Length for 5 hex words required is 44 including
+                        // spaces btween them.
+                        if ((*eventId).length() >=
+                            constants::fiveHexWordsWithSpaces)
+                        {
+                            std::vector<std::string> hexWords;
+                            boost::split(hexWords, *eventId,
+                                         boost::is_any_of("\n"));
+
+                            /*Steps used to check for terminating Bit.
+                            Eg: 5th Hexword = "A0000000".
+                            - Binary equivalent "1010 0000 0000 0000 0000 0000
+                            0000 0000"
+                            - Picking nibble from MSB - "1010"
+                            - Storing as a Byte - "0000 1010"
+                            - Bitwise AND with "0000 0010" to check the
+                            terminating bit.*/
+
+                            // picking a nibble value from MSB end (Big Endian)
+                            // of the hexword and storing as a char.
+                            char valueAtIndexZero[2] = {hexWords[4][0], '\0'};
+                            types::Byte byte =
+                                ::strtoul(valueAtIndexZero, nullptr, 16);
+
+                            if ((byte & constants::terminatingBit) != 0x00 &&
+                                (hexWords[0][0] == 'B' &&
+                                 hexWords[0][1] == 'D'))
+                            {
+                                // if terminating bit is set and response code
+                                // is for BMC i.e "BD". Send it directly to
+                                // display.
+                                utils::sendCurrDisplayToPanel(
+                                    hexWords.at(4), std::string{}, transport);
+                            }
+                            executor->storePelEventId(*eventId);
+                            return;
+                        }
                     }
+                    std::cerr << "Error fetching value for Event ID"
+                              << std::endl;
+                    return;
                 }
                 std::cerr << "Event ID property not found" << std::endl;
             }
