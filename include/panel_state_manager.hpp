@@ -124,6 +124,11 @@ class PanelStateManager
      */
     void setSystemOperatingMode(const std::string& operatingMode);
 
+    /**
+     * @brief An api to enable/disable CE mode.
+     */
+    void setCEState();
+
   private:
     /**
      * @brief An Api to set the initial state of PanelState class.
