@@ -90,6 +90,17 @@ class Executor
         return iplSrcs.size();
     }
 
+    /**
+     * @brief An api to get state of service switch 1.
+     * It is required to enable CE mode by state manager.
+     *
+     * @return state of service switch 1.
+     */
+    inline bool getServiceSwitch1State() const
+    {
+        return serviceSwitch1State;
+    }
+
   private:
     /**
      * @brief An api to execute functionality 20
@@ -141,6 +152,21 @@ class Executor
      * @param[in] funcNumber - function to execute.
      */
     void execute14to19(const types::FunctionNumber funcNumber);
+
+    /**
+     * @brief An api to execute function 25.
+     * Function 25 along with function 26 is usd to enable CE mode functions in
+     * panel.
+     */
+    void execute25();
+
+    /**
+     * @brief An api to execute function 26.
+     * Function 26 when executed after function 25 enables CE mode in panel. If
+     * function 25 has not been executed before function 26, then execution of
+     * this function will fail and FF will be displayed.
+     */
+    void execute26();
 
     /**
      * @brief An api to execute function 63.
@@ -230,5 +256,7 @@ class Executor
     /* Queue of last 25 PEL SRCs */
     std::deque<std::string> pelEventIdQueue;
 
+    /*State of function 25 excution. Needed for function 26*/
+    bool serviceSwitch1State = false;
 }; // class Executor
 } // namespace panel

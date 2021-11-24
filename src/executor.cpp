@@ -43,6 +43,16 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
         std::cout << subFuncNumber.at(0) << std::endl;
     }
 
+    // If function 25 has been executed last and the current requested function
+    // for execution is not 25 or 26 then reset the states else maintain
+    // function 25 executed state.
+    // Function 26 is included here as func26 execution will need the state of
+    // func25.
+    if (serviceSwitch1State && (funcNumber != 25 || funcNumber != 26))
+    {
+        serviceSwitch1State = false;
+    }
+
     try
     {
         switch (funcNumber)
@@ -104,6 +114,14 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 sendFuncNumToPhyp(funcNumber);
                 break;
 
+            case 25:
+                execute25();
+                break;
+
+            case 26:
+                execute26();
+                break;
+
             case 30:
                 execute30(subFuncNumber);
                 break;
@@ -156,6 +174,33 @@ void Executor::execute03()
         "xyz.openbmc_project.State.Host.Transition.GracefulWarmReboot");
 
     utils::sendCurrDisplayToPanel("RESTART SERVER", "INITIATED", transport);
+}
+
+void Executor::execute25()
+{
+    // Execution will not reach this point for subsequent function 25 request
+    // once the state is set.
+    serviceSwitch1State = !serviceSwitch1State;
+    if (serviceSwitch1State)
+    {
+        // Display 00 only when function 25 state is set.
+        displayExecutionStatus(25, std::vector<types::FunctionNumber>(), true);
+    }
+}
+
+void Executor::execute26()
+{
+    if (serviceSwitch1State)
+    {
+        // function 26 has been successfully executed, reset function 25 state.
+        serviceSwitch1State = false;
+        displayExecutionStatus(26, std::vector<types::FunctionNumber>(), true);
+    }
+    else
+    {
+        throw FunctionFailure(
+            "Function 25 is not executed prior to function 26");
+    }
 }
 
 void Executor::execute20()
