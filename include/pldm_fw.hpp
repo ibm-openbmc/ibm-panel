@@ -6,8 +6,6 @@
 
 namespace panel
 {
-using PdrList = std::vector<types::PldmPacket>;
-
 /**
  * @brief A class to implement Pldm related functionalities.
  */
@@ -62,7 +60,8 @@ class PldmFramework
      * @return Returns a Pldm packet.
      */
     types::PldmPacket
-        prepareSetEffecterReq(const PdrList& pdrs, types::Byte instanceId,
+        prepareSetEffecterReq(const types::PdrList& pdrs,
+                              types::Byte instanceId,
                               const types::FunctionNumber& function);
 
     /**
@@ -75,7 +74,8 @@ class PldmFramework
      * @param[out] panelEffecterPos - Position of panel effecter.
      */
 
-    void fetchPanelEffecterStateSet(const PdrList& pdrs, uint16_t& effecterId,
+    void fetchPanelEffecterStateSet(const types::PdrList& pdrs,
+                                    uint16_t& effecterId,
                                     types::Byte& effecterCount,
                                     types::Byte& panelEffecterPos);
 
@@ -88,22 +88,5 @@ class PldmFramework
      * @return one byte instance id.
      */
     types::Byte getInstanceID();
-
-    /**
-     * @brief Find and retrieve the PDR.
-     * This api returns the pdr for the given terminusId, entityId and
-     * stateSetId.
-     *
-     * @param[in] terminusId - PLDM terminus id.
-     * @param[in] entityId - Id representing an entity associated to the given
-     * PLDM state set.
-     * @param[in] stateSetId - Id representing PLDM state set.
-     * @param[in] pdrMethod - PDR method name
-     * (FindStateEffecterPDR/FindStateSensorPDR).
-     *
-     * @return PDR data.
-     */
-    PdrList getPDR(const uint8_t& terminusId, const uint16_t& entityId,
-                   const uint16_t& stateSetId, const std::string& pdrMethod);
 };
 } // namespace panel
