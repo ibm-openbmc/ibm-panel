@@ -89,10 +89,12 @@ Binary MessageEncoder::scroll(Byte scrollControl)
 Binary MessageEncoder::lampTest()
 {
     Binary encodedData;
-    encodedData.reserve(4);
+    encodedData.reserve(6);
     encodedData.emplace_back(0xFF);
     encodedData.emplace_back(0x54);
     encodedData.emplace_back(240); // emplace lamp test duration
+    encodedData.emplace_back(50);  // emplace lamp test period
+    encodedData.emplace_back(50);  // emplace lamp test on period
     calculateCheckSum(encodedData);
     return encodedData;
 }

@@ -110,7 +110,7 @@ TEST(MessageEncoder, scroll)
 TEST(MessageEncoder, lampTest)
 {
     MessageEncoder msgEncode;
-    Binary validData = {0xFF, 0x54, 240, 187};
+    Binary validData = {0xFF, 0x54, 240, 50, 50, 87};
     EXPECT_EQ(validData, msgEncode.lampTest());
 }
 

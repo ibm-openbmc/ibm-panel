@@ -89,8 +89,8 @@ class MessageEncoder
      * The Lamp Test command is used to perform a lamp test on all illumination
      * elements (LED, LCD) on the converged Panel.
      * The encoded data packet contains the command code of lamp test command
-     * (0xFF54); the lamp test duration which is defaulted to 240seconds; along
-     * with the calculated checksum.
+     * (0xFF54); the lamp test duration which is defaulted to 240seconds; lamp
+     * test period and lamp test on period along with the calculated checksum.
      * @return Encoded data packet of lamp test command.
      */
     Binary lampTest();
