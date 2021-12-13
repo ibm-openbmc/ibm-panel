@@ -164,7 +164,7 @@ int main(int, char**)
         }
 
         // create executor class
-        auto executor = std::make_shared<panel::Executor>(lcdPanel);
+        auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io);
 
         // create state manager object
         auto stateManager =

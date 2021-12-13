@@ -2,6 +2,8 @@
 #include "transport.hpp"
 #include "types.hpp"
 
+#include <sdbusplus/asio/connection.hpp>
+#include <sdbusplus/asio/object_server.hpp>
 #include <tuple>
 
 #include <gtest/gtest.h>
@@ -17,8 +19,13 @@ using namespace std;
 
 // NOTE: Using "up", "down" and "enter" till we implement actual button events.
 // Will be modified later.
+auto io_con = std::make_shared<boost::asio::io_context>();
+auto dummy_conn = std::make_shared<sdbusplus::asio::connection>(*io_con);
+auto iface = std::make_shared<sdbusplus::asio::dbus_interface>(
+    dummy_conn, std::string{}, std::string{});
+
 auto lcdPanel = std::make_shared<panel::Transport>();
-auto executor = std::make_shared<panel::Executor>(lcdPanel);
+auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io_con);
 
 TEST(PanelStateManager, default_state)
 {
