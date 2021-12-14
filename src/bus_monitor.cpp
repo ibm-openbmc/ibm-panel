@@ -65,75 +65,13 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
         {
             const auto severity = std::get_if<std::string>(&propItr->second);
 
-            // TODO: need to check which all severty needs to be taken care
-            // of
+            // TODO: Issue 76. Need to check which all severity needs to be
+            // taken care.
             if (severity != nullptr &&
                 *severity !=
                     "xyz.openbmc_project.Logging.Entry.Level.Informational")
             {
-                types::FunctionalityList list;
-                // as there are maximum 9 SRC related functions.
-                list.reserve(9);
-
-                if (!functionStateEnabled)
-                {
-                    // these functions needs to be enabled only once when first
-                    // PEL of desired severity is received.
-                    functionStateEnabled = true;
-                    list.emplace_back(11);
-                    list.emplace_back(12);
-                    list.emplace_back(13);
-                }
-
-                propItr = propMap.find("Resolution");
-                if (propItr != propMap.end())
-                {
-                    const auto resolution =
-                        std::get_if<std::string>(&propItr->second);
-                    if (resolution != nullptr || !(*resolution).empty())
-                    {
-                        std::vector<std::string> callOutList;
-                        boost::split(callOutList, *resolution,
-                                     boost::is_any_of("\n"));
-
-                        // Need to show max 6 callout src.
-                        auto size = std::min(callOutList.size(),
-                                             static_cast<size_t>(6));
-
-                        // default list: 14 to 19 are the functions to display
-                        // callout SRCs.
-                        constexpr std::array<types::FunctionNumber, 6>
-                            callOutSRCFunctions{14, 15, 16, 17, 18, 19};
-
-                        // add functions to enable list based on number of
-                        // callouts.
-                        list.insert(std::end(list), callOutSRCFunctions.begin(),
-                                    callOutSRCFunctions.begin() + size);
-
-                        // Need to also disable functions in the range of 14 to
-                        // 19 based on number of callouts.
-                        if (size < callOutSRCFunctions.size())
-                        {
-                            // disable rest of the functions
-                            types::FunctionalityList disableFunc(
-                                (callOutSRCFunctions.begin() + size),
-                                callOutSRCFunctions.end());
-
-                            stateManager->disableFunctonality(disableFunc);
-                        }
-
-                        executor->pelCallOutList(callOutList);
-                    }
-                    else
-                    {
-                        std::cout << "No Callout found in the PEL";
-                    }
-                }
-
-                if (list.size() > 0)
-                {
-                    stateManager->enableFunctonality(list);
-                }
+                setPelRelatedFunctionState(propMap);
 
                 propItr = propMap.find("EventId");
                 if (propItr != propMap.end())
@@ -193,6 +131,203 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
     }
 }
 
+static void sortPels(types::GetManagedObjects& listOfPels)
+{
+    std::sort(listOfPels.begin(), listOfPels.end(),
+              [](const types::singleObjectEntry& curPelObject,
+                 const types::singleObjectEntry& nextPelObject) {
+                  return (std::stoi((std::get<0>(curPelObject)).filename()) >
+                          std::stoi((std::get<0>(nextPelObject)).filename()));
+              });
+}
+
+void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
+{
+    std::vector<types::PropertyValueMap> finalListOFPEls;
+    finalListOFPEls.reserve(25);
+
+    // Need this as the PEL list is sorted in decreasing order and we need to
+    // store eventIDs in normal order.
+    std::vector<std::string> tempListOfEventId;
+    // need to store 25 event Ids
+    tempListOfEventId.reserve(25);
+
+    for (const auto& aPel : listOfPels)
+    {
+        std::vector<types::InterfacePropertyPair> interfacePropList =
+            std::get<1>(aPel);
+
+        for (const auto& item : interfacePropList)
+        {
+            if (std::get<0>(item) == "xyz.openbmc_project.Logging.Entry")
+            {
+                types::PropertyValueMap propValueMap = std::get<1>(item);
+
+                auto propItr = propValueMap.find("Severity");
+                if (propItr != propValueMap.end())
+                {
+                    const auto severity =
+                        std::get_if<std::string>(&propItr->second);
+
+                    // TODO: Issue 76. Need to check which all severity needs to
+                    // be taken care.
+                    if (severity != nullptr &&
+                        *severity != "xyz.openbmc_project.Logging.Entry."
+                                     "Level.Informational")
+                    {
+                        propItr = propValueMap.find("EventId");
+                        if (propItr != propValueMap.end())
+                        {
+                            if (const auto eventId =
+                                    std::get_if<std::string>(&propItr->second))
+                            {
+                                // this is the PEL we are interested in.
+                                finalListOFPEls.push_back(propValueMap);
+
+                                // Empty eventId is not possible as length
+                                // of evenId field is hardcoded and is
+                                // guaranteed.
+                                tempListOfEventId.push_back(*eventId);
+
+                                if (tempListOfEventId.size() == 25)
+                                {
+                                    break;
+                                }
+                                continue;
+                            }
+                            std::cerr << "Error fetching value for Event ID. "
+                                         "Not a normal case. Ignoring the PEL"
+                                      << std::endl;
+                            continue;
+                        }
+                        std::cerr << "Mandatory field EventId is missing from "
+                                     "PEL. Ignoring the PEL."
+                                  << std::endl;
+                        continue;
+                    }
+                }
+                std::cerr << "Mandatory field severity is missing from PEL. "
+                             "Ignoring the PEL"
+                          << std::endl;
+            }
+        }
+
+        // we need to maintain a list of last 25 pels eventId with a desired
+        // severity.
+        if (tempListOfEventId.size() == 25)
+        {
+            break;
+        }
+    }
+
+    // Implies there are PELs logged in the system with desired severity
+    // before panel came up.
+    if (!finalListOFPEls.empty())
+    {
+        auto it = tempListOfEventId.rbegin();
+        while (it != tempListOfEventId.rend())
+        {
+            executor->storePelEventId(*it);
+            it++;
+        }
+
+        // enable or disable functions based on latest PEL logged.
+        setPelRelatedFunctionState(finalListOFPEls[0]);
+    }
+}
+
+void PELListener::setPelRelatedFunctionState(
+    const types::PropertyValueMap& propValueMap)
+{
+    types::FunctionalityList list;
+    // as there are maximum 9 SRC related functions.
+    list.reserve(9);
+
+    if (!functionStateEnabled)
+    {
+        // these functions needs to be enabled only once when first
+        // PEL of desired severity is received.
+        functionStateEnabled = true;
+        list.emplace_back(11);
+        list.emplace_back(12);
+        list.emplace_back(13);
+    }
+
+    const auto& propItr = propValueMap.find("Resolution");
+    if (propItr != propValueMap.end())
+    {
+        const auto resolution = std::get_if<std::string>(&propItr->second);
+        if (resolution != nullptr || !(*resolution).empty())
+        {
+            std::vector<std::string> callOutList;
+            boost::split(callOutList, *resolution, boost::is_any_of("\n"));
+
+            // Need to show max 6 callout src.
+            auto size = std::min(callOutList.size(), static_cast<size_t>(6));
+
+            // default list: 14 to 19 are the functions to display
+            // callout SRCs.
+            constexpr std::array<types::FunctionNumber, 6> callOutSRCFunctions{
+                14, 15, 16, 17, 18, 19};
+
+            // add functions to enable list based on number of
+            // callouts.
+            list.insert(std::end(list), callOutSRCFunctions.begin(),
+                        callOutSRCFunctions.begin() + size);
+
+            // Need to also disable functions in the range of 14 to
+            // 19 based on number of callouts.
+            if (size < callOutSRCFunctions.size())
+            {
+                // disable rest of the functions
+                types::FunctionalityList disableFunc(
+                    (callOutSRCFunctions.begin() + size),
+                    callOutSRCFunctions.end());
+
+                stateManager->disableFunctonality(disableFunc);
+            }
+
+            executor->pelCallOutList(callOutList);
+        }
+    }
+
+    if (list.size() > 0)
+    {
+        stateManager->enableFunctonality(list);
+    }
+}
+
+void PELListener::getListOfExistingPels()
+{
+    auto listOfPels = utils::getManagedObjects("xyz.openbmc_project.Logging",
+                                               "/xyz/openbmc_project/logging");
+
+    if (!listOfPels.empty())
+    {
+        // We need to remove manager entry as pels needs to be sorted based
+        // on ID.
+        const auto& it = std::find_if(
+            listOfPels.begin(), listOfPels.end(),
+            [](types::singleObjectEntry& pelObject) {
+                std::string objectPath = std::get<0>(pelObject);
+                if (objectPath ==
+                    "/xyz/openbmc_project/logging/internal/manager")
+                {
+                    return true;
+                }
+                return false;
+            });
+
+        if (it != listOfPels.end())
+        {
+            listOfPels.erase(it);
+        }
+
+        sortPels(listOfPels);
+        filterPel(listOfPels);
+    }
+}
+
 void PELListener::listenPelEvents()
 {
     static auto sigMatch = std::make_unique<sdbusplus::bus::match::match>(
@@ -200,6 +335,8 @@ void PELListener::listenPelEvents()
         sdbusplus::bus::match::rules::interfacesAdded(
             "/xyz/openbmc_project/logging"),
         [this](sdbusplus::message::message& msg) { PELEventCallBack(msg); });
+
+    getListOfExistingPels();
 }
 
 void BootProgressCode::listenProgressCode()
@@ -232,7 +369,8 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message::message& msg)
         {
             auto src = std::get<0>(*postCodeData);
 
-            // clear display if progress code ascii equals to "00000000"
+            // clear display if progress code ascii equals to
+            // "00000000"
             if (src == constants::clearDisplayProgressCode)
             {
                 utils::sendCurrDisplayToPanel(std::string{}, std::string{},
@@ -555,8 +693,8 @@ void SystemStatus::initSystemOperatingParameters()
     else
     {
         // for error set the parameters for Normal mode value.
-        powerPolicy =
-            "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.Restore";
+        powerPolicy = "xyz.openbmc_project.Control.Power.RestorePolicy."
+                      "Policy.Restore";
         std::cerr << "Failed to read power policy from Dbus" << std::endl;
     }
 

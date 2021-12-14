@@ -24,16 +24,18 @@ using PanelDataMap = std::unordered_map<std::string, PanelDataTuple>;
 using ItemInterfaceMap = std::map<std::string, std::variant<bool, std::string>>;
 using PldmPacket = std::vector<uint8_t>;
 
+// map{property::value}
+using PropertyValueMap = std::map<
+    std::string,
+    std::variant<
+        std::string, bool, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
+        int64_t, uint64_t, double, std::vector<std::string>,
+        std::vector<std::tuple<std::string, std::string, std::string>>>>;
+
 /* DbusInterfaceMap reference
 map{InterfaceName, map{propertyName, value}}
 */
-using DbusInterfaceMap = std::map<
-    std::string,
-    std::map<
-        std::string,
-        std::variant<
-            bool, uint32_t, uint64_t, std::string, std::vector<std::string>,
-            std::vector<std::tuple<std::string, std::string, std::string>>>>>;
+using DbusInterfaceMap = std::map<std::string, PropertyValueMap>;
 
 /*baseBIOSTable reference
 map{attributeName,struct{attributeType,readonlyStatus,displayname,
@@ -56,18 +58,19 @@ using BiosBaseTable = std::vector<BiosBaseTableItem>;
 using SystemParameterValues =
     std::tuple<std::string, std::string, std::string, std::string, std::string>;
 
+// map{Interface : map{property:value}}
+using InterfacePropertyPair = std::pair<std::string, PropertyValueMap>;
+
+// map{Object path, InterfacePropertyPair}
+using singleObjectEntry = std::pair<sdbusplus::message::object_path,
+                                    std::vector<InterfacePropertyPair>>;
+
 /** Get managed objects for Network manager:
- * array{pair(network-object-paths : array{pair(all-interfaces-of-that-obj-path
- * : map(property-of-that-interface-if-any : property-value))})}
+ * array{pair(network-object-paths :
+ * array{pair(all-interfaces-of-that-obj-path :
+ * map(property-of-that-interface-if-any : property-value))})}
  */
-using GetManagedObjects = std::vector<std::pair<
-    sdbusplus::message::object_path,
-    std::vector<std::pair<
-        std::string,
-        std::map<std::string,
-                 std::variant<std::string, bool, uint8_t, int16_t, uint16_t,
-                              int32_t, uint32_t, int64_t, uint64_t, double,
-                              std::vector<std::string>>>>>>>;
+using GetManagedObjects = std::vector<singleObjectEntry>;
 
 using AttributeValueType = std::variant<int64_t, std::string>;
 using PendingAttributesItemType =
