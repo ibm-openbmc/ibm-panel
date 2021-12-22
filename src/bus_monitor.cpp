@@ -133,12 +133,23 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
 
 static void sortPels(types::GetManagedObjects& listOfPels)
 {
-    std::sort(listOfPels.begin(), listOfPels.end(),
-              [](const types::singleObjectEntry& curPelObject,
-                 const types::singleObjectEntry& nextPelObject) {
-                  return (std::stoi((std::get<0>(curPelObject)).filename()) >
+    try
+    {
+        std::sort(listOfPels.begin(), listOfPels.end(),
+                  [](const types::singleObjectEntry& curPelObject,
+                     const types::singleObjectEntry& nextPelObject) {
+                      return (
+                          std::stoi((std::get<0>(curPelObject)).filename()) >
                           std::stoi((std::get<0>(nextPelObject)).filename()));
-              });
+                  });
+    }
+    catch (const std::exception& e)
+    {
+        // stoi (and sort) can throw. Make sure we handle it such that we can
+        // still continue.
+        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Failed to sort existing list of PELs" << std::endl;
+    }
 }
 
 void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
@@ -206,9 +217,13 @@ void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
                         continue;
                     }
                 }
-                std::cerr << "Mandatory field severity is missing from PEL. "
-                             "Ignoring the PEL"
-                          << std::endl;
+                else
+                {
+                    std::cerr
+                        << "Mandatory field severity is missing from PEL. "
+                           "Ignoring the PEL"
+                        << std::endl;
+                }
             }
         }
 
@@ -304,24 +319,15 @@ void PELListener::getListOfExistingPels()
 
     if (!listOfPels.empty())
     {
-        // We need to remove manager entry as pels needs to be sorted based
-        // on ID.
-        const auto& it = std::find_if(
-            listOfPels.begin(), listOfPels.end(),
-            [](types::singleObjectEntry& pelObject) {
-                std::string objectPath = std::get<0>(pelObject);
-                if (objectPath ==
-                    "/xyz/openbmc_project/logging/internal/manager")
-                {
-                    return true;
-                }
-                return false;
-            });
-
-        if (it != listOfPels.end())
-        {
-            listOfPels.erase(it);
-        }
+        // Remove objects that do not denote PEL entries
+        listOfPels.erase(
+            std::remove_if(
+                listOfPels.begin(), listOfPels.end(),
+                [](const auto& pelObject) {
+                    return !(std::string{std::get<0>(pelObject)}.starts_with(
+                        "/xyz/openbmc_project/logging/entry/"));
+                }),
+            listOfPels.end());
 
         sortPels(listOfPels);
         filterPel(listOfPels);
