@@ -853,8 +853,8 @@ void PanelStateManager::updateFunctionStatus()
     {
         if (aFunction.functionEnableMask != 0x00)
         {
-            if ((systemState | aFunction.functionEnabledByPhyp) ==
-                aFunction.functionEnableMask)
+            if (((systemState | aFunction.functionEnabledByPhyp) &
+                 aFunction.functionEnableMask) == aFunction.functionEnableMask)
             {
                 aFunction.functionActiveState = true;
             }
