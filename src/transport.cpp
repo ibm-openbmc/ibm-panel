@@ -48,15 +48,22 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
     {
         if (buffer.size()) // check if the given buffer has data in it.
         {
-            auto returnedSize =
-                write(panelFileDescriptor, buffer.data(), buffer.size());
-            if (returnedSize !=
-                static_cast<int>(buffer.size())) // write failure
+            static constexpr auto maxRetry = 5; // Just a random value
+            for (auto retryLoop = 0; retryLoop < maxRetry; ++retryLoop)
             {
-                std::cerr << "\n I2C Write failure. Errno : " << errno
-                          << ". Errno description : " << strerror(errno)
-                          << ". Bytes written = " << returnedSize
-                          << ". Actual Bytes = " << buffer.size() << std::endl;
+                auto returnedSize =
+                    write(panelFileDescriptor, buffer.data(), buffer.size());
+                if (returnedSize !=
+                    static_cast<int>(buffer.size())) // write failure
+                {
+                    std::cerr << "\n I2C Write failure. Errno : " << errno
+                              << ". Errno description : " << strerror(errno)
+                              << ". Bytes written = " << returnedSize
+                              << ". Actual Bytes = " << buffer.size()
+                              << ". Retry = " << retryLoop << std::endl;
+                    continue;
+                }
+                break;
             }
         }
         else
