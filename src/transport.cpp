@@ -95,7 +95,9 @@ void Transport::setTransportKey(bool keyValue)
     {
         transportKey = keyValue;
     }
-    std::cout << "\nTransport key is set to " << transportKey << std::endl;
+    std::cout << "\nTransport key is set to " << transportKey
+              << " for the panel at " << devPath << ", " << devAddress
+              << std::endl;
 }
 
 } // namespace panel
