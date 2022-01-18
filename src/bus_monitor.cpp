@@ -362,7 +362,7 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message::message& msg)
 {
     using PostCode = std::tuple<uint64_t, std::vector<types::Byte>>;
 
-    std::string interface{};
+    std::string interface;
     std::map<std::string, std::variant<PostCode>> propertyMap;
 
     msg.read(interface, propertyMap);
