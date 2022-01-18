@@ -150,5 +150,31 @@ void doLampTest(std::shared_ptr<Transport>& transport);
  */
 void restoreDisplayOnPanel(std::shared_ptr<Transport>& transport);
 
+/**
+ * @brief Find and retrieve the PDR.
+ * This api returns the pdr for the given terminusId, entityId and
+ * stateSetId.
+ *
+ * @param[in] terminusId - PLDM terminus id.
+ * @param[in] entityId - Id representing an entity associated to the given
+ * PLDM state set.
+ * @param[in] stateSetId - Id representing PLDM state set.
+ * @param[in] pdrMethod - PDR method name
+ * (FindStateEffecterPDR/FindStateSensorPDR).
+ *
+ * @return PDR data.
+ */
+types::PdrList getPDR(const uint8_t& terminusId, const uint16_t& entityId,
+                      const uint16_t& stateSetId, const std::string& pdrMethod);
+
+/**
+ * @brief Get sensor data like sensor id from the PDR.
+ * @param[in] stateSensorPdr - sensor PDR.
+ * @param[out] sensorId - sensor id fetched from sensor PDR.
+ * PDR.
+ */
+void getSensorDataFromPdr(const types::PdrList& stateSensorPdr,
+                          uint16_t& sensorId);
+
 } // namespace utils
 } // namespace panel

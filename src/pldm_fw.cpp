@@ -1,6 +1,7 @@
 #include "pldm_fw.hpp"
 
 #include "exception.hpp"
+#include "utils.hpp"
 
 #include <libpldm/entity.h>
 #include <libpldm/platform.h>
@@ -13,31 +14,6 @@
 
 namespace panel
 {
-
-PdrList PldmFramework::getPDR(const uint8_t& terminusId,
-                              const uint16_t& entityId,
-                              const uint16_t& stateSetId,
-                              const std::string& pdrMethod)
-{
-    PdrList pdrs{};
-    try
-    {
-        auto bus = sdbusplus::bus::new_default();
-        auto method = bus.new_method_call(
-            "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
-            "xyz.openbmc_project.PLDM.PDR", pdrMethod.c_str());
-        method.append(terminusId, entityId, stateSetId);
-        auto responseMsg = bus.call(method);
-        responseMsg.read(pdrs);
-    }
-    catch (const sdbusplus::exception::SdBusError& e)
-    {
-        std::cerr << e.what() << std::endl;
-        throw FunctionFailure("pldm: Failed to fetch the PDR.");
-    }
-    return pdrs;
-}
-
 types::Byte PldmFramework::getInstanceID()
 {
     types::Byte instanceId = 0;
@@ -60,7 +36,7 @@ types::Byte PldmFramework::getInstanceID()
     return instanceId;
 }
 
-void PldmFramework::fetchPanelEffecterStateSet(const PdrList& pdrs,
+void PldmFramework::fetchPanelEffecterStateSet(const types::PdrList& pdrs,
                                                uint16_t& effecterId,
                                                types::Byte& effecterCount,
                                                types::Byte& panelEffecterPos)
@@ -88,7 +64,7 @@ void PldmFramework::fetchPanelEffecterStateSet(const PdrList& pdrs,
 }
 
 types::PldmPacket
-    PldmFramework::prepareSetEffecterReq(const PdrList& pdrs,
+    PldmFramework::prepareSetEffecterReq(const types::PdrList& pdrs,
                                          types::Byte instanceId,
                                          const types::FunctionNumber& function)
 {
@@ -137,8 +113,9 @@ types::PldmPacket
 void PldmFramework::sendPanelFunctionToPhyp(
     const types::FunctionNumber& funcNumber)
 {
-    PdrList pdrs = getPDR(phypTerminusID, frontPanelBoardEntityId,
-                          stateIdToEnablePanelFunc, "FindStateEffecterPDR");
+    types::PdrList pdrs =
+        utils::getPDR(phypTerminusID, frontPanelBoardEntityId,
+                      stateIdToEnablePanelFunc, "FindStateEffecterPDR");
 
     if (pdrs.empty())
     {

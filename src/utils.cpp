@@ -1,6 +1,9 @@
 #include "utils.hpp"
 
+#include "exception.hpp"
 #include "i2c_message_encoder.hpp"
+
+#include <libpldm/platform.h>
 
 namespace panel
 {
@@ -291,6 +294,36 @@ void doLampTest(std::shared_ptr<Transport>& transport)
 void restoreDisplayOnPanel(std::shared_ptr<Transport>& transport)
 {
     sendCurrDisplayToPanel(restoreLine1, restoreLine2, transport);
+}
+
+types::PdrList getPDR(const uint8_t& terminusId, const uint16_t& entityId,
+                      const uint16_t& stateSetId, const std::string& pdrMethod)
+{
+    types::PdrList pdrs{};
+    try
+    {
+        auto bus = sdbusplus::bus::new_default();
+        auto method = bus.new_method_call(
+            "xyz.openbmc_project.PLDM", "/xyz/openbmc_project/pldm",
+            "xyz.openbmc_project.PLDM.PDR", pdrMethod.c_str());
+        method.append(terminusId, entityId, stateSetId);
+        auto responseMsg = bus.call(method);
+        responseMsg.read(pdrs);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << e.what() << std::endl;
+        throw FunctionFailure("pldm: Failed to fetch the PDR.");
+    }
+    return pdrs;
+}
+
+void getSensorDataFromPdr(const types::PdrList& stateSensorPdr,
+                          uint16_t& sensorId)
+{
+    auto pdr = reinterpret_cast<const pldm_state_sensor_pdr*>(
+        stateSensorPdr.front().data());
+    sensorId = pdr->sensor_id;
 }
 
 } // namespace utils

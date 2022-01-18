@@ -23,6 +23,7 @@ using PanelDataTuple = std::tuple<std::string, uint8_t, std::string>;
 using PanelDataMap = std::unordered_map<std::string, PanelDataTuple>;
 using ItemInterfaceMap = std::map<std::string, std::variant<bool, std::string>>;
 using PldmPacket = std::vector<uint8_t>;
+using PdrList = std::vector<PldmPacket>;
 
 // map{property::value}
 using PropertyValueMap = std::map<
