@@ -52,82 +52,91 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
     sdbusplus::message::object_path objPath;
 
     types::DbusInterfaceMap infMap;
-
     msg.read(objPath, infMap);
 
-    const auto infItr = infMap.find("xyz.openbmc_project.Logging.Entry");
-    if (infItr != infMap.end())
+    // we need too handle signal only in case signal is populated for PEL.Entry
+    // interface, as this confirms that data for Event ID field has been
+    // populated and published.
+    if (infMap.find("org.open_power.Logging.PEL.Entry") != infMap.end())
     {
-        const auto& propMap = infItr->second;
+        auto res = utils::readBusProperty<std::variant<std::string>>(
+            "xyz.openbmc_project.Logging", objPath,
+            "xyz.openbmc_project.Logging.Entry", "Severity");
 
-        auto propItr = propMap.find("Severity");
-        if (propItr != propMap.end())
+        if (const auto& severity = std::get_if<std::string>(&res))
         {
-            const auto severity = std::get_if<std::string>(&propItr->second);
-
-            // TODO: Issue 76. Need to check which all severity needs to be
-            // taken care.
-            if (severity != nullptr &&
-                *severity !=
-                    "xyz.openbmc_project.Logging.Entry.Level.Informational")
+            // Need to process PELs with severity non informational.
+            if (*severity !=
+                "xyz.openbmc_project.Logging.Entry.Level.Informational")
             {
-                setPelRelatedFunctionState(propMap);
+                setPelRelatedFunctionState(objPath);
 
-                propItr = propMap.find("EventId");
-                if (propItr != propMap.end())
+                res = utils::readBusProperty<std::variant<std::string>>(
+                    "xyz.openbmc_project.Logging", objPath,
+                    "xyz.openbmc_project.Logging.Entry", "EventId");
+
+                if (const auto& eventId = std::get_if<std::string>(&res))
                 {
-                    if (const auto eventId =
-                            std::get_if<std::string>(&propItr->second))
+                    // Terminating src detection.
+                    // Terminating bit is the bit 2(starting from 0)
+                    // from MSB end (Big Endian) of 5th Hex word.
+
+                    // Length for 5 hex words required is 44 including
+                    // spaces btween them.
+                    if ((*eventId).length() >=
+                        constants::fiveHexWordsWithSpaces)
                     {
-                        // Terminating src detection.
-                        // Terminating bit is the bit 2(starting from 0) from
-                        // MSB end (Big Endian) of 5th Hex word.
+                        std::vector<std::string> hexWords;
+                        boost::split(hexWords, *eventId, boost::is_any_of(" "));
 
-                        // Length for 5 hex words required is 44 including
-                        // spaces btween them.
-                        if ((*eventId).length() >=
-                            constants::fiveHexWordsWithSpaces)
+                        /*Steps used to check for terminating Bit.
+                        Eg: 5th Hexword = "A0000000".
+                        - Binary equivalent "1010 0000 0000 0000 0000
+                        0000 0000 0000"
+                        - Picking nibble from MSB - "1010"
+                        - Storing as a Byte - "0000 1010"
+                        - Bitwise AND with "0000 0010" to check the
+                        terminating bit.*/
+
+                        // picking a nibble value from MSB end (Big
+                        // Endian) of the hexword and storing as a char.
+                        char valueAtIndexZero[2] = {hexWords[4][0], '\0'};
+                        types::Byte byte =
+                            ::strtoul(valueAtIndexZero, nullptr, 16);
+
+                        if ((byte & constants::terminatingBit) != 0x00 &&
+                            (hexWords[0][0] == 'B' && hexWords[0][1] == 'D'))
                         {
-                            std::vector<std::string> hexWords;
-                            boost::split(hexWords, *eventId,
-                                         boost::is_any_of("\n"));
-
-                            /*Steps used to check for terminating Bit.
-                            Eg: 5th Hexword = "A0000000".
-                            - Binary equivalent "1010 0000 0000 0000 0000 0000
-                            0000 0000"
-                            - Picking nibble from MSB - "1010"
-                            - Storing as a Byte - "0000 1010"
-                            - Bitwise AND with "0000 0010" to check the
-                            terminating bit.*/
-
-                            // picking a nibble value from MSB end (Big Endian)
-                            // of the hexword and storing as a char.
-                            char valueAtIndexZero[2] = {hexWords[4][0], '\0'};
-                            types::Byte byte =
-                                ::strtoul(valueAtIndexZero, nullptr, 16);
-
-                            if ((byte & constants::terminatingBit) != 0x00 &&
-                                (hexWords[0][0] == 'B' &&
-                                 hexWords[0][1] == 'D'))
-                            {
-                                // if terminating bit is set and response code
-                                // is for BMC i.e "BD". Send it directly to
-                                // display.
-                                utils::sendCurrDisplayToPanel(
-                                    hexWords.at(4), std::string{}, transport);
-                            }
-                            executor->storePelEventId(*eventId);
-                            return;
+                            // if terminating bit is set and response
+                            // code is for BMC i.e "BD". Send it
+                            // directly to display.
+                            utils::sendCurrDisplayToPanel(
+                                hexWords.at(4), std::string{}, transport);
                         }
+                        executor->storePelEventId(*eventId);
+                        return;
                     }
-                    std::cerr << "Error fetching value for Event ID"
-                              << std::endl;
+                    std::cerr << "Event Id length is invalid" << std::endl;
                     return;
                 }
-                std::cerr << "Event ID property not found" << std::endl;
+                else
+                {
+                    std::cerr
+                        << "Error fetching value of EventID. Ignoring the PEL."
+                        << std::endl;
+                }
             }
         }
+        else
+        {
+            std::cerr << "Error fetching value of Severity. Ignoring the PEL"
+                      << std::endl;
+        }
+    }
+    else
+    {
+        std::cerr << "PEL entry not yet created, Ignoring the signal"
+                  << std::endl;
     }
 }
 
@@ -154,7 +163,7 @@ static void sortPels(types::GetManagedObjects& listOfPels)
 
 void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
 {
-    std::vector<types::PropertyValueMap> finalListOFPEls;
+    std::vector<types::singleObjectEntry> finalListOFPEls;
     finalListOFPEls.reserve(25);
 
     // Need this as the PEL list is sorted in decreasing order and we need to
@@ -193,7 +202,7 @@ void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
                                     std::get_if<std::string>(&propItr->second))
                             {
                                 // this is the PEL we are interested in.
-                                finalListOFPEls.push_back(propValueMap);
+                                finalListOFPEls.push_back(aPel);
 
                                 // Empty eventId is not possible as length
                                 // of evenId field is hardcoded and is
@@ -247,12 +256,12 @@ void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
         }
 
         // enable or disable functions based on latest PEL logged.
-        setPelRelatedFunctionState(finalListOFPEls[0]);
+        setPelRelatedFunctionState(std::get<0>(finalListOFPEls[0]));
     }
 }
 
 void PELListener::setPelRelatedFunctionState(
-    const types::PropertyValueMap& propValueMap)
+    const sdbusplus::message::object_path& pelObjPath)
 {
     types::FunctionalityList list;
     // as there are maximum 9 SRC related functions.
@@ -268,11 +277,13 @@ void PELListener::setPelRelatedFunctionState(
         list.emplace_back(13);
     }
 
-    const auto& propItr = propValueMap.find("Resolution");
-    if (propItr != propValueMap.end())
+    const auto res = utils::readBusProperty<std::variant<std::string>>(
+        "xyz.openbmc_project.Logging", pelObjPath,
+        "xyz.openbmc_project.Logging.Entry", "Resolution");
+
+    if (const auto& resolution = std::get_if<std::string>(&res))
     {
-        const auto resolution = std::get_if<std::string>(&propItr->second);
-        if (resolution != nullptr || !(*resolution).empty())
+        if (!(*resolution).empty())
         {
             std::vector<std::string> callOutList;
             boost::split(callOutList, *resolution, boost::is_any_of("\n"));
@@ -304,6 +315,16 @@ void PELListener::setPelRelatedFunctionState(
 
             executor->pelCallOutList(callOutList);
         }
+        else
+        {
+            std::cout << "Resolution is empty for PEL = "
+                      << (std::string)pelObjPath << std::endl;
+        }
+    }
+    else
+    {
+        std::cerr << "Error fetching value of resolution for PEL = "
+                  << (std::string)pelObjPath << std::endl;
     }
 
     if (list.size() > 0)
