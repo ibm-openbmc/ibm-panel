@@ -96,10 +96,10 @@ class PELListener
 
     /**
      * @brief An Api to set panel function state based on PEL data.
-     * @param[in]propValueMap - Map of property and value for the PEL.
+     * @param[in]pelObjPath - Object path of the PEL logged.
      */
-    void
-        setPelRelatedFunctionState(const types::PropertyValueMap& propValueMap);
+    void setPelRelatedFunctionState(
+        const sdbusplus::message::object_path& pelObjPath);
 
     /**
      * @brief An Api to get list of PELs logged in the system.
