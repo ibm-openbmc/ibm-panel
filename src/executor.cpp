@@ -49,7 +49,7 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
     // function 25 executed state.
     // Function 26 is included here as func26 execution will need the state of
     // func25.
-    if (serviceSwitch1State && (funcNumber != 25 || funcNumber != 26))
+    if (serviceSwitch1State && funcNumber != 25 && funcNumber != 26)
     {
         serviceSwitch1State = false;
     }
