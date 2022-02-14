@@ -49,6 +49,10 @@ class BusHandler
         iface->register_property(
             "ACFWindowActive", false,
             sdbusplus::asio::PropertyPermission::readWrite);
+
+       iface->register_method("ProcessButton", [this](int event) {
+            this->btnRequest(event););
+        });
     }
 
   private:
@@ -90,6 +94,14 @@ class BusHandler
 
     /* Pointer to state manager class */
     std::shared_ptr<state::manager::PanelStateManager> stateManager;
+
+    /**
+     * @brief Api to process button request.
+     *
+     * @param[in] event: Button event
+     */
+    void btnRequest(int event);
+
 };
 
 } // namespace panel
