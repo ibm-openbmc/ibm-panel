@@ -47,4 +47,27 @@ void BusHandler::toggleFunctionState(types::FunctionalityList functionBitMap)
     // to disable all the functions.
     stateManager->toggleFuncStateFromPhyp(functionList);
 }
+
+void BusHandler::btnRequest(int event)
+{
+    switch (event)
+    {
+        case 0:
+            stateManager->processPanelButtonEvent(
+                types::ButtonEvent::INCREMENT);
+            break;
+
+        case 1:
+            stateManager->processPanelButtonEvent(
+                types::ButtonEvent::DECREMENT);
+            break;
+
+        case 2:
+            stateManager->processPanelButtonEvent(
+                types::ButtonEvent::EXECUTE);
+            break;
+        default:
+            std::cerr << "Invalid Input" << std::endl;
+    }
+}
 } // namespace panel
