@@ -1,4 +1,5 @@
 #include "panel_state_manager.hpp"
+#include "pldm_dbus_signals.hpp"
 #include "transport.hpp"
 #include "types.hpp"
 
@@ -24,8 +25,10 @@ auto dummy_conn = std::make_shared<sdbusplus::asio::connection>(*io_con);
 auto iface = std::make_shared<sdbusplus::asio::dbus_interface>(
     dummy_conn, std::string{}, std::string{});
 
+auto dummySensorEvent = std::make_shared<panel::PLDMSensorEvents>();
 auto lcdPanel = std::make_shared<panel::Transport>();
-auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io_con);
+auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io_con,
+                                                  dummySensorEvent);
 
 TEST(PanelStateManager, default_state)
 {

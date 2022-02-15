@@ -476,9 +476,7 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
 
 bool Executor::isOSIPLTypeEnabled() const
 {
-    // TODO: Check with PLDM how they will communicate if IPL type is
-    // enabled or disabled. Till then return dummy value as false.
-    return false;
+    return sensorEvents->isOSIPLModeSettingEnabled();
 }
 
 void Executor::execute01()
