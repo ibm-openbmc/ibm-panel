@@ -57,6 +57,23 @@ panel_app_a = static_library(
     'src/pldm_dbus_signals.cpp',
     include_directories: 'include'
 )
+panel_tool_a = static_library(
+     'ibm_dbus_call_a',
+     'tools/src/dbus_call.cpp',
+     include_directories: ['include', 'tools/include']
+)
+executable(
+      'paneltool',
+      'tools/src/panel_tool.cpp',
+      dependencies: [
+        sdbusplus,
+      ],
+      install: true,
+      include_directories : [ 'include', 'tools/include'],
+      link_with: [
+          panel_tool_a,
+      ],
+)
 
 executable(
     'ibm-panel',
