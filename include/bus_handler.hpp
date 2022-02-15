@@ -50,9 +50,8 @@ class BusHandler
             "ACFWindowActive", false,
             sdbusplus::asio::PropertyPermission::readWrite);
 
-       iface->register_method("ProcessButton", [this](int event) {
-            this->btnRequest(event););
-        });
+        iface->register_method("ProcessButton",
+                               [this](int event) { this->btnRequest(event); });
     }
 
   private:
@@ -101,7 +100,6 @@ class BusHandler
      * @param[in] event: Button event
      */
     void btnRequest(int event);
-
 };
 
 } // namespace panel
