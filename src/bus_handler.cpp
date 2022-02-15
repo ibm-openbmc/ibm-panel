@@ -63,8 +63,7 @@ void BusHandler::btnRequest(int event)
             break;
 
         case 2:
-            stateManager->processPanelButtonEvent(
-                types::ButtonEvent::EXECUTE);
+            stateManager->processPanelButtonEvent(types::ButtonEvent::EXECUTE);
             break;
         default:
             std::cerr << "Invalid Input" << std::endl;

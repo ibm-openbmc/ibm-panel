@@ -39,7 +39,7 @@ void btnEventDbusCall(const std::string& input)
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
-        std::cerr << "SDBUS call failed: " << e;
+        std::cerr << "SDBUS call failed: " << e.what();
         throw;
     }
 }

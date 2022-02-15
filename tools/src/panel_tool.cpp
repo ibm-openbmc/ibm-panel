@@ -7,11 +7,10 @@ int main(int argc, char** argv)
 {
     std::string input{};
     CLI::App app{"Command line tool for simulating panel functions "};
-    auto state =
-        app.add_option(
-               " -b", input,
-               " Simulating button press"
-               " Increment/Decrement/Execute with UP/DOWN/EXECUTE respectively")
+    auto state = app.add_option(
+        " -b", input,
+        " Simulating button press"
+        " Increment/Decrement/Execute with UP/DOWN/EXECUTE respectively");
     CLI11_PARSE(app, argc, argv);
 
     try
