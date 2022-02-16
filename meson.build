@@ -54,7 +54,6 @@ panel_app_a = static_library(
     'src/bus_monitor.cpp',
     'src/executor.cpp',
     'src/pldm_fw.cpp',
-    'src/pldm_dbus_signals.cpp',
     include_directories: 'include'
 )
 panel_tool_a = static_library(

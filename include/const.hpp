@@ -1,7 +1,5 @@
 #pragma once
 
-#include "types.hpp"
-
 namespace panel
 {
 namespace constants
@@ -50,16 +48,6 @@ static constexpr auto terminatingBit = 2;
 
 // Progress code src equivalent to  ascii "00000000"
 static constexpr auto clearDisplayProgressCode = 0x3030303030303030;
-static constexpr auto phypTerminusID = (types::Byte)208;
-
-// Reference: PLDM Entity and State Set IDs in DSP0249_1.1.0 specification.
-// The Virtual machine manager is a logical entity, so bit 15 need to be set.
-// VMM Entity ID is referred from
-// https://github.ibm.com/openbmc/pldm/blob/1020/libpldm/entity.h#L34
-static constexpr uint16_t vmmEntityId = 33 | 0x8000; // logical value - 32801
-// TODO: Add the reference to the state set id present in pldm state_set.h
-// header file. Currently this info is not in pldm_state_set.h.
-static constexpr uint16_t osIplModeStateSetId = (uint16_t)32777;
 
 } // namespace constants
 } // namespace panel
