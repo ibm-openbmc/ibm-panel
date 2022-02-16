@@ -1,6 +1,5 @@
 #pragma once
 
-#include "pldm_dbus_signals.hpp"
 #include "transport.hpp"
 #include "types.hpp"
 
@@ -30,14 +29,12 @@ class Executor
      * @param[in] transport - Pointer to transport class.
      * @param[in] iface - Pointer to Panel dbus interface.
      * @param[in] io - reference to io context class.
-     * @param[in] sensorEvents - Sensor event object to query osIPLMode.
      */
     Executor(std::shared_ptr<Transport> transport,
              std::shared_ptr<sdbusplus::asio::dbus_interface>& iface,
-             std::shared_ptr<boost::asio::io_context>& io,
-             std::shared_ptr<PLDMSensorEvents>& sensorEvents) :
+             std::shared_ptr<boost::asio::io_context>& io) :
         transport(transport),
-        iface(iface), io_context(io), sensorEvents(sensorEvents)
+        iface(iface), io_context(io)
     {
     }
 
@@ -279,11 +276,6 @@ class Executor
 
     /* Event for timer required in function 74 */
     std::shared_ptr<boost::asio::io_context> io_context;
-
-    /* PLDM Sensor Events object to handle PLDM emitted state sensor dbus
-     * signals.
-     */
-    std::shared_ptr<PLDMSensorEvents> sensorEvents;
 
 }; // class Executor
 } // namespace panel
