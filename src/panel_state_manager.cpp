@@ -871,6 +871,13 @@ void PanelStateManager::updateBMCState(const std::string& bmcState)
     // BMC state is anything other than NotReady
     if (bmcState != "xyz.openbmc_project.State.BMC.BMCState.NotReady")
     {
+        // If BMC state is ready, execute functionality 01.
+        if (bmcState == "xyz.openbmc_project.State.BMC.BMCState.Ready")
+        {
+            // Execute function 01 on bmc ready state.
+            funcExecutor->executeFunction(1, types::FunctionalityList{});
+        }
+
         // if the bit is not set
         if ((systemState & SystemStateMask::ENABLE_BMC_STANDBY_STATE) == 0x00)
         {
