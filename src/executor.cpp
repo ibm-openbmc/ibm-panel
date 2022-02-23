@@ -495,13 +495,6 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
     panel::utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
 
-bool Executor::isOSIPLTypeEnabled() const
-{
-    // TODO: Check with PLDM how they will communicate if IPL type is
-    // enabled or disabled. Till then return dummy value as false.
-    return false;
-}
-
 void Executor::execute01()
 {
     const auto sysValues = utils::readSystemParameters();
@@ -509,7 +502,7 @@ void Executor::execute01()
     std::string line1(16, ' ');
     std::string line2(16, ' ');
 
-    if (isOSIPLTypeEnabled())
+    if (osIplMode)
     {
         // OS IPL Type
         line1.replace(4, 1, std::get<0>(sysValues).substr(0, 1));
