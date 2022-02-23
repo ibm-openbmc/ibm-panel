@@ -133,11 +133,6 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                       << std::endl;
         }
     }
-    else
-    {
-        std::cerr << "PEL entry not yet created, Ignoring the signal"
-                  << std::endl;
-    }
 }
 
 static void sortPels(types::GetManagedObjects& listOfPels)
