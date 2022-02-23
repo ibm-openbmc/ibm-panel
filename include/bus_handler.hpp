@@ -25,12 +25,14 @@ class BusHandler
      * @param[in] transport - Transport class object.
      * @param[in] iface - Pointer to Panel dbus interface.
      * @param[in] manager - Pointer to state manager.
+     * @param[in] executor - Pointer to executor.
      */
     BusHandler(std::shared_ptr<Transport>& transport,
                std::shared_ptr<sdbusplus::asio::dbus_interface>& iface,
-               std::shared_ptr<state::manager::PanelStateManager>& manager) :
+               std::shared_ptr<state::manager::PanelStateManager>& manager,
+               std::shared_ptr<Executor>& executor) :
         transport(transport),
-        iface(iface), stateManager(manager)
+        iface(iface), stateManager(manager), executor(executor)
     {
         iface->register_method("Display", [this](const std::string& line1,
                                                  const std::string& line2) {
@@ -52,6 +54,18 @@ class BusHandler
 
         iface->register_method("ProcessButton",
                                [this](int event) { this->btnRequest(event); });
+
+        iface->register_property(
+            "OSIPLMode", false,
+            [this](const bool newVal, bool& oldVal) {
+                if (newVal != oldVal)
+                {
+                    this->executor->setOSIPLMode(newVal);
+                    oldVal = newVal;
+                    return 1;
+                }
+                return 0;
+            });
     }
 
   private:
@@ -93,6 +107,9 @@ class BusHandler
 
     /* Pointer to state manager class */
     std::shared_ptr<state::manager::PanelStateManager> stateManager;
+
+    /* Pointer to Executor class */
+    std::shared_ptr<Executor> executor;
 
     /**
      * @brief Api to process button request.

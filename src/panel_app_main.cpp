@@ -195,7 +195,7 @@ int main(int, char**)
         panel::BootProgressCode progressCode(lcdPanel, conn, executor);
         progressCode.listenProgressCode();
 
-        panel::BusHandler busHandle(lcdPanel, iface, stateManager);
+        panel::BusHandler busHandle(lcdPanel, iface, stateManager, executor);
 
         iface->initialize();
 
