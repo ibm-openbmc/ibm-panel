@@ -108,6 +108,19 @@ class Executor
         return serviceSwitch1State;
     }
 
+    /**
+     * @brief API which sets OS IPL mode.
+     * This api is called whenever there is a property change signal occurs for
+     * OSIPLMode com.ibm.panel interface's property and the current OS IPL mode
+     * value is stored in Executor.
+     *
+     * @param[in] osIPLModeState - current osIPLMode
+     */
+    inline void setOSIPLMode(const bool osIPLModeState)
+    {
+        osIplMode = osIPLModeState;
+    }
+
   private:
     /**
      * @brief An api to execute functionality 20
@@ -205,14 +218,6 @@ class Executor
      */
     std::string getSrcDataForPEL();
 
-    /**
-     * @brief An api of check if OS IPL type is enabled.
-     * It is a helper function for functionality 01. Display needs to be
-     * modified depending upon if OS IPL type is enabled or disabled.
-     * @return OS IPL type enabled/disbaled.
-     */
-    bool isOSIPLTypeEnabled() const;
-
     /** @brief API to execute function 30. */
     void execute30(const types::FunctionalityList& subFuncNumber);
 
@@ -276,6 +281,9 @@ class Executor
 
     /* Event for timer required in function 74 */
     std::shared_ptr<boost::asio::io_context> io_context;
+
+    /* OS IPL mode state */
+    bool osIplMode = false;
 
 }; // class Executor
 } // namespace panel
