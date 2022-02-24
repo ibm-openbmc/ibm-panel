@@ -39,12 +39,14 @@ class ButtonHandler
      * @param[in] io - Boost asio io_context object pointer.
      * @param[in] transport - Transport Object to call transport functions.
      * @param[in] stateManager - State manager object to call
+     * @param[in] i2cBusPath - i2c bus path to communicate with panel.
      * increment/decrement/execute methods.
      */
     ButtonHandler(
         const std::string& path, std::shared_ptr<boost::asio::io_context>& io,
         std::shared_ptr<Transport> transport,
-        std::shared_ptr<state::manager::PanelStateManager> stateManager);
+        std::shared_ptr<state::manager::PanelStateManager> stateManager,
+        const std::string& i2cBusPath);
 
   private:
     /** @brief Api to perform async read operation on the device path.
@@ -76,6 +78,10 @@ class ButtonHandler
 
     /* state manager object to call increment/decrement/execute functions */
     std::shared_ptr<state::manager::PanelStateManager> stateManager;
+
+    /* The /dev/ path to the I2C bus that is used to communicate with the panel.
+     * This will be used for callout purposes.*/
+    std::string busPath;
 
     /* file descriptor */
     int fd = -1;

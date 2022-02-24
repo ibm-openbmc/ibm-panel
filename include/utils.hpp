@@ -45,6 +45,26 @@ T readBusProperty(const std::string& service, const std::string& object,
  */
 std::string binaryToHexString(const types::Binary& val);
 
+/**
+ * @brief Api to create PEL.
+ *
+ * @param[in] errIntf - Error Interface
+ * @param[in] sev -  panel::constants::Severity of Error
+ * @param[in] additionalData - Information of PEL
+ */
+void createPEL(const std::string& errIntf, const std::string& sev,
+               const std::map<std::string, std::string>& additionalData);
+
+/**
+ * @brief Api to get service.
+ *
+ * @param[in] bus - bus input
+ * @param[in] path -  Dbus object path
+ * @param[in] interface - Interface
+ */
+std::string getService(sdbusplus::bus::bus& bus, const std::string& path,
+                       const std::string& interface);
+
 /** @brief Display on panel using transport class api.
  *
  * Method which sends the actual data to the panel's micro code using Transport
