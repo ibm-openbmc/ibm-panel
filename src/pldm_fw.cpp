@@ -119,7 +119,13 @@ void PldmFramework::sendPanelFunctionToPhyp(
 
     if (pdrs.empty())
     {
-        throw FunctionFailure("Empty PDR returned for panel entity id.");
+        std::map<std::string, std::string> additionalData{};
+        additionalData.emplace("DESCRIPTION",
+                               "Empty PDR returned for panel entity id.");
+        utils::createPEL("com.ibm.Panel.Error.HostCommunicationError",
+                         "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                         additionalData);
+        return;
     }
 
     types::Byte instance = getInstanceID();
@@ -129,9 +135,13 @@ void PldmFramework::sendPanelFunctionToPhyp(
 
     if (packet.empty())
     {
-        std::cerr << "Pldm packet is empty" << std::endl;
-        throw FunctionFailure(
-            "pldm:SetStateEffecterStates request message empty");
+        std::map<std::string, std::string> additionalData{};
+        additionalData.emplace(
+            "DESCRIPTION", "pldm:SetStateEffecterStates request message empty");
+        utils::createPEL("com.ibm.Panel.Error.HostCommunicationError",
+                         "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                         additionalData);
+        return;
     }
 
     int fd = pldm_open();
@@ -139,7 +149,14 @@ void PldmFramework::sendPanelFunctionToPhyp(
     {
         std::cerr << "pldm_open() failed with error = " << strerror(errno)
                   << std::endl;
-        throw FunctionFailure("pldm: Failed to connect to MCTP socket");
+        std::map<std::string, std::string> additionalData{};
+        additionalData.emplace("DESCRIPTION",
+                               "pldm: Failed to connect to MCTP socket");
+        additionalData.emplace("ERRNO:", strerror(errno));
+        utils::createPEL("com.ibm.Panel.Error.HostCommunicationError",
+                         "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                         additionalData);
+        return;
     }
 
     std::cout << "packet data sent to pldm: ";
@@ -160,9 +177,13 @@ void PldmFramework::sendPanelFunctionToPhyp(
 
     if (rc)
     {
-        std::cerr << "Pldm send failed" << std::endl;
-        throw FunctionFailure(
+        std::map<std::string, std::string> additionalData{};
+        additionalData.emplace(
+            "DESCRIPTION",
             "pldm: pldm_send failed for panel function trigger.");
+        panel::utils::createPEL(
+            "com.ibm.Panel.Error.HostCommunicationError",
+            "xyz.openbmc_project.Logging.Entry.Level.Warning", additionalData);
     }
 }
 } // namespace panel
