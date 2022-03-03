@@ -36,12 +36,10 @@ void Executor::displayExecutionStatus(
 void Executor::executeFunction(const types::FunctionNumber funcNumber,
                                const types::FunctionalityList& subFuncNumber)
 {
-    // test output, to be removed
-    std::cout << funcNumber << std::endl;
-
     if (!subFuncNumber.empty())
     {
-        std::cout << subFuncNumber.at(0) << std::endl;
+        std::cout << "Sub function executed = " << (int)subFuncNumber.at(0)
+                  << std::endl;
     }
 
     // If function 25 has been executed last and the current requested function
