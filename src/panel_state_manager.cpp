@@ -233,16 +233,24 @@ void PanelStateManager::toggleFuncStateFromPhyp(
         if (pos != list.end())
         {
             // then the cout can be used to test the function number.
-            std::cout << "Function to be enabled"
-                      << (int)aFunction.functionNumber << std::endl;
+            std::cout << " Function enabled: " << (int)aFunction.functionNumber
+                      << std::endl;
 
             aFunction.functionEnabledByPhyp = SystemStateMask::ENABLE_BY_PHYP;
         }
         else
         {
-            // If the function is not in the list it
-            // should be in disabled state.
-            aFunction.functionEnabledByPhyp = SystemStateMask::DISABLE_BY_PHYP;
+            if (aFunction.functionEnabledByPhyp ==
+                SystemStateMask::ENABLE_BY_PHYP)
+            {
+                std::cout << " Function Disabled: "
+                          << (int)aFunction.functionNumber << std::endl;
+
+                // If the function was enabled and not in the list it should be
+                // disabled.
+                aFunction.functionEnabledByPhyp =
+                    SystemStateMask::DISABLE_BY_PHYP;
+            }
         }
     }
     updateFunctionStatus();
@@ -322,6 +330,10 @@ void PanelStateManager::processPanelButtonEvent(
         default:
             break;
     }
+
+    std::cout << "Button event " << (int)button << " At function - "
+              << (int)panelFunctions.at(panelCurState).functionNumber
+              << " Panel cur state = " << (int)systemState << std::endl;
 
     // printPanelStates();
 }
@@ -770,7 +782,6 @@ void PanelStateManager::executeState()
     {
         // set this anyhow in case we are coming from debounce SRC state.
         panelCurSubStates.at(0) = StateType::INITIAL_STATE;
-        std::cout << "Execute method" << std::endl;
 
         if (panelFunctions.at(panelCurState).functionNumber == 25 ||
             panelFunctions.at(panelCurState).functionNumber == 26)
