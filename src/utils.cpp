@@ -62,10 +62,6 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
 
 void readSystemOperatingMode(std::string& sysOperatingMode)
 {
-    auto readLogSettings = readBusProperty<std::variant<bool>>(
-        "xyz.openbmc_project.Settings", "/xyz/openbmc_project/logging/settings",
-        "xyz.openbmc_project.Logging.Settings", "QuiesceOnHwError");
-
     auto readRestorePolicy = readBusProperty<std::variant<std::string>>(
         "xyz.openbmc_project.Settings",
         "/xyz/openbmc_project/control/host0/power_restore_policy",
@@ -77,15 +73,12 @@ void readSystemOperatingMode(std::string& sysOperatingMode)
         "/xyz/openbmc_project/control/host0/auto_reboot",
         "xyz.openbmc_project.Control.Boot.RebootPolicy", "AutoReboot");
 
-    const auto loggingService = std::get_if<bool>(&readLogSettings);
     const auto restorePolicy = std::get_if<std::string>(&readRestorePolicy);
     const auto autoRebootPolicy = std::get_if<bool>(&readRebootPolicy);
 
-    if (loggingService != nullptr && restorePolicy != nullptr &&
-        autoRebootPolicy != nullptr)
+    if (restorePolicy != nullptr && autoRebootPolicy != nullptr)
     {
-        if (*loggingService == true &&
-            *restorePolicy == "xyz.openbmc_project.Control.Power."
+        if (*restorePolicy == "xyz.openbmc_project.Control.Power."
                               "RestorePolicy.Policy.AlwaysOff" &&
             *autoRebootPolicy == false)
         {

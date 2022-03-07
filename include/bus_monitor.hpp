@@ -245,12 +245,6 @@ class SystemStatus
     void bootProgressStateCallback(sdbusplus::message::message& msg);
 
     /**
-     * @brief Api to handle logging settings state change callback.
-     * @param[in] msg - Callback message.
-     */
-    void loggingSettingStateCallback(sdbusplus::message::message& msg);
-
-    /**
      * @brief Api to handle power policy state change callback.
      * @param[in] msg - Callback message.
      */
@@ -282,9 +276,6 @@ class SystemStatus
 
     /* state manager */
     std::shared_ptr<state::manager::PanelStateManager> stateManager;
-
-    /* Member to store logging policy*/
-    bool loggingPolicy;
 
     /* Member to store power policy */
     std::string powerPolicy;

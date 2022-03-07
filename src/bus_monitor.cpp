@@ -582,30 +582,6 @@ void SystemStatus::listenBootProgressState()
         });
 }
 
-void SystemStatus::loggingSettingStateCallback(sdbusplus::message::message& msg)
-{
-    std::string object{};
-    types::ItemInterfaceMap invItemMap;
-
-    msg.read(object, invItemMap);
-    const auto itr = invItemMap.find("QuiesceOnHwError");
-    if (itr != invItemMap.end())
-    {
-        if (auto loggingSetting = std::get_if<bool>(&(itr->second)))
-        {
-            // std::cout << "loggingSettingState = " << *loggingSetting
-            //          << std::endl;
-            loggingPolicy = *loggingSetting;
-
-            setSystemCurrentOperatingMode();
-        }
-        else
-        {
-            std::cerr << "\n Error reading logging state property" << std::endl;
-        }
-    }
-}
-
 void SystemStatus::powerPolicyStateCallback(sdbusplus::message::message& msg)
 {
     std::string object{};
@@ -654,16 +630,6 @@ void SystemStatus::rebootPolicyStateCallback(sdbusplus::message::message& msg)
 
 void SystemStatus::listenSystemOperatingModeParameters()
 {
-    static auto sigLoggingSettings =
-        std::make_unique<sdbusplus::bus::match::match>(
-            *conn,
-            sdbusplus::bus::match::rules::propertiesChanged(
-                "/xyz/openbmc_project/logging/settings",
-                "xyz.openbmc_project.Logging.Settings"),
-            [this](sdbusplus::message::message& msg) {
-                loggingSettingStateCallback(msg);
-            });
-
     static auto sigPowerPolicy = std::make_unique<sdbusplus::bus::match::match>(
         *conn,
         sdbusplus::bus::match::rules::propertiesChanged(
@@ -686,22 +652,6 @@ void SystemStatus::listenSystemOperatingModeParameters()
 
 void SystemStatus::initSystemOperatingParameters()
 {
-    auto retlogSettings = utils::readBusProperty<std::variant<bool>>(
-        "xyz.openbmc_project.Settings", "/xyz/openbmc_project/logging/settings",
-        "xyz.openbmc_project.Logging.Settings", "QuiesceOnHwError");
-
-    if (auto logSettings = std::get_if<bool>(&retlogSettings))
-    {
-        loggingPolicy = *logSettings;
-    }
-    else
-    {
-        // for error set the parameters for Normal mode value.
-        loggingPolicy = false;
-        std::cerr << "Failed to read logging setting dbus property"
-                  << std::endl;
-    }
-
     auto retPowerSettings = utils::readBusProperty<std::variant<std::string>>(
         "xyz.openbmc_project.Settings",
         "/xyz/openbmc_project/control/host0/power_restore_policy",
@@ -741,8 +691,7 @@ void SystemStatus::initSystemOperatingParameters()
 
 void SystemStatus::setSystemCurrentOperatingMode()
 {
-    if (loggingPolicy == true &&
-        powerPolicy == "xyz.openbmc_project.Control.Power.RestorePolicy.Policy."
+    if (powerPolicy == "xyz.openbmc_project.Control.Power.RestorePolicy.Policy."
                        "AlwaysOff" &&
         rebootPolicy == false)
     {
@@ -752,7 +701,9 @@ void SystemStatus::setSystemCurrentOperatingMode()
     else
     {
         // if any of the condition fails set mode to normal
-        std::cout << "System operating mode set to Normal" << std::endl;
+        std::cout << "System operating mode set to Normal as power policy ="
+                  << powerPolicy << " and reboot policy = " << rebootPolicy
+                  << std::endl;
         stateManager->setSystemOperatingMode("Normal");
     }
 }
