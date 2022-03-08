@@ -1,5 +1,6 @@
 #include "panel_state_manager.hpp"
 
+#include "exception.hpp"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -489,10 +490,32 @@ void PanelStateManager::setIPLParameters(const types::ButtonEvent& button)
                     panelCurSubStates.at(1) != StateType::INVALID_STATE ||
                     panelCurSubStates.at(2) != StateType::INVALID_STATE)
                 {
+                    try
+                    {
+                        funcExecutor->executeFunction(
+                            panelFunctions.at(panelCurState).functionNumber,
+                            panelCurSubStates);
 
-                    funcExecutor->executeFunction(
-                        panelFunctions.at(panelCurState).functionNumber,
-                        panelCurSubStates);
+                        if (panelCurSubStates.at(1) != StateType::INVALID_STATE)
+                        {
+                            if (panelCurSubStates.at(1) == 0)
+                            {
+                                std::cout << "Manual mode set" << std::endl;
+                                setSystemOperatingMode("Manual");
+                            }
+                            else if (panelCurSubStates.at(1) == 1)
+                            {
+                                std::cout << "Normal mode set" << std::endl;
+                                setSystemOperatingMode("Normal");
+                            }
+                        }
+                    }
+                    catch (const sdbusplus::exception::SdBusError& e)
+                    {
+                        std::cerr << "Error writing values to set system "
+                                     "operating mode"
+                                  << std::endl;
+                    }
 
                     // reset all the flag
                     panelCurSubStates.at(0) = StateType::INITIAL_STATE;
