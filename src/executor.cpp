@@ -163,11 +163,26 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
     {
         std::cerr << e.what() << std::endl;
         displayExecutionStatus(funcNumber, subFuncNumber, false);
+
+        // In case of function 02, if there is any exception, throw it
+        // back to state manager so that setting operating modes can be avoided.
+        if (funcNumber == 2)
+        {
+            throw;
+        }
     }
     catch (const sdbusplus::exception::SdBusError& e)
     {
         std::cerr << e.what() << std::endl;
         displayExecutionStatus(funcNumber, subFuncNumber, false);
+
+        // In case of function 02, if there is any Dbus read/write error, throw
+        // it back to state manager so that setting operating modes can be
+        // avoided.
+        if (funcNumber == 2)
+        {
+            throw;
+        }
     }
     catch (const boost::system::system_error& err)
     {
@@ -695,7 +710,6 @@ static types::PendingAttributesItemType
     // Normal mode is the default mode hence all the defaul values are as
     // per normal mode.
     types::AttributeValueType sysOperatingModeValue = "Normal";
-    bool QuiesceOnHwError = false;
     std::string PowerRestorePolicy =
         "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.Restore";
     bool autoReboot = true;
@@ -703,16 +717,10 @@ static types::PendingAttributesItemType
     if (sysOperatingModeIndex == 0)
     {
         sysOperatingModeValue = "Manual";
-        QuiesceOnHwError = true;
         PowerRestorePolicy = "xyz.openbmc_project.Control.Power."
                              "RestorePolicy.Policy.AlwaysOff";
         autoReboot = false;
     }
-
-    utils::writeBusProperty<bool>("xyz.openbmc_project.Settings",
-                                  "/xyz/openbmc_project/logging/settings",
-                                  "xyz.openbmc_project.Logging.Settings",
-                                  "QuiesceOnHwError", QuiesceOnHwError);
 
     utils::writeBusProperty<std::string>(
         "xyz.openbmc_project.Settings",
