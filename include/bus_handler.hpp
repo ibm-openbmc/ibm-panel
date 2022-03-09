@@ -59,8 +59,6 @@ class BusHandler
      *
      * @param[in] displayLine1: 1st line of display.
      * @param[in] displayLine2: 2nd line of display.
-     *
-     *
      */
     void display(const std::string& displayLine1,
                  const std::string& displayLine2);
