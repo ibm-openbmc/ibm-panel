@@ -86,7 +86,7 @@ void Transport::doSoftReset()
 {
     using namespace std::chrono_literals;
     panelI2CWrite(encoder::MessageEncoder().softReset());
-    std::this_thread::sleep_for(100ms);
+    std::this_thread::sleep_for(3000ms);
     std::cout << "\n Panel:Soft reset done." << std::endl;
 }
 
