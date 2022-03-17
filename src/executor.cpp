@@ -365,7 +365,9 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         ethPort = "eth1";
         otherPort = "eth0";
     }
-    std::string line2{};
+
+    // If address points to invalid value, default 0.0.0.0 will be displayed.
+    std::string line2 = "0.0.0.0";
     std::string ethObjPath = constants::networkManagerObj;
     ethObjPath += "/";
     ethObjPath += ethPort;
@@ -373,6 +375,7 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
 
     for (const auto& obj : networkObjects)
     {
+        std::string originStr{};
         const std::string& objPath =
             std::get<sdbusplus::message::object_path>(obj);
         // search for eth0/eth1 ipv4 objects based on input
@@ -400,14 +403,11 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
                         const auto& origin =
                             std::get_if<std::string>(&(originItr->second));
 
-                        // Ignore link local ip and display the other one
-                        // (could be either static/dynamic ip)
                         if ((type != nullptr) && (origin != nullptr) &&
                             (*type == "xyz.openbmc_project.Network.IP."
-                                      "Protocol.IPv4") &&
-                            (*origin != "xyz.openbmc_project.Network.IP."
-                                        "AddressOrigin.LinkLocal"))
+                                      "Protocol.IPv4"))
                         {
+                            originStr = *origin;
                             const auto& addressItr = propValMap.find("Address");
                             if (addressItr != propValMap.end())
                             {
@@ -416,11 +416,11 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
                                 if (address != nullptr)
                                 {
                                     line2 = *address;
-                                    break;
                                 }
                             }
                         }
                     }
+                    break;
                 }
             }
         }
@@ -446,7 +446,15 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
                 macAddr = *mac;
             }
         }
-        if (!macAddr.empty() && !line2.empty())
+
+        // If MAC address and static/dynamic IP are found, break the loop. Else
+        // LinkLocal IP will be displayed by default.
+        if (!macAddr.empty() &&
+            (line2 != "0.0.0.0" &&
+             ((originStr ==
+               "xyz.openbmc_project.Network.IP.AddressOrigin.Static") ||
+              (originStr ==
+               "xyz.openbmc_project.Network.IP.AddressOrigin.DHCP"))))
         {
             break;
         }
