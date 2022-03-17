@@ -26,6 +26,14 @@ void BusHandler::triggerPanelLampTest(const bool state)
 
 void BusHandler::toggleFunctionState(types::FunctionalityList functionBitMap)
 {
+    std::cout << "Bitmap received: ";
+    for (const auto& item : functionBitMap)
+    {
+        std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)item
+                  << " ";
+    }
+    std::cout << std::endl;
+
     types::FunctionalityList functionList;
 
     for (types::Byte bitIndex = 1; bitIndex < functionBitMap.size() * 8;
@@ -38,6 +46,13 @@ void BusHandler::toggleFunctionState(types::FunctionalityList functionBitMap)
         {
             functionList.push_back((byteIndex * 8) + bitIndexInsideByte);
         }
+    }
+
+    if (functionList.empty())
+    {
+        std::cout << "Empty function list received. Functions enabled before "
+                     "will be disabled."
+                  << std::endl;
     }
 
     // should be called even if the function list is empty, in case phyp wants

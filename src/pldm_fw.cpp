@@ -129,6 +129,7 @@ void PldmFramework::sendPanelFunctionToPhyp(
 
     if (packet.empty())
     {
+        std::cerr << "Pldm packet is empty" << std::endl;
         throw FunctionFailure(
             "pldm:SetStateEffecterStates request message empty");
     }
@@ -141,6 +142,14 @@ void PldmFramework::sendPanelFunctionToPhyp(
         throw FunctionFailure("pldm: Failed to connect to MCTP socket");
     }
 
+    std::cout << "packet data sent to pldm: ";
+    for (const auto i : packet)
+    {
+        std::cout << std::setfill('0') << std::setw(2) << std::hex << (int)i
+                  << " ";
+    }
+    std::cout << std::endl;
+
     auto rc = pldm_send(mctpEid, fd, packet.data(), packet.size());
 
     if (close(fd) == -1)
@@ -151,6 +160,7 @@ void PldmFramework::sendPanelFunctionToPhyp(
 
     if (rc)
     {
+        std::cerr << "Pldm send failed" << std::endl;
         throw FunctionFailure(
             "pldm: pldm_send failed for panel function trigger.");
     }
