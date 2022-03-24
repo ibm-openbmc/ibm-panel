@@ -530,7 +530,7 @@ void Executor::execute01()
     }
 
     // HMC Managed
-    if (std::get<2>(sysValues) == "1")
+    if (std::get<2>(sysValues) == "Enabled")
     {
         line2.replace(0, 5, "HMC=1");
     }
