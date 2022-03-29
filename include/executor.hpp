@@ -70,6 +70,18 @@ class Executor
     void storePelEventId(const std::string& pelEventId);
 
     /**
+     * @brief An api to store latest SRC and Hexwords.
+     * This api will receive string consisting SRC and Hexwords and store them
+     * to be used in function 11, 12 and 13.
+     *
+     * @param[in] srcAndHexwords- String consisting of SRC and hex words.
+     */
+    inline void storeSRCAndHexwords(const std::string& srcAndHexwords)
+    {
+        latestSrcAndHexwords = srcAndHexwords;
+    }
+
+    /**
      * @brief An api to return count of Pel EventIds.
      * This count is required to enable/disable sub functions by state manager
      * w.r.t function 64.
@@ -284,6 +296,9 @@ class Executor
 
     /* OS IPL mode state */
     bool osIplMode = false;
+
+    /* SRC and HEX words */
+    std::string latestSrcAndHexwords;
 
 }; // class Executor
 } // namespace panel
