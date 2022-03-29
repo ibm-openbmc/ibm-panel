@@ -278,22 +278,21 @@ void Executor::execute20()
 
 void Executor::execute11()
 {
-    auto srcData = pelEventIdQueue.back();
-
-    if (!srcData.empty())
+    if (!latestSrcAndHexwords.empty())
     {
         // find the first space to get response code
-        auto pos = srcData.find_first_of(" ");
+        auto pos = latestSrcAndHexwords.find_first_of(" ");
 
         // length of src data need to be 8
         if (pos != std::string::npos && pos == 8)
         {
-            utils::sendCurrDisplayToPanel((srcData).substr(0, pos),
+            utils::sendCurrDisplayToPanel((latestSrcAndHexwords).substr(0, pos),
                                           std::string{}, transport);
         }
         else
         {
-            std::cerr << "Invalid srcData received = " << srcData << std::endl;
+            std::cerr << "Invalid srcData received = " << latestSrcAndHexwords
+                      << std::endl;
         }
         return;
     }
@@ -549,19 +548,17 @@ void Executor::execute01()
 
 void Executor::execute12()
 {
-    auto srcData = pelEventIdQueue.back();
-
     // Need to show blank spaces in case no srcData as function is enabled.
     constexpr auto blankHexWord = "        ";
     std::vector<std::string> output(4, blankHexWord);
 
-    if (!srcData.empty())
+    if (!latestSrcAndHexwords.empty())
     {
         std::vector<std::string> src;
-        boost::split(src, srcData, boost::is_any_of(" "));
+        boost::split(src, latestSrcAndHexwords, boost::is_any_of(" "));
 
         const auto size = std::min(src.size(), (size_t)5);
-        // ignoring the first hexword
+        // ignoring the first hexword as that will be SRC.
         for (size_t i = 1; i < size; ++i)
         {
             output[i - 1] = src[i];
@@ -575,17 +572,15 @@ void Executor::execute12()
 
 void Executor::execute13()
 {
-    auto srcData = pelEventIdQueue.back();
-
-    // Need to show blank spaces in case of no srcData as function is
+    // Need to show blank spaces in case of no hex word as function is
     // enabled.
     constexpr auto blankHexWord = "        ";
     std::vector<std::string> output(4, blankHexWord);
 
-    if (!srcData.empty())
+    if (!latestSrcAndHexwords.empty())
     {
         std::vector<std::string> src;
-        boost::split(src, srcData, boost::is_any_of(" "));
+        boost::split(src, latestSrcAndHexwords, boost::is_any_of(" "));
 
         const auto size = std::min(src.size(), (size_t)9);
         // ignoring the first five hexword
@@ -863,6 +858,7 @@ void Executor::storePelEventId(const std::string& pelEventId)
         pelEventIdQueue.pop_front();
     }
     pelEventIdQueue.push_back(pelEventId);
+    latestSrcAndHexwords = pelEventId;
 }
 
 void Executor::execute64(const types::FunctionNumber subFuncNumber)
