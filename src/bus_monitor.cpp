@@ -415,6 +415,59 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message::message& msg)
 
             executor->storeIPLSRC(
                 std::string(byteArray.begin(), byteArray.end()));
+
+            // Read the hexwords sent down by Phyp. If the hexwords are present
+            // we need to store the SRC to show in function 11 and Hexwords to
+            // show in function 12 and 13.
+            std::vector<types::Byte> hexWordArray = std::get<1>(*postCodeData);
+
+            // Its a fixed size array of length 72.
+            if (hexWordArray.empty() || hexWordArray.size() < 72)
+            {
+                std::cerr << "Error reading postcode byte array" << std::endl;
+                return;
+            }
+
+            // To detect if there is a need to save SRCs and hexwords in func 11
+            // to 13, check for array data filled with space.
+            if (hexWordArray.at(0) != 0x20)
+            {
+                // store the SRC.
+                std::string hexWordsWithSRC =
+                    std::string(byteArray.begin(), byteArray.end());
+
+                // 4th byte will return number of valid hex words.
+                types::Byte validHexWords = hexWordArray.at(3);
+
+                // Ignoring the first 8 bytes from the array as those are some
+                // header related data not HEX words. Hex words are represented
+                // as 4 bytes so read 4*validHexWords bytes to read all the
+                // hexwords.
+                std::ostringstream convert;
+                for (size_t arrayLoop = 8; arrayLoop <= (4 * validHexWords);)
+                {
+                    // clear any previous data.
+                    convert.str("");
+
+                    hexWordsWithSRC += " ";
+
+                    // From this offet read 4 bytes, convert them to HEX and
+                    // then append to final string of hexwords and SRC.
+                    for (size_t hexWordLoop = 0; hexWordLoop < 4; ++hexWordLoop)
+                    {
+                        convert
+                            << std::setfill('0') << std::setw(2) << std::hex
+                            << static_cast<int>(hexWordArray.at(arrayLoop++));
+
+                        hexWordsWithSRC += convert.str();
+                    }
+                }
+
+                std::cout << "SRC and hexwords from Phyp = " << hexWordsWithSRC
+                          << std::endl;
+
+                executor->storeSRCAndHexwords(hexWordsWithSRC);
+            }
         }
         else
         {
