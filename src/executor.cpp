@@ -368,11 +368,9 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
     std::string ethObjPath = constants::networkManagerObj;
     ethObjPath += "/";
     ethObjPath += ethPort;
-    std::string macAddr{}, locCode{};
-
+    std::string macAddr{}, locCode{}, staticIP{}, dhcpIP{}, linkLocalIP{};
     for (const auto& obj : networkObjects)
     {
-        std::string originStr{};
         const std::string& objPath =
             std::get<sdbusplus::message::object_path>(obj);
         // search for eth0/eth1 ipv4 objects based on input
@@ -404,7 +402,6 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
                             (*type == "xyz.openbmc_project.Network.IP."
                                       "Protocol.IPv4"))
                         {
-                            originStr = *origin;
                             const auto& addressItr = propValMap.find("Address");
                             if (addressItr != propValMap.end())
                             {
@@ -412,7 +409,24 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
                                     &(addressItr->second));
                                 if (address != nullptr)
                                 {
-                                    line2 = *address;
+                                    if (*origin ==
+                                        "xyz.openbmc_project.Network.IP."
+                                        "AddressOrigin.Static")
+                                    {
+                                        staticIP = *address;
+                                    }
+                                    else if (*origin ==
+                                             "xyz.openbmc_project.Network.IP."
+                                             "AddressOrigin.DHCP")
+                                    {
+                                        dhcpIP = *address;
+                                    }
+                                    else if (*origin ==
+                                             "xyz.openbmc_project.Network.IP."
+                                             "AddressOrigin.LinkLocal")
+                                    {
+                                        linkLocalIP = *address;
+                                    }
                                 }
                             }
                         }
@@ -443,18 +457,6 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
                 macAddr = *mac;
             }
         }
-
-        // If MAC address and static/dynamic IP are found, break the loop. Else
-        // LinkLocal IP will be displayed by default.
-        if (!macAddr.empty() &&
-            (line2 != "0.0.0.0" &&
-             ((originStr ==
-               "xyz.openbmc_project.Network.IP.AddressOrigin.Static") ||
-              (originStr ==
-               "xyz.openbmc_project.Network.IP.AddressOrigin.DHCP"))))
-        {
-            break;
-        }
     }
 
     // obtain the mac address of network ethernet object path. query mac
@@ -481,15 +483,24 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         locCode = getPortSegment(locCode);
     }
 
-    if ((locCode.empty() && line2.empty()) || line2.empty())
+    // Decide on which IP to be displayed on op-panel.
+    if (!dhcpIP.empty())
     {
-        throw FunctionFailure("Function 30 failed.");
+        line2 = dhcpIP;
+    }
+    else if (!staticIP.empty())
+    {
+        line2 = staticIP;
+    }
+    else if (!linkLocalIP.empty())
+    {
+        line2 = linkLocalIP;
     }
 
     // create display
     std::string line1 = "SP: ";
     line1 += boost::to_upper_copy<std::string>(ethPort);
-    line1 += ":      ";
+    line1 += ":     ";
     line1 += locCode;
     panel::utils::sendCurrDisplayToPanel(line1, line2, transport);
 }
