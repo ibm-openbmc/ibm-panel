@@ -319,5 +319,34 @@ void getSensorDataFromPdr(const types::PdrList& stateSensorPdr,
     sensorId = pdr->sensor_id;
 }
 
+std::vector<std::string> getSubTreePaths(const std::string& objectPath,
+                                         const std::vector<std::string>& intf,
+                                         const int32_t depth)
+{
+    std::vector<std::string> result;
+
+    try
+    {
+        auto bus = sdbusplus::bus::new_default();
+        auto mapperCall = bus.new_method_call(
+            "xyz.openbmc_project.ObjectMapper",
+            "/xyz/openbmc_project/object_mapper",
+            "xyz.openbmc_project.ObjectMapper", "GetSubTreePaths");
+
+        mapperCall.append(objectPath);
+        mapperCall.append(depth);
+        mapperCall.append(intf);
+
+        auto response = bus.call(mapperCall);
+        response.read(result);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << e.what();
+    }
+
+    return result;
+}
+
 } // namespace utils
 } // namespace panel
