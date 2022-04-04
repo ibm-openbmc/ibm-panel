@@ -176,5 +176,18 @@ types::PdrList getPDR(const uint8_t& terminusId, const uint16_t& entityId,
 void getSensorDataFromPdr(const types::PdrList& stateSensorPdr,
                           uint16_t& sensorId);
 
+/**
+ * @brief Get subtree path for the given interface under given object path.
+ * @param[in] objectPath - Object path to find the subtree for the given
+ * interface.
+ * @param[in] intf - Interface list.
+ * @param[in] depth - Maximum subtree depth to fetch the results.
+ *
+ * @return List of all fru paths categorized under the given interface.
+ */
+std::vector<std::string> getSubTreePaths(const std::string& objectPath,
+                                         const std::vector<std::string>& intf,
+                                         const int32_t depth);
+
 } // namespace utils
 } // namespace panel

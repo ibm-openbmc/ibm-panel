@@ -301,52 +301,65 @@ void Executor::execute11()
     std::cerr << "Error getting SRC data" << std::endl;
 }
 
-static std::string getEthObjByIntf(const std::string& portName)
+static std::string getEthLocPort(const std::string& macAddr)
 {
-    std::string invEthObj = "/xyz/openbmc_project/inventory/system/chassis/"
-                            "motherboard/ebmc_card_bmc/ethernet0";
+    const auto& ethernetObjPaths = utils::getSubTreePaths(
+        "/xyz/openbmc_project/inventory",
+        std::vector<std::string>(
+            {"xyz.openbmc_project.Inventory.Item.Ethernet"}),
+        0);
 
-    if (portName == "eth1")
+    for (const auto& obj : ethernetObjPaths)
     {
-        invEthObj = "/xyz/openbmc_project/inventory/system/chassis/motherboard/"
-                    "ebmc_card_bmc/ethernet1";
-    }
-    return invEthObj;
-}
+        auto ethMac = utils::readBusProperty<std::variant<std::string>>(
+            constants::inventoryManagerIntf, obj,
+            "xyz.openbmc_project.Inventory.Item.NetworkInterface",
+            "MACAddress");
+        if (auto mac = std::get_if<std::string>(&ethMac))
+        {
+            // Cross check the macAddr obtained from Network Manager with all
+            // the inventory ethernet objects. If macAddr matches, query the
+            // location code of the corresponding inventory ethernet object and
+            // return the location port segment alone.
+            if (*mac == macAddr)
+            {
+                auto locCode =
+                    utils::readBusProperty<std::variant<std::string>>(
+                        constants::inventoryManagerIntf, obj,
+                        constants::locCodeIntf, "LocationCode");
+                if (auto location = std::get_if<std::string>(&locCode))
+                {
+                    // Retrieve the location port from location code.
+                    std::string locCode = *location;
+                    // U78DB.ND0.WZS0008-P0-C5-T0
+                    auto pos = locCode.find_last_of('-');
 
-static std::string getEthernetMac(const std::string& portName)
-{
-    std::string invEthObj = getEthObjByIntf(portName);
-    const auto nwItemIntf =
-        "xyz.openbmc_project.Inventory.Item.NetworkInterface";
-    auto ethMac = utils::readBusProperty<std::variant<std::string>>(
-        constants::inventoryManagerIntf, invEthObj, nwItemIntf, "MACAddress");
-    if (auto p = std::get_if<std::string>(&ethMac))
-    {
-        return *p;
+                    if (pos == std::string::npos)
+                    {
+                        std::cerr << "\n Unable to find location port in this "
+                                     "location code "
+                                  << locCode << " for " << obj << std::endl;
+                        return std::string();
+                    }
+                    else
+                    {
+                        return locCode.substr(pos + 1);
+                    }
+                }
+                else
+                {
+                    std::cerr << "\n Unable to find location code for " << obj
+                              << std::endl;
+                    return std::string();
+                }
+            }
+        }
     }
+
+    std::cerr << "No matching MAC address(from Network Manager) " << macAddr
+              << " found in Inventory Manager for any ethernet objects."
+              << std::endl;
     return {};
-}
-
-static std::string getEthernetLocation(const std::string& portName)
-{
-    std::string invEthObj = getEthObjByIntf(portName);
-    auto locCode = utils::readBusProperty<std::variant<std::string>>(
-        constants::inventoryManagerIntf, invEthObj, constants::locCodeIntf,
-        "LocationCode");
-    if (auto p = std::get_if<std::string>(&locCode))
-    {
-        return *p;
-    }
-    return {};
-}
-
-static std::string getPortSegment(const std::string& locCode)
-{
-    // U78DB.ND0.WZS0008-P0-C5-T0
-    auto pos = locCode.find_last_of('-');
-    std::string loc = locCode.substr(pos + 1);
-    return loc;
 }
 
 void Executor::execute30(const types::FunctionalityList& subFuncNumber)
@@ -459,29 +472,7 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         }
     }
 
-    // obtain the mac address of network ethernet object path. query mac
-    // address of ethernet0&1 of inv manager objects. if mac of both the
-    // objects(network & inventory eth objects)matches, take loc code from
-    // the respective inv manager obj path.
-
-    if (macAddr == getEthernetMac(ethPort))
-    {
-        locCode = getEthernetLocation(ethPort);
-    }
-    else if (macAddr == getEthernetMac(otherPort))
-    {
-        locCode = getEthernetLocation(otherPort);
-    }
-    else
-    {
-        std::cerr << "\n No matching ethernet object in Inventory Manager. "
-                  << std::endl;
-    }
-
-    if (!locCode.empty())
-    {
-        locCode = getPortSegment(locCode);
-    }
+    locCode = getEthLocPort(macAddr);
 
     // Decide on which IP to be displayed on op-panel.
     if (!dhcpIP.empty())
