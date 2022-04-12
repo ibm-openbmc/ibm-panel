@@ -55,17 +55,16 @@ class BusHandler
         iface->register_method("ProcessButton",
                                [this](int event) { this->btnRequest(event); });
 
-        iface->register_property(
-            "OSIPLMode", false,
-            [this](const bool newVal, bool& oldVal) {
-                if (newVal != oldVal)
-                {
-                    this->executor->setOSIPLMode(newVal);
-                    oldVal = newVal;
-                    return 1;
-                }
-                return 0;
-            });
+        iface->register_property("OSIPLMode", false,
+                                 [this](const bool newVal, bool& oldVal) {
+                                     if (newVal != oldVal)
+                                     {
+                                         this->executor->setOSIPLMode(newVal);
+                                         oldVal = newVal;
+                                         return 1;
+                                     }
+                                     return 0;
+                                 });
     }
 
   private:
