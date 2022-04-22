@@ -397,6 +397,8 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message::message& msg)
             {
                 utils::sendCurrDisplayToPanel(std::string{}, std::string{},
                                               transport);
+                //default the display by executing function 01.
+                executor->executeFunction(1, types::FunctionalityList{});
                 return;
             }
 
@@ -462,10 +464,6 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message::message& msg)
                         hexWordsWithSRC += convert.str();
                     }
                 }
-
-                std::cout << "SRC and hexwords from Phyp = " << hexWordsWithSRC
-                          << std::endl;
-
                 executor->storeSRCAndHexwords(hexWordsWithSRC);
             }
         }
