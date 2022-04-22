@@ -67,10 +67,6 @@ void ButtonHandler::processInputEvent(const boost::system::error_code& ec,
 
         for (auto& ev : std::views::counted(ipEvent.begin(), numOfEvents))
         {
-            std::cout << "Received event type: " << ev.type << std::endl
-                      << " event code = " << ev.code << std::endl
-                      << " event value = " << ev.value << std::endl;
-
             // process only for release event i.e. 1
             if (ev.value == 0)
             {
