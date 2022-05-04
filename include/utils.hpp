@@ -126,12 +126,6 @@ void writeBusProperty(const std::string& serviceName,
 }
 
 /**
- * @brief Make mapper call to get boot side paths.
- * @return List of all image object paths.
- */
-std::vector<std::string> getBootSidePaths();
-
-/**
  * @brief Get next marked boot side.
  * @param[out] nextBootSide -  Next selected boot side.
  */
