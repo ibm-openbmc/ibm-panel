@@ -955,7 +955,7 @@ void PanelStateManager::updatePowerState(const std::string& powerState)
         // unset the bit
         systemState &= SystemStateMask::DISABLE_POWER_STATE;
         updateFunctionStatus();
-        //default function displayed when we power down.
+        // default function displayed when we power down.
         funcExecutor->executeFunction(1, types::FunctionalityList{});
     }
 }
