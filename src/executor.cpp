@@ -737,47 +737,6 @@ static types::PendingAttributesItemType
                         sysOperatingModeValue));
 }
 
-static void bootSideSwitch()
-{
-    const auto bootSidePaths = utils::getBootSidePaths();
-
-    if (bootSidePaths.size() != 0)
-    {
-        if (bootSidePaths.size() > 2)
-        {
-            std::cout << "Received more than two boot paths, Setting the "
-                         "first path with priority 1 as next boot path"
-                      << std::endl;
-        }
-
-        for (const auto& path : bootSidePaths)
-        {
-            auto retVal = utils::readBusProperty<std::variant<uint8_t>>(
-                "xyz.openbmc_project.Software.BMC.Updater", path,
-                "xyz.openbmc_project.Software.RedundancyPriority", "Priority");
-
-            if (auto priority = std::get_if<uint8_t>(&retVal))
-            {
-                if (*priority != 0)
-                {
-                    uint8_t value = 0;
-                    utils::writeBusProperty<uint8_t>(
-                        "xyz.openbmc_project.Software.BMC.Updater", path,
-                        "xyz.openbmc_project.Software.RedundancyPriority",
-                        "Priority", value);
-
-                    // once the value is updated no need to check for other
-                    // paths.
-                    return;
-                }
-            }
-        }
-    }
-    std::cerr << "No boot paths returned by mapper call. Hence boot switch "
-                 "not executed"
-              << std::endl;
-}
-
 void Executor::execute02(const types::FunctionalityList& subFuncNumber)
 {
     // 127 is sent in sub function number when the state is invalid.
@@ -805,8 +764,16 @@ void Executor::execute02(const types::FunctionalityList& subFuncNumber)
     // change required.
     if (subFuncNumber.at(2) != invalidState)
     {
-        // switch boot side.
-        bootSideSwitch();
+        std::string nextBootSide = "Perm";
+        if (subFuncNumber.at(2) == 1)
+        {
+            nextBootSide = "Temp";
+        }
+        listOfAttributeValue.push_back(std::make_pair(
+            "fw_boot_side",
+            std::make_tuple("xyz.openbmc_project.BIOSConfig.Manager."
+                            "AttributeType.Enumeration",
+                            nextBootSide)));
     }
 
     if (listOfAttributeValue.size() > 0)
