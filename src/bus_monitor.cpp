@@ -397,7 +397,7 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message::message& msg)
             {
                 utils::sendCurrDisplayToPanel(std::string{}, std::string{},
                                               transport);
-                //default the display by executing function 01.
+                // default the display by executing function 01.
                 executor->executeFunction(1, types::FunctionalityList{});
                 return;
             }
