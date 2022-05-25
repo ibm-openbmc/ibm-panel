@@ -1,6 +1,7 @@
 #include "button_handler.hpp"
-
+#include "const.hpp"
 #include "panel_state_manager.hpp"
+#include "utils.hpp"
 
 #include <assert.h>
 
@@ -13,9 +14,10 @@ namespace panel
 ButtonHandler::ButtonHandler(
     const std::string& path, std::shared_ptr<boost::asio::io_context>& io,
     std::shared_ptr<Transport> transport,
-    std::shared_ptr<state::manager::PanelStateManager> stateManager) :
+    std::shared_ptr<state::manager::PanelStateManager> stateManager,
+    const std::string& busPath) :
     devicePath(path),
-    io(io), transport(transport), stateManager(stateManager)
+    io(io), transport(transport), stateManager(stateManager), busPath(busPath)
 {
     // TODO update this to actual size needed.
     ipEvent.resize(10);
@@ -27,6 +29,18 @@ ButtonHandler::ButtonHandler(
 
         if (fd < 0)
         {
+            std::map<std::string, std::string> additionalData{};
+            additionalData.emplace("CALLOUT_ERRNO", std::to_string(errno));
+            additionalData.emplace("DESCRIPTION",
+                       "Failed to open the I2C button handler device");
+            additionalData.emplace("CALLOUT_IIC_BUS", busPath);
+            additionalData.emplace("CALLOUT_IIC_ADDR",
+                              std::to_string(constants::devAddr));
+
+            utils::createPEL("com.ibm.Panel.Error.InputDevPathFailure",
+                       "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                       additionalData);
+
             throw std::runtime_error("Failed to open the input path. Button "
                                      "handler creation failed");
         }
@@ -67,6 +81,10 @@ void ButtonHandler::processInputEvent(const boost::system::error_code& ec,
 
         for (auto& ev : std::views::counted(ipEvent.begin(), numOfEvents))
         {
+            std::cout << "Received event type: " << ev.type << std::endl
+                      << " event code = " << ev.code << std::endl
+                      << " event value = " << ev.value << std::endl;
+
             // process only for release event i.e. 1
             if (ev.value == 0)
             {
