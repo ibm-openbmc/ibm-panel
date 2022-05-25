@@ -1,6 +1,7 @@
 #include "transport.hpp"
 
 #include "i2c_message_encoder.hpp"
+#include "utils.hpp"
 
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
@@ -8,12 +9,15 @@
 
 #include <chrono>
 #include <cstring>
+#include <sstream>
 #include <thread>
 
 namespace panel
 {
 void Transport::panelI2CSetup()
 {
+    std::ostringstream i2cAddress;
+    i2cAddress << "0x" << std::hex << std::uppercase << devAddress;
     if ((panelFileDescriptor = open(devPath.data(), O_WRONLY | O_NONBLOCK)) ==
         -1) // open failure
     {
@@ -22,6 +26,15 @@ void Transport::panelI2CSetup()
         error += std::to_string(err);
         error += "Errno description : ";
         error += strerror(err);
+        error +=  " for device path ";
+        error += devPath;
+        std::map<std::string, std::string> additionData{};
+        additionData.emplace("DESCRIPTION", error);
+        additionData.emplace("CALLOUT_IIC_BUS", devPath);
+        additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+        panel::utils::createPEL("com.ibm.Panel.Error.I2CSetupFailure",
+                       "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                       additionData);
         throw std::runtime_error(error);
     }
     if (ioctl(panelFileDescriptor, I2C_SLAVE, devAddress) ==
@@ -36,14 +49,23 @@ void Transport::panelI2CSetup()
         error += std::to_string(err);
         error += ". Errno description : ";
         error += strerror(err);
+        std::map<std::string, std::string> additionData{};
+        additionData.emplace("DESCRIPTION", error);
+        additionData.emplace("CALLOUT_IIC_BUS", devPath);
+        additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+        panel::utils::createPEL("com.ibm.Panel.Error.I2CSetupFailure",
+                       "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                       additionData);
         throw std::runtime_error(error);
     }
-    std::cout << "\nSuccess opening and accessing the device path: " << devPath
+    std::cout << "Success opening and accessing the device path: " << devPath
               << std::endl;
 }
 
 void Transport::panelI2CWrite(const types::Binary& buffer) const
 {
+    std::ostringstream i2cAddress;
+    i2cAddress << "0x" << std::hex << std::uppercase << devAddress;
     if (transportKey)
     {
         if (buffer.size()) // check if the given buffer has data in it.
@@ -61,6 +83,15 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
                               << ". Bytes written = " << returnedSize
                               << ". Actual Bytes = " << buffer.size()
                               << ". Retry = " << retryLoop << std::endl;
+                    std::map<std::string, std::string> additionData{};
+                    additionData.emplace("DESCRIPTION", strerror(errno));
+                    additionData.emplace("CALLOUT_IIC_BUS", devPath);
+                    additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+                    additionData.emplace("CALLOUT_ERRNO",std::to_string(errno));
+                    panel::utils::createPEL(
+                       "xyz.openbmc_project.Common.Device.Error.WriteFailure",
+                       "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                       additionData);
                     continue;
                 }
                 break;

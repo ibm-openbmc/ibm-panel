@@ -178,7 +178,8 @@ int main(int, char**)
         try
         {
             btnHandler = std::make_unique<panel::ButtonHandler>(
-                getInputDevicePath(imValue), io, lcdPanel, stateManager);
+                getInputDevicePath(imValue), io, lcdPanel, stateManager,
+                lcdDevPath);
         }
         catch (const std::runtime_error& e)
         {
@@ -212,5 +213,6 @@ int main(int, char**)
         // failure. We will do that once Everest hardware is ready.
         // https://github.com/ibm-openbmc/ibm-panel/issues/21
     }
-    return 0;
+    // Create the D-Bus invoker class
+    // Create D-Bus signal handler
 }
