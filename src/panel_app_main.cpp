@@ -178,7 +178,8 @@ int main(int, char**)
         try
         {
             btnHandler = std::make_unique<panel::ButtonHandler>(
-                getInputDevicePath(imValue), io, lcdPanel, stateManager);
+                getInputDevicePath(imValue), io, lcdPanel, stateManager,
+                lcdDevPath);
         }
         catch (const std::runtime_error& e)
         {

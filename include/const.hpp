@@ -48,6 +48,12 @@ static constexpr auto terminatingBit = 2;
 
 // Progress code src equivalent to  ascii "00000000"
 static constexpr auto clearDisplayProgressCode = 0x3030303030303030;
+static constexpr auto loggerObjectPath = "/xyz/openbmc_project/logging";
+static constexpr auto loggerCreateInterface =
+    "xyz.openbmc_project.Logging.Create";
+static constexpr auto mapperObjectPath = "/xyz/openbmc_project/object_mapper";
+static constexpr auto mapperInterface = "xyz.openbmc_project.ObjectMapper";
+static constexpr auto mapperDestination = "xyz.openbmc_project.ObjectMapper";
 
 } // namespace constants
 } // namespace panel
