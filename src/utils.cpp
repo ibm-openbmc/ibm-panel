@@ -1,5 +1,6 @@
 #include "utils.hpp"
 
+#include "const.hpp"
 #include "exception.hpp"
 #include "i2c_message_encoder.hpp"
 
@@ -21,6 +22,55 @@ std::string binaryToHexString(const types::Binary& val)
             << static_cast<int>(i);
     }
     return oss.str();
+}
+
+void createPEL(const std::string& errIntf, const std::string& sev,
+               const std::map<std::string, std::string>& additionalData)
+{
+    try
+    {
+        auto bus = sdbusplus::bus::new_default();
+        auto service = getService(bus, constants::loggerObjectPath,
+                                  constants::loggerCreateInterface);
+        auto method =
+            bus.new_method_call(service.c_str(), constants::loggerObjectPath,
+                                constants::loggerCreateInterface, "Create");
+
+        method.append(errIntf, sev, additionalData);
+        bus.call(method);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        std::cerr << "Error in invoking D-Bus logging create interface to "
+                     "register PEL";
+    }
+}
+
+std::string getService(sdbusplus::bus::bus& bus, const std::string& path,
+                       const std::string& interface)
+{
+    auto mapper = bus.new_method_call(constants::mapperDestination,
+                                      constants::mapperObjectPath,
+                                      constants::mapperInterface, "GetObject");
+    mapper.append(path, std::vector<std::string>({interface}));
+
+    std::map<std::string, std::vector<std::string>> response;
+    try
+    {
+        auto reply = bus.call(mapper);
+        reply.read(response);
+    }
+    catch (const sdbusplus::exception::exception& e)
+    {
+        throw std::runtime_error("Service name is not found");
+    }
+
+    if (response.empty())
+    {
+        throw std::runtime_error("Service name response is empty");
+    }
+
+    return response.begin()->first;
 }
 
 void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
