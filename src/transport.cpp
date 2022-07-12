@@ -17,7 +17,8 @@ namespace panel
 void Transport::panelI2CSetup()
 {
     std::ostringstream i2cAddress;
-    i2cAddress << "0x" << std::hex << std::uppercase << devAddress;
+    i2cAddress << "0x" << std::hex << std::uppercase
+               << static_cast<int>(devAddress);
     if ((panelFileDescriptor = open(devPath.data(), O_RDWR | O_NONBLOCK)) ==
         -1) // open failure
     {
@@ -32,6 +33,7 @@ void Transport::panelI2CSetup()
         additionData.emplace("DESCRIPTION", error);
         additionData.emplace("CALLOUT_IIC_BUS", devPath);
         additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+        additionData.emplace("CALLOUT_ERRNO", std::to_string(err));
         panel::utils::createPEL(
             "com.ibm.Panel.Error.I2CSetupFailure",
             "xyz.openbmc_project.Logging.Entry.Level.Warning", additionData);
@@ -53,6 +55,7 @@ void Transport::panelI2CSetup()
         additionData.emplace("DESCRIPTION", error);
         additionData.emplace("CALLOUT_IIC_BUS", devPath);
         additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+        additionData.emplace("CALLOUT_ERRNO", std::to_string(err));
         panel::utils::createPEL(
             "com.ibm.Panel.Error.I2CSetupFailure",
             "xyz.openbmc_project.Logging.Entry.Level.Warning", additionData);
@@ -65,7 +68,8 @@ void Transport::panelI2CSetup()
 void Transport::panelI2CWrite(const types::Binary& buffer) const
 {
     std::ostringstream i2cAddress;
-    i2cAddress << "0x" << std::hex << std::uppercase << devAddress;
+    i2cAddress << "0x" << std::hex << std::uppercase
+               << static_cast<int>(devAddress);
     if (transportKey)
     {
         if (buffer.size()) // check if the given buffer has data in it.
@@ -78,17 +82,17 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
                 if (returnedSize !=
                     static_cast<int>(buffer.size())) // write failure
                 {
-                    std::cerr << "\n I2C Write failure. Errno : " << errno
-                              << ". Errno description : " << strerror(errno)
+                    auto err = errno;
+                    std::cerr << "\n I2C Write failure. Errno : " << err
+                              << ". Errno description : " << strerror(err)
                               << ". Bytes written = " << returnedSize
                               << ". Actual Bytes = " << buffer.size()
                               << ". Retry = " << retryLoop << std::endl;
                     std::map<std::string, std::string> additionData{};
-                    additionData.emplace("DESCRIPTION", strerror(errno));
+                    additionData.emplace("DESCRIPTION", strerror(err));
                     additionData.emplace("CALLOUT_IIC_BUS", devPath);
                     additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
-                    additionData.emplace("CALLOUT_ERRNO",
-                                         std::to_string(errno));
+                    additionData.emplace("CALLOUT_ERRNO", std::to_string(err));
                     panel::utils::createPEL(
                         "xyz.openbmc_project.Common.Device.Error.WriteFailure",
                         "xyz.openbmc_project.Logging.Entry.Level.Warning",
@@ -195,8 +199,8 @@ void Transport::setTransportKey(bool keyValue)
     }
 
     std::cout << "\nTransport key is set to " << transportKey
-              << " for the panel at " << devPath << ", " << devAddress
-              << std::endl;
+              << " for the panel at " << devPath << ", " << std::hex << "0x"
+              << std::uppercase << static_cast<int>(devAddress) << std::endl;
 }
 
 } // namespace panel
