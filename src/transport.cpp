@@ -18,7 +18,7 @@ void Transport::panelI2CSetup()
 {
     std::ostringstream i2cAddress;
     i2cAddress << "0x" << std::hex << std::uppercase << devAddress;
-    if ((panelFileDescriptor = open(devPath.data(), O_WRONLY | O_NONBLOCK)) ==
+    if ((panelFileDescriptor = open(devPath.data(), O_RDWR | O_NONBLOCK)) ==
         -1) // open failure
     {
         auto err = errno;
@@ -122,18 +122,78 @@ void Transport::doSoftReset()
     std::cout << "\n Panel:Soft reset done." << std::endl;
 }
 
+void Transport::checkAndFixBootLoaderBug()
+{
+    auto retries = 3;
+    types::Binary readBuff;
+    readBuff.resize(2);
+    auto writeBuff = encoder::MessageEncoder().jumpToMainProgram();
+
+    while (retries--)
+    {
+        // Read the version (2 bytes)
+        // Check if we are in the bootloader: 0x42 0x4c ('B', 'L')
+        auto readSize =
+            ::read(panelFileDescriptor, readBuff.data(), readBuff.size());
+        if (readSize != (int)readBuff.size())
+        {
+            std::cerr << "Failed to read panel version. Read bytes: "
+                      << readSize << ", retry: " << retries
+                      << ", errno: " << errno << std::endl;
+            continue;
+        }
+
+        // TODO: Uncomment when we have dynamic logging
+        // std::cout << "Version read from panel: " << readBuff[0] <<
+        // readBuff[1]
+        //          << std::endl;
+
+        if (readBuff[0] == 'M' && readBuff[1] == 'P')
+        {
+            std::cout << "Validated that the panel is running the main program"
+                      << std::endl;
+            return;
+        }
+
+        // If we are in BL, call write to jump to MP.
+        if (readBuff[0] == 'B' && readBuff[1] == 'L')
+        {
+            using namespace std::chrono_literals;
+            std::cerr << "Panel is stuck in bootloader, attempting recovery..."
+                      << std::endl;
+            auto writeSize = ::write(panelFileDescriptor, writeBuff.data(),
+                                     writeBuff.size());
+            if (writeSize != (int)writeBuff.size())
+            {
+                std::cerr << "Failed to write panel jump command. Wrote bytes: "
+                          << writeSize << ", retry: " << retries
+                          << ", errno: " << errno << std::endl;
+                std::cerr << "This is expected if the errno is 5" << std::endl;
+            }
+            std::this_thread::sleep_for(1s);
+        }
+    }
+
+    std::cerr << "Failed to determine OR fix bootloader bug ... " << std::endl;
+}
+
 void Transport::setTransportKey(bool keyValue)
 {
-    if (!transportKey && keyValue && panelType == types::PanelType::LCD)
+    transportKey = keyValue;
+
+    if (transportKey)
     {
-        transportKey = keyValue;
+        // When setting key to true, check if the panel is stuck in the
+        // bootloader
+        checkAndFixBootLoaderBug();
+    }
+
+    if (transportKey && (panelType == types::PanelType::LCD))
+    {
         doSoftReset();
         doButtonConfig();
     }
-    else
-    {
-        transportKey = keyValue;
-    }
+
     std::cout << "\nTransport key is set to " << transportKey
               << " for the panel at " << devPath << ", " << devAddress
               << std::endl;
