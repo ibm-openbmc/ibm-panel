@@ -108,5 +108,14 @@ class Transport
      * soft reset operation.
      */
     void doSoftReset();
+
+    /**
+     * @brief API to get the panel out of a bootloader hang
+     *
+     * Due to a bug in some levels of the microcode, the panel can sometimes be
+     * stuck in the bootloader. This API attempts to recover from the situation
+     * by forcing the bootloader to jump to the main panel program.
+     */
+    void checkAndFixBootLoaderBug();
 };
 } // namespace panel
