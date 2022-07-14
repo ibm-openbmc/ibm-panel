@@ -105,11 +105,18 @@ class MessageEncoder
     Binary softReset();
 
     /** @brief Flash Update command encode api
-     * The encoded data packet contains the command code of flash update(0xFF3)
+     * The encoded data packet contains the command code of flash update(0xFF30)
      * and the calculated checksum.
      * @return Encoded data packet of flash update command.
      */
     Binary flashUpdate();
+
+    /** @brief Jump from bootloader to main program
+     * The encoded data packet contains the command code of jumping to main
+     * program (0xFF25) and the calculated checksum.
+     * @return Encoded data packet of jump to main program command.
+     */
+    Binary jumpToMainProgram();
 
     /** @brief Display version command encode api
      * The encoded data packet contains the command code of display version

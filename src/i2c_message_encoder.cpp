@@ -119,6 +119,16 @@ Binary MessageEncoder::flashUpdate()
     return encodedData;
 }
 
+Binary MessageEncoder::jumpToMainProgram()
+{
+    Binary encodedData;
+    encodedData.reserve(3);
+    encodedData.emplace_back(0xFF);
+    encodedData.emplace_back(0x25);
+    calculateCheckSum(encodedData);
+    return encodedData;
+}
+
 Binary MessageEncoder::displayVersionCmd()
 {
     Binary encodedData;
