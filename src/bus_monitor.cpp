@@ -100,6 +100,29 @@ void PanelPresence::readPresentProperty(sdbusplus::message::message& msg)
         if (auto present = std::get_if<bool>(&(itr->second)))
         {
             transport->setTransportKey(*present);
+            if (transport->getPanelType() == types::PanelType::LCD && *present)
+            {
+
+                const auto bmcState =
+                    utils::readBusProperty<std::variant<std::string>>(
+                        "xyz.openbmc_project.State.BMC",
+                        "/xyz/openbmc_project/state/bmc0",
+                        "xyz.openbmc_project.State.BMC", "CurrentBMCState");
+
+                if (const auto* bmc = std::get_if<std::string>(&bmcState))
+                {
+                    if (*bmc == "xyz.openbmc_project.State.BMC.BMCState.Ready")
+                    {
+                        stateManager->updateBMCState(*bmc);
+                    }
+                }
+                else
+                {
+                    std::cerr
+                        << "Failed reading CurrentBMCState property from D-Bus."
+                        << std::endl;
+                }
+            }
         }
         else
         {

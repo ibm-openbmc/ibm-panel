@@ -75,6 +75,14 @@ class Transport
         return transportKey;
     }
 
+    /** @brief Method to get panel type
+     * @return panel type(LCD/BASE)
+     */
+    inline types::PanelType getPanelType() const
+    {
+        return panelType;
+    }
+
   private:
     /** @brief The panel's file descriptor */
     int panelFileDescriptor = -1;

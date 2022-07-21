@@ -31,9 +31,10 @@ class PanelPresence
      */
     PanelPresence(std::string& objPath,
                   std::shared_ptr<sdbusplus::asio::connection> conn,
-                  std::shared_ptr<Transport> transport) :
+                  std::shared_ptr<Transport> transport,
+                  std::shared_ptr<state::manager::PanelStateManager> state) :
         objectPath(objPath),
-        conn(conn), transport(transport)
+        conn(conn), transport(transport), stateManager(state)
     {
     }
 
@@ -47,6 +48,7 @@ class PanelPresence
     std::string objectPath;
     std::shared_ptr<sdbusplus::asio::connection> conn;
     std::shared_ptr<Transport> transport;
+    std::shared_ptr<state::manager::PanelStateManager> stateManager;
 
     /** @brief Read panel's "Present" property and set the transport key.
      * @param[in] msg - pointer to the msg sent by the PropertiesChanged signal.
