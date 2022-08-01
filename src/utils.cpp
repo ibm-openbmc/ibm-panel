@@ -319,5 +319,39 @@ std::vector<std::string> getSubTreePaths(const std::string& objectPath,
     return result;
 }
 
+std::string getSystemIM()
+{
+    auto im = readBusProperty<std::variant<types::Binary>>(
+        constants::inventoryManagerIntf, constants::systemDbusObj,
+        constants::imInterface, constants::imKeyword);
+    if (auto imVector = std::get_if<types::Binary>(&im))
+    {
+        return utils::binaryToHexString(*imVector);
+    }
+    else
+    {
+        std::cerr << "\n Failed querying IM property from dbus" << std::endl;
+    }
+    return "";
+}
+
+bool getLcdPanelPresentProperty(const std::string& imValue)
+{
+    auto present = readBusProperty<std::variant<bool>>(
+        constants::inventoryManagerIntf,
+        std::get<2>((lcdDataMap.find(imValue))->second),
+        constants::itemInterface, "Present");
+    if (auto p = std::get_if<bool>(&present))
+    {
+        return *p;
+    }
+    else
+    {
+        std::cerr << "\n Failed querying Present property from dbus."
+                  << std::endl;
+    }
+    return false;
+}
+
 } // namespace utils
 } // namespace panel
