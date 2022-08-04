@@ -83,14 +83,30 @@ int main(int, char**)
         auto lcdPanel = std::make_shared<panel::Transport>(
             lcdDevPath, lcdDevAddr, panel::types::PanelType::LCD);
 
-        // create transport base object
+        // create transport base object and listen for its presence to
+        // enable CM on everest.
         std::shared_ptr<panel::Transport> basePanel;
+        std::unique_ptr<panel::PanelPresence> basePanelPresence;
         if (baseDataMap.find(imValue) != baseDataMap.end())
         {
             basePanel = std::make_shared<panel::Transport>(
                 std::get<0>((baseDataMap.find(imValue))->second),
                 std::get<1>((baseDataMap.find(imValue))->second),
                 panel::types::PanelType::BASE);
+
+            auto& baseObjPath =
+                std::get<2>((baseDataMap.find(imValue))->second);
+
+            // if it is base panel of Everest, register for its presence to
+            // enable CM.
+            if (baseObjPath == panel::constants::everBaseDbusObj)
+            {
+                basePanelPresence = std::make_unique<panel::PanelPresence>(
+                    baseObjPath, conn, basePanel);
+
+                basePanelPresence->listenPanelPresence();
+            }
+
             basePanel->setTransportKey(true);
         }
 

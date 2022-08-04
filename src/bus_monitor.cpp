@@ -10,6 +10,84 @@
 namespace panel
 {
 
+static void resetLEDState()
+{
+    std::cout << "Reset LED state" << std::endl;
+    std::vector<std::string> ledsPathOnBasePanel{
+        "/xyz/openbmc_project/led/groups/bmc_booted",
+        "/xyz/openbmc_project/led/groups/power_on",
+        "/xyz/openbmc_project/led/groups/enclosure_identify",
+        "/xyz/openbmc_project/led/groups/platform_system_attention_indicator",
+        "/xyz/openbmc_project/led/groups/partition_system_attention_indicator",
+        "/xyz/openbmc_project/led/groups/enclosure_fault"};
+
+    for (const auto& led : ledsPathOnBasePanel)
+    {
+        auto res = utils::readBusProperty<std::variant<bool>>(
+            "xyz.openbmc_project.LED.GroupManager", led,
+            "xyz.openbmc_project.Led.Group", "Asserted");
+
+        if (auto asserted = std::get_if<bool>(&res))
+        {
+            if (*asserted)
+            {
+                try
+                {
+                    std::cout << "Led asserted = " << led << std::endl;
+                    utils::writeBusProperty<bool>(
+                        "xyz.openbmc_project.LED.GroupManager", led,
+                        "xyz.openbmc_project.Led.Group", "Asserted", false);
+
+                    utils::writeBusProperty<bool>(
+                        "xyz.openbmc_project.LED.GroupManager", led,
+                        "xyz.openbmc_project.Led.Group", "Asserted", true);
+                }
+                catch (const sdbusplus::exception::SdBusError& e)
+                {
+                    std::cerr << "Write call for led " << led
+                              << " failed with exception " << e.what()
+                              << std::endl;
+                }
+            }
+        }
+        else
+        {
+            std::cerr
+                << "Failed to read asserted property. Unable to reset led "
+                << led << std::endl;
+        }
+    }
+}
+
+void PanelPresence::readBasePresentProperty(sdbusplus::message::message& msg)
+{
+    if (msg.is_method_error())
+    {
+        std::cerr << "\n Error in reading panel presence signal " << std::endl;
+    }
+    std::string interface;
+    types::PropertyValueMap propMap;
+    msg.read(interface, propMap);
+    const auto itr = propMap.find("Present");
+    if (itr != propMap.end())
+    {
+        if (auto present = std::get_if<bool>(&(itr->second)))
+        {
+            transport->setTransportKey(*present);
+
+            if (*present)
+            {
+                resetLEDState();
+            }
+        }
+        else
+        {
+            std::cerr << "\n Error reading base panel present property"
+                      << std::endl;
+        }
+    }
+}
+
 void PanelPresence::readPresentProperty(sdbusplus::message::message& msg)
 {
     if (msg.is_method_error())
@@ -35,14 +113,31 @@ void PanelPresence::readPresentProperty(sdbusplus::message::message& msg)
 
 void PanelPresence::listenPanelPresence()
 {
-    static std::shared_ptr<sdbusplus::bus::match::match> matchPanelPresence =
-        std::make_shared<sdbusplus::bus::match::match>(
-            *conn,
-            sdbusplus::bus::match::rules::propertiesChanged(
-                objectPath, constants::itemInterface),
-            [this](sdbusplus::message::message& msg) {
-                readPresentProperty(msg);
-            });
+    // Register call back for Everest base panel. Used in case of CM to reset
+    // LEDs.
+    if (objectPath == constants::everBaseDbusObj)
+    {
+        static std::shared_ptr<sdbusplus::bus::match::match>
+            everBasePanelPresence =
+                std::make_shared<sdbusplus::bus::match::match>(
+                    *conn,
+                    sdbusplus::bus::match::rules::propertiesChanged(
+                        objectPath, constants::itemInterface),
+                    [this](sdbusplus::message::message& msg) {
+                        readBasePresentProperty(msg);
+                    });
+    }
+    else
+    {
+        static std::shared_ptr<sdbusplus::bus::match::match>
+            matchPanelPresence = std::make_shared<sdbusplus::bus::match::match>(
+                *conn,
+                sdbusplus::bus::match::rules::propertiesChanged(
+                    objectPath, constants::itemInterface),
+                [this](sdbusplus::message::message& msg) {
+                    readPresentProperty(msg);
+                });
+    }
 }
 
 void PELListener::PELEventCallBack(sdbusplus::message::message& msg)

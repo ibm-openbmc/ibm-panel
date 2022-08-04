@@ -52,6 +52,14 @@ class PanelPresence
      * @param[in] msg - pointer to the msg sent by the PropertiesChanged signal.
      */
     void readPresentProperty(sdbusplus::message::message& msg);
+
+    /**
+     * @brief Everest base panel "Present" property callback.
+     * It resets LEDs state on base panel and sets the transport key.
+     *
+     * @param[in] msg - pointer to the msg sent by the PropertiesChanged signal.
+     */
+    void readBasePresentProperty(sdbusplus::message::message& msg);
 };
 
 /** @class PELListener
