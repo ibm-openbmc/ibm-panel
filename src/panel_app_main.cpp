@@ -85,6 +85,15 @@ int main(int, char**)
 
         // create transport base object and listen for its presence to
         // enable CM on everest.
+
+        // NOTE:Always base transport key should be set to true prior to LCD
+        // transport key getting set to true. This is to be taken care for code
+        // update scenarios. Reason: If the base panel isn't up, SRC is
+        // displayed on LCD panel. And there needs an external request to LCD
+        // panel to change the display once the base is up. This case can get
+        // avoided by following the panel order to set transport key.
+
+        // create transport base object
         std::shared_ptr<panel::Transport> basePanel;
         std::unique_ptr<panel::PanelPresence> basePanelPresence;
         if (baseDataMap.find(imValue) != baseDataMap.end())
