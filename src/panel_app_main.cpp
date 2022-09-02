@@ -83,6 +83,14 @@ int main(int, char**)
         auto lcdPanel = std::make_shared<panel::Transport>(
             lcdDevPath, lcdDevAddr, panel::types::PanelType::LCD);
 
+        // create executor class
+        auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io);
+
+        // create state manager object
+        auto stateManager =
+            std::make_shared<panel::state::manager::PanelStateManager>(
+                lcdPanel, executor);
+
         // create transport base object and listen for its presence to
         // enable CM on everest.
         std::shared_ptr<panel::Transport> basePanel;
@@ -102,7 +110,7 @@ int main(int, char**)
             if (baseObjPath == panel::constants::everBaseDbusObj)
             {
                 basePanelPresence = std::make_unique<panel::PanelPresence>(
-                    baseObjPath, conn, basePanel);
+                    baseObjPath, conn, basePanel, stateManager);
 
                 basePanelPresence->listenPanelPresence();
             }
@@ -116,8 +124,8 @@ int main(int, char**)
         if (panel::utils::lcdDataMap.find(imValue) !=
             panel::utils::lcdDataMap.end())
         {
-            presence = std::make_unique<panel::PanelPresence>(lcdObjPath, conn,
-                                                              lcdPanel);
+            presence = std::make_unique<panel::PanelPresence>(
+                lcdObjPath, conn, lcdPanel, stateManager);
             presence->listenPanelPresence();
 
             /** Race condition can happen when the panel is removed exactly at
@@ -135,14 +143,6 @@ int main(int, char**)
             // set transport key to true for test system(tacoma).
             lcdPanel->setTransportKey(true);
         }
-
-        // create executor class
-        auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io);
-
-        // create state manager object
-        auto stateManager =
-            std::make_shared<panel::state::manager::PanelStateManager>(
-                lcdPanel, executor);
 
         // TODO: via https://github.com/ibm-openbmc/ibm-panel/issues/21
         // Remove this try catch around the button handler once Everest device
