@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.hpp"
+
 namespace panel
 {
 namespace constants
@@ -55,5 +57,10 @@ static constexpr auto mapperObjectPath = "/xyz/openbmc_project/object_mapper";
 static constexpr auto mapperInterface = "xyz.openbmc_project.ObjectMapper";
 static constexpr auto mapperDestination = "xyz.openbmc_project.ObjectMapper";
 
+// Minimum version for both base and LCD panels
+static const types::PanelVersion minPanelVersion('5', '0');
+static const types::PanelVersion maxLCDVersion('5', '2');
+static const types::PanelVersion maxBaseVersion('5', '5');
+static constexpr auto maxFlashWriteChunk = 68;
 } // namespace constants
 } // namespace panel

@@ -1,6 +1,9 @@
 #include "transport.hpp"
 
+#include "base_fw_latest.hpp"
+#include "const.hpp"
 #include "i2c_message_encoder.hpp"
+#include "lcd_fw_latest.hpp"
 #include "utils.hpp"
 
 #include <fcntl.h>
@@ -12,13 +15,17 @@
 #include <sstream>
 #include <thread>
 
+using namespace std::chrono_literals;
+
 namespace panel
 {
 void Transport::panelI2CSetup()
 {
-    std::ostringstream i2cAddress;
-    i2cAddress << "0x" << std::hex << std::uppercase
+    std::ostringstream byteStream;
+    byteStream << "0x" << std::hex << std::uppercase
                << static_cast<int>(devAddress);
+    i2cAddress = byteStream.str();
+
     if ((panelFileDescriptor = open(devPath.data(), O_RDWR | O_NONBLOCK)) ==
         -1) // open failure
     {
@@ -32,7 +39,7 @@ void Transport::panelI2CSetup()
         std::map<std::string, std::string> additionData{};
         additionData.emplace("DESCRIPTION", error);
         additionData.emplace("CALLOUT_IIC_BUS", devPath);
-        additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+        additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress);
         additionData.emplace("CALLOUT_ERRNO", std::to_string(err));
         panel::utils::createPEL(
             "com.ibm.Panel.Error.I2CSetupFailure",
@@ -54,7 +61,7 @@ void Transport::panelI2CSetup()
         std::map<std::string, std::string> additionData{};
         additionData.emplace("DESCRIPTION", error);
         additionData.emplace("CALLOUT_IIC_BUS", devPath);
-        additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+        additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress);
         additionData.emplace("CALLOUT_ERRNO", std::to_string(err));
         panel::utils::createPEL(
             "com.ibm.Panel.Error.I2CSetupFailure",
@@ -67,9 +74,6 @@ void Transport::panelI2CSetup()
 
 void Transport::panelI2CWrite(const types::Binary& buffer) const
 {
-    std::ostringstream i2cAddress;
-    i2cAddress << "0x" << std::hex << std::uppercase
-               << static_cast<int>(devAddress);
     if (transportKey)
     {
         if (buffer.size()) // check if the given buffer has data in it.
@@ -113,7 +117,7 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
                 std::map<std::string, std::string> additionData{};
                 additionData.emplace("DESCRIPTION", strerror(failedErrno));
                 additionData.emplace("CALLOUT_IIC_BUS", devPath);
-                additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+                additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress);
                 additionData.emplace("CALLOUT_ERRNO",
                                      std::to_string(failedErrno));
                 panel::utils::createPEL(
@@ -140,7 +144,6 @@ void Transport::doButtonConfig()
 
 void Transport::doSoftReset()
 {
-    using namespace std::chrono_literals;
     panelI2CWrite(encoder::MessageEncoder().softReset());
     std::this_thread::sleep_for(3000ms);
     std::cout << "\n Panel:Soft reset done." << std::endl;
@@ -182,7 +185,6 @@ void Transport::checkAndFixBootLoaderBug()
         // If we are in BL, call write to jump to MP.
         if (readBuff[0] == 'B' && readBuff[1] == 'L')
         {
-            using namespace std::chrono_literals;
             std::cerr << "Panel is stuck in bootloader, attempting recovery..."
                       << std::endl;
             auto writeSize = ::write(panelFileDescriptor, writeBuff.data(),
@@ -201,6 +203,129 @@ void Transport::checkAndFixBootLoaderBug()
     std::cerr << "Failed to determine OR fix bootloader bug ... " << std::endl;
 }
 
+bool Transport::readPanelVersion(types::Binary& versionBuffer) const
+{
+    const size_t versionSize = 6;
+    versionBuffer.resize(versionSize);
+
+    auto readSize =
+        ::read(panelFileDescriptor, versionBuffer.data(), versionSize);
+
+    if (readSize != versionSize)
+    {
+        std::cerr << "Failed to read panel current version [" << devPath << ", "
+                  << i2cAddress << "]. Bytes read: " << readSize
+                  << ", errno: " << errno
+                  << "error statement = " << std::to_string(errno) << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void Transport::doFWUpdate() const
+{
+    // Read current microcode version
+    types::Binary versionBuffer;
+    if (!readPanelVersion(versionBuffer))
+    {
+        return;
+    }
+
+    if (versionBuffer[0] != 'M' && versionBuffer[1] != 'P')
+    {
+        if (versionBuffer[0] != 'B' && versionBuffer[1] != 'L')
+        {
+            logCodeUpdateError(
+                "FW Code requires minimum version to proceed with code "
+                "update. Code update fails.",
+                0, "Not reached the Main Program");
+            return;
+        }
+        std::cerr << "\n The Op-panel at " << devPath << ", " << i2cAddress
+                  << " has not reached the Main Program. Aborting code update."
+                  << std::endl;
+        return;
+    }
+
+    types::PanelVersion currentVersion;
+
+    if (versionBuffer[0] == 'M' && versionBuffer[1] == 'P')
+    {
+        types::PanelVersion v(versionBuffer[3], versionBuffer[5]);
+        currentVersion = v;
+    }
+
+    std::cout << "\n The current version of Op-panel at " << devPath << ", "
+              << i2cAddress << " is " << currentVersion.str() << std::endl;
+
+    types::PanelVersion maxVersion =
+        (panelType == types::PanelType::LCD)
+            ? types::PanelVersion(constants::maxLCDVersion)
+            : types::PanelVersion(constants::maxBaseVersion);
+
+    if (currentVersion == maxVersion || currentVersion > maxVersion)
+    {
+        std::cout << "\nOp-panel at " << devPath << ", " << i2cAddress
+                  << " has the latest version " << currentVersion.str()
+                  << ". Code update not required." << std::endl;
+        return;
+    }
+    else if (currentVersion < constants::minPanelVersion)
+    {
+        logCodeUpdateError(
+            "FW Code requires minimum version to proceed with code update. "
+            "Code update fails.",
+            0, "In Main Program");
+        return;
+    }
+
+    if (!gotoBootloader())
+    {
+        std::cerr << "\nFailed to switch to boot loader. Code update failed "
+                     "for Op-panel at "
+                  << devPath << ", " << i2cAddress << std::endl;
+        return;
+    }
+
+    if (!updateFlash())
+    {
+        std::cerr << "\nFlash failed. Aborting code update for Op-panel at "
+                  << devPath << ", " << i2cAddress << std::endl;
+        return;
+    }
+
+    if (!gotoMainProgram())
+    {
+        std::cerr << "\nFailed jumping to main program after a code update for "
+                     "Op-panel at "
+                  << devPath << ", " << i2cAddress << std::endl;
+        return;
+    }
+    else
+    {
+        types::Binary mpVersion;
+
+        if (readPanelVersion(mpVersion) && mpVersion[0] == 'M' &&
+            mpVersion[1] == 'P')
+        {
+            types::PanelVersion v(mpVersion[3], mpVersion[5]);
+            currentVersion = v;
+
+            if (currentVersion == maxVersion)
+            {
+                std::cout
+                    << "\nFirmware update successful to the latest version "
+                    << currentVersion.str() << " for the op-panel at "
+                    << devPath << ", " << i2cAddress << std::endl;
+                return;
+            }
+            logCodeUpdateError("Failed updating firmware to the latest version",
+                               0, "In Main Program");
+            return;
+        }
+    }
+}
+
 void Transport::setTransportKey(bool keyValue)
 {
     transportKey = keyValue;
@@ -210,6 +335,7 @@ void Transport::setTransportKey(bool keyValue)
         // When setting key to true, check if the panel is stuck in the
         // bootloader
         checkAndFixBootLoaderBug();
+        doFWUpdate();
     }
 
     if (transportKey && (panelType == types::PanelType::LCD))
@@ -219,8 +345,127 @@ void Transport::setTransportKey(bool keyValue)
     }
 
     std::cout << "\nTransport key is set to " << transportKey
-              << " for the panel at " << devPath << ", " << std::hex << "0x"
-              << std::uppercase << static_cast<int>(devAddress) << std::endl;
+              << " for the panel at " << devPath << ", " << i2cAddress
+              << std::endl;
 }
 
+bool Transport::gotoBootloader() const
+{
+    auto writeBuff = encoder::MessageEncoder().jumpToBootLoader();
+
+    auto writeSize =
+        ::write(panelFileDescriptor, writeBuff.data(), writeBuff.size());
+    if (writeSize != (int)writeBuff.size())
+    {
+        logCodeUpdateError(
+            "Failed jumping to panel boot loader. Code update fails.", errno,
+            "In Main Program");
+        return false;
+    }
+
+    std::this_thread::sleep_for(1s);
+
+    types::Binary blVersion;
+
+    if (!readPanelVersion(blVersion) ||
+        (blVersion[0] != 'B' && blVersion[1] != 'L'))
+    {
+        logCodeUpdateError(
+            "Failed to read Boot Loader version. Code update fails.", 0,
+            "In Boot Loader");
+        return false;
+    }
+    return true;
+}
+
+bool Transport::updateFlash() const
+{
+    auto maxAvailBytes = 0;
+    const void* lcdPtr = &(firmware::lcd);
+    const void* basePtr = &(firmware::base);
+
+    const void* fwUpdateBuffer =
+        (panelType == types::PanelType::LCD) ? lcdPtr : basePtr;
+    const int fwCodeSize = (panelType == types::PanelType::LCD)
+                               ? (firmware::lcd).size()
+                               : (firmware::base).size();
+
+    for (auto chunkIndex = 0; chunkIndex < fwCodeSize;
+         chunkIndex += maxAvailBytes)
+    {
+        if (fwCodeSize - chunkIndex < constants::maxFlashWriteChunk)
+        {
+            maxAvailBytes = fwCodeSize - chunkIndex;
+        }
+        else
+        {
+            maxAvailBytes = constants::maxFlashWriteChunk;
+        }
+
+        auto sizeWritten =
+            ::write(panelFileDescriptor,
+                    (static_cast<const uint8_t*>(fwUpdateBuffer) + chunkIndex),
+                    maxAvailBytes);
+
+        if (sizeWritten != maxAvailBytes)
+        {
+            logCodeUpdateError(
+                "Failed to write a byte chunk while flashing. Code update "
+                "fails.",
+                errno, "In Boot Loader");
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Transport::gotoMainProgram() const
+{
+    auto writeBuff = encoder::MessageEncoder().jumpToMainProgram();
+
+    auto writeSize =
+        ::write(panelFileDescriptor, writeBuff.data(), writeBuff.size());
+
+    std::this_thread::sleep_for(1s);
+
+    if (writeSize != static_cast<int>(writeBuff.size()) && errno != EIO)
+    {
+        logCodeUpdateError(
+            "Failed jumping to Main program after a code update.", errno,
+            "In Boot Loader");
+        return false;
+    }
+    return true;
+}
+
+void Transport::logCodeUpdateError(const std::string& description,
+                                   const int err,
+                                   const std::string& control) const
+{
+    std::map<std::string, std::string> codeUpdatePELData;
+
+    codeUpdatePELData.emplace("DESCRIPTION", description);
+    codeUpdatePELData.emplace("CALLOUT_IIC_BUS", devPath);
+    codeUpdatePELData.emplace("CALLOUT_IIC_ADDR", i2cAddress);
+    codeUpdatePELData.emplace("CALLOUT_ERRNO", std::to_string(err));
+    codeUpdatePELData.emplace("MINIMUM_VERSION",
+                              constants::minPanelVersion.str());
+
+    if (panelType == types::PanelType::LCD)
+    {
+        codeUpdatePELData.emplace("MAXIMUM_VERSION",
+                                  constants::maxLCDVersion.str());
+    }
+    else if (panelType == types::PanelType::BASE)
+    {
+        codeUpdatePELData.emplace("MAXIMUM_VERSION",
+                                  constants::maxBaseVersion.str());
+    }
+
+    codeUpdatePELData.emplace("CONTROL", control);
+
+    utils::createPEL("com.ibm.Panel.Error.CodeUpdateFailure",
+                     "xyz.openbmc_project.Logging.Entry.Level.Error",
+                     codeUpdatePELData);
+}
 } // namespace panel

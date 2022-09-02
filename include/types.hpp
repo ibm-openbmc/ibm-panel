@@ -98,5 +98,116 @@ enum class ScrollType : Byte
     LINE2_LEFT = 0x21,
 };
 
+/** @brief Structure to store and process panel version */
+struct PanelVersion
+{
+    uint8_t major;
+    uint8_t minor;
+
+    // Delete move assignment operator and move constructor
+    PanelVersion& operator=(const PanelVersion&&) = delete;
+    PanelVersion(PanelVersion&&) = delete;
+
+    /** @brief Parameterized constructor
+     *
+     * @param[in] mj - Major version
+     * @param[in] mn - Minor version
+     */
+    PanelVersion(int mj, int mn)
+    {
+        major = mj;
+        minor = mn;
+    }
+
+    /** @brief Default constructor */
+    PanelVersion()
+    {
+        major = 0;
+        minor = 0;
+    }
+
+    /** @brief Copy constructor
+     *
+     * @param[in] v - Input PanelVersion object
+     *
+     * @return Output PanelVersion object
+     */
+    PanelVersion(const PanelVersion& v)
+    {
+        major = v.major;
+        minor = v.minor;
+    }
+
+    /** @brief Overload less than operator.
+     *
+     * @param[in] right - Right side value
+     *
+     * @return true if left value is less than right, false otherwise.
+     */
+    bool operator<(const PanelVersion& right) const
+    {
+        if ((major < right.major) ||
+            ((major == right.major) && (minor < right.minor)))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /** @brief Overload greater than operator.
+     *
+     * @param[in] right - Right side value
+     *
+     * @return true if left value is greater than right, false otherwise.
+     */
+    bool operator>(const PanelVersion& right) const
+    {
+        if ((major > right.major) ||
+            ((major == right.major) && (minor > right.minor)))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /** @brief Overload equal to operator.
+     *
+     * @param[in] right - Right side value
+     *
+     * @return true if left and right values are equal, false otherwise.
+     */
+    bool operator==(const PanelVersion& right) const
+    {
+        if ((major == right.major) && (minor == right.minor))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /** @brief Overload assignment operator
+     *
+     * @param[in] right - Value at the right of the assignment operator
+     *
+     * @return Output value
+     */
+    PanelVersion& operator=(PanelVersion& right)
+    {
+        major = right.major;
+        minor = right.minor;
+        return *this;
+    }
+
+    /** @brief Get PanelVersion in string.
+     *
+     * @return PanelVersion value as string.
+     */
+    std::string str() const
+    {
+        return std::string{1, static_cast<char>(major)} + "." +
+               std::string{1, static_cast<char>(minor)};
+    }
+};
+
 } // namespace types
 } // namespace panel

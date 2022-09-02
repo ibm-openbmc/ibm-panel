@@ -103,6 +103,10 @@ class Transport
     /** @brief Panel type (base/lcd) */
     const types::PanelType panelType;
 
+    /** @brief i2cAddress and devAddress are same in value but differs in type.
+     * This is required to log CALLOUT_IIC_ADDR in PEL.*/
+    std::string i2cAddress{};
+
     /** @brief Establish panel i2c connection
      * This api establishes the i2c bus connection to the panel micro
      * controller.
@@ -125,5 +129,55 @@ class Transport
      * by forcing the bootloader to jump to the main panel program.
      */
     void checkAndFixBootLoaderBug();
+
+    /**
+     * @brief API to read panel current version
+     *
+     * This method reads 6 bytes of panel's current version and stores in the io
+     * reference argument.
+     *
+     * @param[out] - Reference to byte vector to store the current version.
+     *
+     * @return true if version read successfully, false otherwise.
+     */
+    bool readPanelVersion(types::Binary& currVersion) const;
+
+    /**
+     * @brief API which does panel firmware update
+     * This method does both LCD and base firmware code update with their latest
+     * code respectively, if the existing panel firmware is not the latest.
+     */
+    void doFWUpdate() const;
+
+    /**
+     * @brief API to go to boot loader from main program
+     *
+     * @return true if its a successful jump to bootloader, false otherwise.
+     */
+    bool gotoBootloader() const;
+
+    /**
+     * @brief API which updates the panel FW with the latest.
+     *
+     * @return true if its a successful updation, false otherwise.
+     */
+    bool updateFlash() const;
+
+    /**
+     * @brief API to go main program from bootloader.
+     *
+     * @return true if its a successful jump to main program, false otherwise.
+     */
+    bool gotoMainProgram() const;
+
+    /** @brief Log error related to code update failure.
+     *
+     * @param[in] description - Error description.
+     * @param[in] err - errno.
+     * @param[in] control - Says if panel control reaches Main program or Boot
+     * loader.
+     */
+    void logCodeUpdateError(const std::string& description, const int err,
+                            const std::string& control) const;
 };
 } // namespace panel

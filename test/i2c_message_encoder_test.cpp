@@ -121,11 +121,11 @@ TEST(MessageEncoder, softReset)
     EXPECT_EQ(validData, msgEncode.softReset());
 }
 
-TEST(MessageEncoder, flashUpdate)
+TEST(MessageEncoder, gotoBootLoader)
 {
     MessageEncoder msgEncode;
     Binary validData = {0xFF, 0x30, 208};
-    EXPECT_EQ(validData, msgEncode.flashUpdate());
+    EXPECT_EQ(validData, msgEncode.jumpToBootLoader());
 }
 
 TEST(MessageEncoder, displayVersionCmd)

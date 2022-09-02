@@ -109,7 +109,7 @@ Binary MessageEncoder::softReset()
     return encodedData;
 }
 
-Binary MessageEncoder::flashUpdate()
+Binary MessageEncoder::jumpToBootLoader()
 {
     Binary encodedData;
     encodedData.reserve(3);
