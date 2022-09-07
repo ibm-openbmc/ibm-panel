@@ -121,7 +121,7 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
                 additionData.emplace("CALLOUT_ERRNO",
                                      std::to_string(failedErrno));
                 panel::utils::createPEL(
-                    "xyz.openbmc_project.Common.Device.Error.WriteFailure",
+                    constants::deviceWriteFailure,
                     "xyz.openbmc_project.Logging.Entry.Level.Warning",
                     additionData);
             }
@@ -238,7 +238,8 @@ void Transport::doFWUpdate() const
             logCodeUpdateError(
                 "FW Code requires minimum version to proceed with code "
                 "update. Code update fails.",
-                0, "Not reached the Main Program");
+                0, "Not reached the Main Program",
+                constants::codeUpdateFailure);
             return;
         }
         std::cerr << "\n The Op-panel at " << devPath << ", " << i2cAddress
@@ -275,7 +276,7 @@ void Transport::doFWUpdate() const
         logCodeUpdateError(
             "FW Code requires minimum version to proceed with code update. "
             "Code update fails.",
-            0, "In Main Program");
+            0, "In Main Program", constants::codeUpdateFailure);
         return;
     }
 
@@ -320,7 +321,8 @@ void Transport::doFWUpdate() const
                 return;
             }
             logCodeUpdateError("Failed updating firmware to the latest version",
-                               0, "In Main Program");
+                               0, "In Main Program",
+                               constants::deviceWriteFailure);
             return;
         }
     }
@@ -359,7 +361,7 @@ bool Transport::gotoBootloader() const
     {
         logCodeUpdateError(
             "Failed jumping to panel boot loader. Code update fails.", errno,
-            "In Main Program");
+            "In Main Program", constants::deviceWriteFailure);
         return false;
     }
 
@@ -372,7 +374,7 @@ bool Transport::gotoBootloader() const
     {
         logCodeUpdateError(
             "Failed to read Boot Loader version. Code update fails.", 0,
-            "In Boot Loader");
+            "In Boot Loader", constants::deviceReadFailure);
         return false;
     }
     return true;
@@ -412,7 +414,7 @@ bool Transport::updateFlash() const
             logCodeUpdateError(
                 "Failed to write a byte chunk while flashing. Code update "
                 "fails.",
-                errno, "In Boot Loader");
+                errno, "In Boot Loader", constants::deviceWriteFailure);
             return false;
         }
     }
@@ -432,22 +434,19 @@ bool Transport::gotoMainProgram() const
     {
         logCodeUpdateError(
             "Failed jumping to Main program after a code update.", errno,
-            "In Boot Loader");
+            "In Boot Loader", constants::deviceWriteFailure);
         return false;
     }
     return true;
 }
 
 void Transport::logCodeUpdateError(const std::string& description,
-                                   const int err,
-                                   const std::string& control) const
+                                   const int err, const std::string& control,
+                                   const std::string& pelIntf) const
 {
     std::map<std::string, std::string> codeUpdatePELData;
 
     codeUpdatePELData.emplace("DESCRIPTION", description);
-    codeUpdatePELData.emplace("CALLOUT_IIC_BUS", devPath);
-    codeUpdatePELData.emplace("CALLOUT_IIC_ADDR", i2cAddress);
-    codeUpdatePELData.emplace("CALLOUT_ERRNO", std::to_string(err));
     codeUpdatePELData.emplace("MINIMUM_VERSION",
                               constants::minPanelVersion.str());
 
@@ -464,8 +463,18 @@ void Transport::logCodeUpdateError(const std::string& description,
 
     codeUpdatePELData.emplace("CONTROL", control);
 
-    utils::createPEL("com.ibm.Panel.Error.CodeUpdateFailure",
-                     "xyz.openbmc_project.Logging.Entry.Level.Error",
+    if (pelIntf != constants::codeUpdateFailure)
+    {
+        codeUpdatePELData.emplace("CALLOUT_IIC_BUS", devPath);
+        codeUpdatePELData.emplace("CALLOUT_IIC_ADDR", i2cAddress);
+        codeUpdatePELData.emplace("CALLOUT_ERRNO", std::to_string(err));
+    }
+    else
+    {
+        codeUpdatePELData.emplace("CALLOUT_INVENTORY_PATH", fruPath);
+    }
+
+    utils::createPEL(pelIntf, "xyz.openbmc_project.Logging.Entry.Level.Error",
                      codeUpdatePELData);
 }
 } // namespace panel

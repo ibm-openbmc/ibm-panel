@@ -204,8 +204,7 @@ struct PanelVersion
      */
     std::string str() const
     {
-        return std::string{1, static_cast<char>(major)} + "." +
-               std::string{1, static_cast<char>(minor)};
+        return std::string(1, major) + "." + std::string(1, minor);
     }
 };
 

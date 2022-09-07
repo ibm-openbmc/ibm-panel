@@ -30,9 +30,9 @@ class Transport
      * and device address based on the system type.
      */
     Transport(const std::string& devPath, const uint8_t& devAddr,
-              const types::PanelType& type) :
+              const types::PanelType& type, const std::string& objectPath) :
         devPath(devPath),
-        devAddress(devAddr), panelType(type)
+        devAddress(devAddr), panelType(type), fruPath(objectPath)
     {
         panelI2CSetup();
     }
@@ -107,6 +107,9 @@ class Transport
      * This is required to log CALLOUT_IIC_ADDR in PEL.*/
     std::string i2cAddress{};
 
+    /** @brief Base/LCD panel FRU path */
+    const std::string fruPath;
+
     /** @brief Establish panel i2c connection
      * This api establishes the i2c bus connection to the panel micro
      * controller.
@@ -176,8 +179,10 @@ class Transport
      * @param[in] err - errno.
      * @param[in] control - Says if panel control reaches Main program or Boot
      * loader.
+     * @param[in] pelIntf - PEL interface.
      */
     void logCodeUpdateError(const std::string& description, const int err,
-                            const std::string& control) const;
+                            const std::string& control,
+                            const std::string& pelIntf) const;
 };
 } // namespace panel
