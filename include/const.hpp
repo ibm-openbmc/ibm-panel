@@ -62,5 +62,12 @@ static const types::PanelVersion minPanelVersion('5', '0');
 static const types::PanelVersion maxLCDVersion('5', '2');
 static const types::PanelVersion maxBaseVersion('5', '5');
 static constexpr auto maxFlashWriteChunk = 68;
+
+static constexpr auto deviceReadFailure =
+    "xyz.openbmc_project.Common.Device.Error.ReadFailure";
+static constexpr auto deviceWriteFailure =
+    "xyz.openbmc_project.Common.Device.Error.WriteFailure";
+static constexpr auto codeUpdateFailure =
+    "com.ibm.Panel.Error.CodeUpdateFailure";
 } // namespace constants
 } // namespace panel

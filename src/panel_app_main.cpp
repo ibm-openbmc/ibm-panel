@@ -81,7 +81,7 @@ int main(int, char**)
 
         // create transport lcd object
         auto lcdPanel = std::make_shared<panel::Transport>(
-            lcdDevPath, lcdDevAddr, panel::types::PanelType::LCD);
+            lcdDevPath, lcdDevAddr, panel::types::PanelType::LCD, lcdObjPath);
 
         // create executor class
         auto executor = std::make_shared<panel::Executor>(lcdPanel, iface, io);
@@ -109,7 +109,8 @@ int main(int, char**)
             basePanel = std::make_shared<panel::Transport>(
                 std::get<0>((baseDataMap.find(imValue))->second),
                 std::get<1>((baseDataMap.find(imValue))->second),
-                panel::types::PanelType::BASE);
+                panel::types::PanelType::BASE,
+                std::get<2>((baseDataMap.find(imValue))->second));
 
             auto& baseObjPath =
                 std::get<2>((baseDataMap.find(imValue))->second);
