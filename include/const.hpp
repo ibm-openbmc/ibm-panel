@@ -27,6 +27,8 @@ static constexpr auto rainLcdDbusObj = "/xyz/openbmc_project/inventory/system/"
 static constexpr auto everLcdDbusObj =
     "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/"
     "panel1";
+static constexpr auto everBMCObj =
+    "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc";
 
 static constexpr auto rain2s2uIM = "50001001";
 static constexpr auto rain2s4uIM = "50001000";
@@ -69,5 +71,12 @@ static constexpr auto deviceWriteFailure =
     "xyz.openbmc_project.Common.Device.Error.WriteFailure";
 static constexpr auto codeUpdateFailure =
     "com.ibm.Panel.Error.CodeUpdateFailure";
+
+// Map of system type to that of path to the FRU on which BootFail PIC is
+// physically present
+static const types::PICFRUPathMap bootFailPIC = {{rain2s2uIM, systemDbusObj},
+                                                 {rain2s4uIM, systemDbusObj},
+                                                 {rain1s4uIM, systemDbusObj},
+                                                 {everestIM, everBMCObj}};
 } // namespace constants
 } // namespace panel

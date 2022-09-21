@@ -110,7 +110,10 @@ int main(int, char**)
                 std::get<0>((baseDataMap.find(imValue))->second),
                 std::get<1>((baseDataMap.find(imValue))->second),
                 panel::types::PanelType::BASE,
-                std::get<2>((baseDataMap.find(imValue))->second));
+                (panel::constants::bootFailPIC.find(imValue) !=
+                 panel::constants::bootFailPIC.end())
+                    ? panel::constants::bootFailPIC.find(imValue)->second
+                    : std::string());
 
             auto& baseObjPath =
                 std::get<2>((baseDataMap.find(imValue))->second);
