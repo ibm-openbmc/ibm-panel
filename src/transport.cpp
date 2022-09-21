@@ -454,11 +454,13 @@ void Transport::logCodeUpdateError(const std::string& description,
     {
         codeUpdatePELData.emplace("MAXIMUM_VERSION",
                                   constants::maxLCDVersion.str());
+        codeUpdatePELData.emplace("CHIP TYPE", "LCD PIC");
     }
     else if (panelType == types::PanelType::BASE)
     {
         codeUpdatePELData.emplace("MAXIMUM_VERSION",
                                   constants::maxBaseVersion.str());
+        codeUpdatePELData.emplace("CHIP TYPE", "BootFail PIC");
     }
 
     codeUpdatePELData.emplace("CONTROL", control);
