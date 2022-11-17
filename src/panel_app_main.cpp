@@ -177,6 +177,7 @@ int main(int, char**)
 
         panel::PELListener pelEvent(conn, stateManager, executor, lcdPanel);
         pelEvent.listenPelEvents();
+        pelEvent.listenPelDeleteEvents();
 
         // register property change call back for progress code.
         panel::BootProgressCode progressCode(lcdPanel, conn, executor);

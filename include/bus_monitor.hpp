@@ -4,6 +4,7 @@
 #include "panel_state_manager.hpp"
 #include "transport.hpp"
 
+#include <deque>
 #include <memory>
 #include <sdbusplus/asio/object_server.hpp>
 #include <string>
@@ -100,9 +101,17 @@ class PELListener
      */
     void listenPelEvents();
 
+    /**
+     * @brief Api to listen for PEL Delete events.
+     */
+    void listenPelDeleteEvents();
+
   private:
     /* Callback to listen for PEL event log */
     void PELEventCallBack(sdbusplus::message::message& msg);
+
+    /* Callback to listen for PEL Delete event log */
+    void PELDeleteEventCallBack(sdbusplus::message::message& msg);
 
     /**
      * @brief An Api to set panel function state based on PEL data.
@@ -122,6 +131,15 @@ class PELListener
      */
     void filterPel(const types::GetManagedObjects& listOfPels);
 
+    /**
+     * @brief An api to store pel object path.
+     * Some pels are stored so that in case any pel is deleted, panel function
+     * need to fall back to last logged pel.
+     *
+     * @param pelObj - pel object.
+     */
+    void storePel(const std::string& pelObj);
+
     /* Dbus connection */
     std::shared_ptr<sdbusplus::asio::connection> conn;
 
@@ -136,6 +154,9 @@ class PELListener
 
     /* Check if respective functions are enabled */
     bool functionStateEnabled = false;
+
+    /* List of pel object path */
+    std::deque<std::string> pelObjList;
 
 }; // class PEL Listener
 

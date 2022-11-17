@@ -228,7 +228,8 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                             utils::sendCurrDisplayToPanel(
                                 hexWords.at(4), std::string{}, transport);
                         }
-                        executor->storePelEventId(*eventId);
+                        storePel(objPath);
+                        executor->storePel(objPath, *eventId);
                         return;
                     }
                     std::cerr << "Event Id length is invalid" << std::endl;
@@ -248,6 +249,62 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                       << std::endl;
         }
     }
+}
+
+void PELListener::PELDeleteEventCallBack(sdbusplus::message::message& msg)
+{
+
+    std::cout << "Entered Function" << std::endl;
+
+    sdbusplus::message::object_path objPath;
+    std::vector<std::string> interface;
+    msg.read(objPath, interface);
+
+    std::cout << " Path [" << objPath.str << "]" << std::endl;
+
+    for (const auto& element : interface)
+    {
+        if (element == "xyz.openbmc_project.Object.Delete")
+        {
+            auto it = std::find(pelObjList.begin(), pelObjList.end(), objPath);
+            if (it != pelObjList.end())
+            {
+                pelObjList.erase(it);
+                executor->deletePel(objPath);
+            }
+
+            auto res = utils::readBusProperty<std::variant<std::string>>(
+                "xyz.openbmc_project.Logging", objPath,
+                "xyz.openbmc_project.Logging.Entry", "EventId");
+
+            if (const auto& eventId = std::get_if<std::string>(&res))
+            {
+                std::cout << "Found" << std::endl;
+                std::cout << *eventId << std::endl;
+            }
+        }
+    }
+    std::cout << "Leaving Function" << std::endl;
+}
+
+void PELListener::listenPelDeleteEvents()
+{
+    static auto sigMatch = std::make_unique<sdbusplus::bus::match::match>(
+        *conn,
+        sdbusplus::bus::match::rules::interfacesRemoved(
+            "/xyz/openbmc_project/logging"),
+        [this](sdbusplus::message::message& msg) {
+            PELDeleteEventCallBack(msg);
+        });
+}
+
+void PELListner::storePel(types::singleObjectEntry& aPel)
+{
+    if (listOfPels.size() == 25)
+    {
+        listOfPels.erase(listOfPels.begin());
+    }
+    listofPels.push_back(aPel);
 }
 
 static void sortPels(types::GetManagedObjects& listOfPels)
@@ -273,14 +330,14 @@ static void sortPels(types::GetManagedObjects& listOfPels)
 
 void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
 {
-    std::vector<types::singleObjectEntry> finalListOFPEls;
-    finalListOFPEls.reserve(25);
+    // std::vector<types::singleObjectEntry> finalListOFPEls;
+    // finalListOFPEls.reserve(25);
 
     // Need this as the PEL list is sorted in decreasing order and we need to
     // store eventIDs in normal order.
-    std::vector<std::string> tempListOfEventId;
+    std::vector<std::tuple<std::string, std::string>> listOfPelPathAndEventId;
     // need to store 25 event Ids
-    tempListOfEventId.reserve(25);
+    listOfPelPathAndEventId.reserve(25);
 
     for (const auto& aPel : listOfPels)
     {
@@ -312,14 +369,20 @@ void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
                                     std::get_if<std::string>(&propItr->second))
                             {
                                 // this is the PEL we are interested in.
-                                finalListOFPEls.push_back(aPel);
+                                // finalListOFPEls.push_back(aPel);
 
                                 // Empty eventId is not possible as length
                                 // of evenId field is hardcoded and is
                                 // guaranteed.
-                                tempListOfEventId.push_back(*eventId);
+                                listOfPelPathAndEventId.push_back(
+                                    std::make_tuple(std::get<0>(aPel),
+                                                    *eventId));
 
-                                if (tempListOfEventId.size() == 25)
+                                // since the list of pels passed to the function
+                                // is sorted in descending oder.
+                                pelList.push_front(std::get<0>(aPel));
+
+                                if (listOfPelPathAndEventId.size() == 25)
                                 {
                                     break;
                                 }
@@ -348,7 +411,7 @@ void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
 
         // we need to maintain a list of last 25 pels eventId with a desired
         // severity.
-        if (tempListOfEventId.size() == 25)
+        if (listOfPelPathAndEventId.size() == 25)
         {
             break;
         }
@@ -356,17 +419,17 @@ void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
 
     // Implies there are PELs logged in the system with desired severity
     // before panel came up.
-    if (!finalListOFPEls.empty())
+    if (!listOfPelPathAndEventId.empty())
     {
-        auto it = tempListOfEventId.rbegin();
-        while (it != tempListOfEventId.rend())
+        auto it = listOfPelPathAndEventId.rbegin();
+        while (it != listOfPelPathAndEventId.rend())
         {
-            executor->storePelEventId(*it);
+            executor->storePel(std::get<0>(*it), std::get<1>(*it));
             it++;
         }
 
         // enable or disable functions based on latest PEL logged.
-        setPelRelatedFunctionState(std::get<0>(finalListOFPEls[0]));
+        setPelRelatedFunctionState(std::get<0>(listOfPelPathAndEventId[0]));
     }
 }
 
@@ -423,7 +486,7 @@ void PELListener::setPelRelatedFunctionState(
                 stateManager->disableFunctonality(disableFunc);
             }
 
-            executor->pelCallOutList(callOutList);
+            executor->pelCallOutList(std::make_tuple(pelObjPath, callOutList));
         }
         else
         {

@@ -608,7 +608,7 @@ void Executor::execute14to19(const types::FunctionNumber funcNumber)
         // size check is not done here as functions are enabled based on
         // count of entries in this vector.
         case 14:
-            aCallOut = callOutList.at(0);
+            aCallOut = std::get<1>(callOutList.at(0));
             break;
 
         case 15:
@@ -819,31 +819,62 @@ void Executor::execute63(const types::FunctionNumber subFuncNumber)
               << std::endl;
 }
 
-void Executor::storePelEventId(const std::string& pelEventId)
+void Executor::storePel(const std::string& objPath,
+                        const std::string& pelEventId)
 {
     // Need to store last 25 PEL SRCs.
-    if (pelEventIdQueue.size() == 25)
+    if (pelQueue.size() == 25)
     {
-        pelEventIdQueue.pop_front();
+        pelQueue.pop_front();
     }
-    pelEventIdQueue.push_back(pelEventId);
+    pelQueue.push_back(std::make_tuple(objPath, pelEventId));
     latestSrcAndHexwords = pelEventId;
+}
+
+void Executor::deletePel(const std::string& objPath)
+{
+    auto it = std::find(
+        pelQueue.begin(), pelQueue.end(),
+        [objPath](const std::deque<std::tuple<std::string, std::string>>& pel) {
+            return objpath == std::get<0> pel;
+        });
+
+    // This check should not fail as the pel stored by bus monitor should always
+    // be in sync with pel stored by executor.
+    if (it != pelQueue.end())
+    {
+        pelQueue.erase(it);
+
+        // if this was not the last pel to be deleted from the system.
+        if (!pelQueue.empty())
+        {
+            latestSrcAndHexwords = std::get<1>(pelQueue.rbegin());
+        }
+        else
+        {
+            latestSrcAndHexwords = std::string();
+        }
+    }
+    else
+    {
+        std::cerr << "Pels stored are out of sync" << std::endl;
+    }
 }
 
 void Executor::execute64(const types::FunctionNumber subFuncNumber)
 {
     // 0th Sub function is always enabled and should show blank screen if
     // required.
-    if ((subFuncNumber == 0) && (pelEventIdQueue.size() == 0))
+    if ((subFuncNumber == 0) && (pelList.size() == 0))
     {
         utils::sendCurrDisplayToPanel(std::string{}, std::string{}, transport);
         return;
     }
     else
     {
-        if ((pelEventIdQueue.size() - 1) >= subFuncNumber)
+        if ((pelList.size() - 1) >= subFuncNumber)
         {
-            std::string_view src(pelEventIdQueue.at(subFuncNumber));
+            std::string_view src(std::get<1>(pelList.at(subFuncNumber)));
             if (src.length() < 8)
             {
                 std::cerr << "Bad error event data" << std::endl;

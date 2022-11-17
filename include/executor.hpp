@@ -56,18 +56,27 @@ class Executor
      * @brief Api to store callout list of last PEL.
      * @param[in] callOuts - list of callouts.
      */
-    inline void pelCallOutList(const std::vector<std::string>& callOuts)
+    inline void
+        pelCallOutList(const std::tuple<std::string, std::string>& callOuts)
     {
-        callOutList = callOuts;
+        callOutList.push_back(callOuts);
     }
 
     /**
-     * @brief An api to store event id of last 25 PELs.
+     * @brief An api to store event id and object path of last 25 PELs.
      * This will be required by function 64 sub functions.
      *
+     * @param[in] objPath - Pel path corresponding to the event id.
      * @param[in] pelEventId - Value of eventId property of a given PEL.
      */
-    void storePelEventId(const std::string& pelEventId);
+    void storePel(const std::string& objPath, const std::string& pelEventId);
+
+    /**
+     * @brief An api to delete pel from stored list.
+     *
+     * @param objPath - Object path of the pel to be deleted.
+     */
+    void deletePel(const std::string& objPath);
 
     /**
      * @brief An api to store latest SRC and Hexwords.
@@ -82,14 +91,14 @@ class Executor
     }
 
     /**
-     * @brief An api to return count of Pel EventIds.
+     * @brief An api to return count of Pel stored.
      * This count is required to enable/disable sub functions by state manager
      * w.r.t function 64.
-     * @return The current count of stored PEL SRCs.
+     * @return The current count of stored PELs.
      */
-    inline uint8_t getPelEventIdCount() const
+    inline uint8_t getStoredPelCount() const
     {
-        return pelEventIdQueue.size();
+        return pelList.size();
     }
 
     /**
@@ -277,13 +286,13 @@ class Executor
     std::shared_ptr<Transport> transport;
 
     /* List of resolution property added to callouts */
-    std::vector<std::string> callOutList;
+    std::vector<std::tuple<std::string, std::vector<std::string>>> callOutList;
 
     /* List of last 25 IPL SRCs. */
     std::deque<std::string> iplSrcs;
 
-    /* Queue of last 25 PEL SRCs */
-    std::deque<std::string> pelEventIdQueue;
+    /* Queue of last 25 PEL SRCs and their object path*/
+    std::deque < std::tuple<std::string, std::string> pelQueue;
 
     /*State of function 25 excution. Needed for function 26*/
     bool serviceSwitch1State = false;
