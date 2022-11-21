@@ -253,7 +253,7 @@ void Executor::execute20()
     if (propData != nullptr)
     {
         line1.replace(0, constants::tmKwdDataLength,
-                      reinterpret_cast<const char*>(propData->data()));
+                      std::string{propData->begin(), propData->end()});
     }
 
     // reading CCIN
