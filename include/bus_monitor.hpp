@@ -86,13 +86,16 @@ class PELListener
     }
 
     /**
-     * @brief Api to listen for PEL events.
+     * @brief Api to listen for PEL addition/deletion events.
      */
     void listenPelEvents();
 
   private:
     /* Callback to listen for PEL event log */
     void PELEventCallBack(sdbusplus::message::message& msg);
+
+    /* Callback to listen for PEL Delete event log */
+    void PELDeleteEventCallBack(sdbusplus::message::message& msg);
 
     /**
      * @brief An Api to set panel function state based on PEL data.
@@ -126,6 +129,9 @@ class PELListener
 
     /* Check if respective functions are enabled */
     bool functionStateEnabled = false;
+
+    /* Store the last logged PEL with required severity */
+    std::string lastPelObjPath;
 
 }; // class PEL Listener
 

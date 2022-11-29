@@ -339,6 +339,15 @@ void PanelStateManager::processPanelButtonEvent(
     // printPanelStates();
 }
 
+void PanelStateManager::resetStateManager()
+{
+    panelCurState = StateType::INITIAL_STATE;
+    panelCurSubStates.push_back(StateType::INITIAL_STATE);
+    panelCurSubStates.push_back(StateType::INVALID_STATE);
+    panelCurSubStates.push_back(StateType::INVALID_STATE);
+    funcExecutor->executeFunction(01, types::FunctionalityList{});
+}
+
 void PanelStateManager::initPanelState()
 {
     for (const auto& singleFunctionality : functionalityList)
@@ -751,6 +760,8 @@ void PanelStateManager::executeState()
                 // number of Pel event received so far.
                 if (funcState.functionNumber == FUNCTION_64)
                 {
+                    // fetch the existing list of PELs in the system, filter
+                    // them and store their event Id for sub functions.
                     count = funcExecutor->getPelEventIdCount();
                 }
 
