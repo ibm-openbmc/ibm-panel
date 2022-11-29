@@ -353,5 +353,125 @@ bool getLcdPanelPresentProperty(const std::string& imValue)
     return false;
 }
 
+void filterPel(const types::GetManagedObjects& listOfPels,
+               types::PelPathAndSRCList& finalListOFPEls)
+{
+    finalListOFPEls.reserve(25);
+
+    for (const auto& aPel : listOfPels)
+    {
+        std::vector<types::InterfacePropertyPair> interfacePropList =
+            std::get<1>(aPel);
+
+        for (const auto& item : interfacePropList)
+        {
+            if (std::get<0>(item) == "xyz.openbmc_project.Logging.Entry")
+            {
+                types::PropertyValueMap propValueMap = std::get<1>(item);
+
+                auto propItr = propValueMap.find("Severity");
+                if (propItr != propValueMap.end())
+                {
+                    const auto severity =
+                        std::get_if<std::string>(&propItr->second);
+
+                    // TODO: Issue 76. Need to check which all severity needs to
+                    // be taken care.
+                    if (severity != nullptr &&
+                        *severity != "xyz.openbmc_project.Logging.Entry."
+                                     "Level.Informational")
+                    {
+                        propItr = propValueMap.find("EventId");
+                        if (propItr != propValueMap.end())
+                        {
+                            if (const auto eventId =
+                                    std::get_if<std::string>(&propItr->second))
+                            {
+                                // this is the PEL we are interested in.
+                                finalListOFPEls.push_back(std::make_pair(
+                                    std::get<0>(aPel), *eventId));
+
+                                if (finalListOFPEls.size() == 25)
+                                {
+                                    break;
+                                }
+                                continue;
+                            }
+                            std::cerr << "Error fetching value for Event ID. "
+                                         "Not a normal case. Ignoring the PEL"
+                                      << std::endl;
+                            continue;
+                        }
+                        std::cerr << "Mandatory field EventId is missing from "
+                                     "PEL. Ignoring the PEL."
+                                  << std::endl;
+                        continue;
+                    }
+                }
+                else
+                {
+                    std::cerr
+                        << "Mandatory field severity is missing from PEL. "
+                           "Ignoring the PEL"
+                        << std::endl;
+                }
+            }
+        }
+
+        // we need to maintain a list of last 25 pels eventId with a desired
+        // severity.
+        if (finalListOFPEls.size() == 25)
+        {
+            break;
+        }
+    }
+}
+
+void sortPels(types::GetManagedObjects& listOfPels)
+{
+    try
+    {
+        std::sort(listOfPels.begin(), listOfPels.end(),
+                  [](const types::singleObjectEntry& curPelObject,
+                     const types::singleObjectEntry& nextPelObject) {
+                      return (
+                          std::stoi((std::get<0>(curPelObject)).filename()) >
+                          std::stoi((std::get<0>(nextPelObject)).filename()));
+                  });
+    }
+    catch (const std::exception& e)
+    {
+        // stoi (and sort) can throw. Make sure we handle it such that we can
+        // still continue.
+        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Failed to sort existing list of PELs" << std::endl;
+    }
+}
+
+types::PelPathAndSRCList geListOfPELsAndSRCs()
+{
+    auto listOfPels = getManagedObjects("xyz.openbmc_project.Logging",
+                                        "/xyz/openbmc_project/logging");
+
+    types::PelPathAndSRCList finalListOfFPEls{};
+    if (!listOfPels.empty())
+    {
+        // Remove objects that do not denote PEL entries
+        listOfPels.erase(
+            std::remove_if(
+                listOfPels.begin(), listOfPels.end(),
+                [](const auto& pelObject) {
+                    return !(std::string{std::get<0>(pelObject)}.starts_with(
+                        "/xyz/openbmc_project/logging/entry/"));
+                }),
+            listOfPels.end());
+
+        sortPels(listOfPels);
+        filterPel(listOfPels, finalListOfFPEls);
+    }
+
+    return finalListOfFPEls;
+}
+
 } // namespace utils
 } // namespace panel

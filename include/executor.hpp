@@ -62,14 +62,6 @@ class Executor
     }
 
     /**
-     * @brief An api to store event id of last 25 PELs.
-     * This will be required by function 64 sub functions.
-     *
-     * @param[in] pelEventId - Value of eventId property of a given PEL.
-     */
-    void storePelEventId(const std::string& pelEventId);
-
-    /**
      * @brief An api to store latest SRC and Hexwords.
      * This api will receive string consisting SRC and Hexwords and store them
      * to be used in function 11, 12 and 13.
@@ -133,7 +125,26 @@ class Executor
         osIplMode = osIPLModeState;
     }
 
+    /**
+     * @brief An api to store event id of last PEL.
+     * This is required to be dispalyed in function 11 to 13.
+     *
+     * @param pelEventId - Event id data of last PEL.
+     */
+    inline void storeLastPelEventId(const std::string& pelEventId)
+    {
+        latestSrcAndHexwords = pelEventId;
+    }
+
   private:
+    /**
+     * @brief An api to store event id of last 25 PELs.
+     * This will be required by function 64 sub functions.
+     *
+     * @param[in] pelEventId - Value of eventId property of a given PEL.
+     */
+    void storePelEventId(const std::string& pelEventId);
+
     /**
      * @brief An api to execute functionality 20
      */

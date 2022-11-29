@@ -832,6 +832,20 @@ void Executor::storePelEventId(const std::string& pelEventId)
 
 void Executor::execute64(const types::FunctionNumber subFuncNumber)
 {
+    auto listOfPels = utils::geListOfPELsAndSRCs();
+
+    if (!listOfPels.empty())
+    {
+        // done in reverse order as the PELs are sorted in descending order and
+        // we want this queue in ascending order.
+        auto it = listOfPels.rbegin();
+        while (it != listOfPels.rend())
+        {
+            storePelEventId(std::get<1>(*it));
+            it++;
+        }
+    }
+
     // 0th Sub function is always enabled and should show blank screen if
     // required.
     if ((subFuncNumber == 0) && (pelEventIdQueue.size() == 0))

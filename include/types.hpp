@@ -25,6 +25,7 @@ using ItemInterfaceMap = std::map<std::string, std::variant<bool, std::string>>;
 using PldmPacket = std::vector<uint8_t>;
 using PdrList = std::vector<PldmPacket>;
 using PICFRUPathMap = std::unordered_map<std::string, std::string>;
+using PelPathAndSRCList = std::vector<std::pair<std::string, std::string>>;
 
 // map{property::value}
 using PropertyValueMap = std::map<
