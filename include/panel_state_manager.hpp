@@ -39,6 +39,13 @@ class PanelStateManager
     }
 
     /**
+     * @brief Api to reset state manager.
+     * This needs to be called when we want to reset the state manager and LCD
+     * panel to function 01.
+     */
+    void resetStateManager();
+
+    /**
      * @brief Api to get state and sub state info of panel.
      * */
     std::tuple<types::FunctionNumber, types::FunctionNumber>
