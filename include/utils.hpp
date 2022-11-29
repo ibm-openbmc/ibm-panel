@@ -5,6 +5,7 @@
 #include <string>
 #include <transport.hpp>
 #include <types.hpp>
+#include <vector>
 
 namespace panel
 {
@@ -235,6 +236,33 @@ std::string getSystemIM();
  * @return The value of the presence property.
  */
 bool getLcdPanelPresentProperty(const std::string& imValue);
+
+/**
+ * @brief An API to get list of PELs and SRC logged in the system.
+ *
+ * @return The sorted list of object path and SRCs of last 25 PELs.
+ */
+types::PelPathAndSRCList geListOfPELsAndSRCs();
+
+/**
+ * @brief API to sort list of Pels.
+ * This is required to pick last "n" number of PELs logged in the system.
+ *
+ * @param [in] listOfPels - list of PELs.
+ */
+void sortPels(types::GetManagedObjects& listOfPels);
+
+/**
+ * @brief API to return list of last 25 PELs.
+ * Out of all the PELs retreived from the system, Panel needs to keep track of
+ * PELs only with specific severity. Hence this API will filter those PELs from
+ * the list of all the PELs.
+ *
+ * @param listOfPels - List of PELs retrieved from the system.
+ * @param finalListOFPEls - List of PEL and SRC pair.
+ */
+void filterPel(const types::GetManagedObjects& listOfPels,
+               types::PelPathAndSRCList& finalListOFPELs);
 
 } // namespace utils
 } // namespace panel
