@@ -47,8 +47,6 @@ void PanelPresence::listenPanelPresence()
 
 void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
 {
-    // TODO: we need for delete event as well.
-
     sdbusplus::message::object_path objPath;
 
     types::DbusInterfaceMap infMap;
@@ -113,7 +111,6 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                             utils::sendCurrDisplayToPanel(
                                 hexWords.at(4), std::string{}, transport);
                         }
-                        executor->storePelEventId(*eventId);
                         return;
                     }
                     std::cerr << "Event Id length is invalid" << std::endl;
@@ -132,126 +129,6 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
             std::cerr << "Error fetching value of Severity. Ignoring the PEL"
                       << std::endl;
         }
-    }
-}
-
-static void sortPels(types::GetManagedObjects& listOfPels)
-{
-    try
-    {
-        std::sort(listOfPels.begin(), listOfPels.end(),
-                  [](const types::singleObjectEntry& curPelObject,
-                     const types::singleObjectEntry& nextPelObject) {
-                      return (
-                          std::stoi((std::get<0>(curPelObject)).filename()) >
-                          std::stoi((std::get<0>(nextPelObject)).filename()));
-                  });
-    }
-    catch (const std::exception& e)
-    {
-        // stoi (and sort) can throw. Make sure we handle it such that we can
-        // still continue.
-        std::cerr << "Exception: " << e.what() << std::endl;
-        std::cerr << "Failed to sort existing list of PELs" << std::endl;
-    }
-}
-
-void PELListener::filterPel(const types::GetManagedObjects& listOfPels)
-{
-    std::vector<types::singleObjectEntry> finalListOFPEls;
-    finalListOFPEls.reserve(25);
-
-    // Need this as the PEL list is sorted in decreasing order and we need to
-    // store eventIDs in normal order.
-    std::vector<std::string> tempListOfEventId;
-    // need to store 25 event Ids
-    tempListOfEventId.reserve(25);
-
-    for (const auto& aPel : listOfPels)
-    {
-        std::vector<types::InterfacePropertyPair> interfacePropList =
-            std::get<1>(aPel);
-
-        for (const auto& item : interfacePropList)
-        {
-            if (std::get<0>(item) == "xyz.openbmc_project.Logging.Entry")
-            {
-                types::PropertyValueMap propValueMap = std::get<1>(item);
-
-                auto propItr = propValueMap.find("Severity");
-                if (propItr != propValueMap.end())
-                {
-                    const auto severity =
-                        std::get_if<std::string>(&propItr->second);
-
-                    // TODO: Issue 76. Need to check which all severity needs to
-                    // be taken care.
-                    if (severity != nullptr &&
-                        *severity != "xyz.openbmc_project.Logging.Entry."
-                                     "Level.Informational")
-                    {
-                        propItr = propValueMap.find("EventId");
-                        if (propItr != propValueMap.end())
-                        {
-                            if (const auto eventId =
-                                    std::get_if<std::string>(&propItr->second))
-                            {
-                                // this is the PEL we are interested in.
-                                finalListOFPEls.push_back(aPel);
-
-                                // Empty eventId is not possible as length
-                                // of evenId field is hardcoded and is
-                                // guaranteed.
-                                tempListOfEventId.push_back(*eventId);
-
-                                if (tempListOfEventId.size() == 25)
-                                {
-                                    break;
-                                }
-                                continue;
-                            }
-                            std::cerr << "Error fetching value for Event ID. "
-                                         "Not a normal case. Ignoring the PEL"
-                                      << std::endl;
-                            continue;
-                        }
-                        std::cerr << "Mandatory field EventId is missing from "
-                                     "PEL. Ignoring the PEL."
-                                  << std::endl;
-                        continue;
-                    }
-                }
-                else
-                {
-                    std::cerr
-                        << "Mandatory field severity is missing from PEL. "
-                           "Ignoring the PEL"
-                        << std::endl;
-                }
-            }
-        }
-
-        // we need to maintain a list of last 25 pels eventId with a desired
-        // severity.
-        if (tempListOfEventId.size() == 25)
-        {
-            break;
-        }
-    }
-
-    // Implies there are PELs logged in the system with desired severity
-    // before panel came up.
-    if (!finalListOFPEls.empty())
-    {
-        auto it = tempListOfEventId.rbegin();
-        while (it != tempListOfEventId.rend())
-        {
-            executor->storePelEventId(*it);
-            it++;
-        }
-
-        // enable or disable functions based on latest PEL logged.
-        setPelRelatedFunctionState(std::get<0>(finalListOFPEls[0]));
     }
 }
 
@@ -330,23 +207,19 @@ void PELListener::setPelRelatedFunctionState(
 
 void PELListener::getListOfExistingPels()
 {
-    auto listOfPels = utils::getManagedObjects("xyz.openbmc_project.Logging",
-                                               "/xyz/openbmc_project/logging");
+    auto listOfSortedPels = utils::geListOfPELsAndSRCs();
 
-    if (!listOfPels.empty())
+    // Implies there are PELs logged in the system with desired severity
+    // before panel came up.
+    if (!listOfSortedPels.empty())
     {
-        // Remove objects that do not denote PEL entries
-        listOfPels.erase(
-            std::remove_if(
-                listOfPels.begin(), listOfPels.end(),
-                [](const auto& pelObject) {
-                    return !(std::string{std::get<0>(pelObject)}.starts_with(
-                        "/xyz/openbmc_project/logging/entry/"));
-                }),
-            listOfPels.end());
+        // store the last pel details. Required to compare and disable functions
+        // 11 to 19 in case this PEL gets deleted.
+        lastPelObjPath = std::get<0>(listOfSortedPels[0]);
+        executor->storeLastPelEventId(std::get<1>(listOfSortedPels[0]));
 
-        sortPels(listOfPels);
-        filterPel(listOfPels);
+        // enable or disable functions based on latest PEL logged.
+        setPelRelatedFunctionState(lastPelObjPath);
     }
 }
 
@@ -358,7 +231,49 @@ void PELListener::listenPelEvents()
             "/xyz/openbmc_project/logging"),
         [this](sdbusplus::message::message& msg) { PELEventCallBack(msg); });
 
+    static auto infRemovedSigMatch =
+        std::make_unique<sdbusplus::bus::match::match>(
+            *conn,
+            sdbusplus::bus::match::rules::interfacesRemoved(
+                "/xyz/openbmc_project/logging"),
+            [this](sdbusplus::message::message& msg) {
+                PELDeleteEventCallBack(msg);
+            });
+
     getListOfExistingPels();
+}
+
+void PELListener::PELDeleteEventCallBack(sdbusplus::message::message& msg)
+{
+    sdbusplus::message::object_path objPath;
+    std::vector<std::string> interface;
+    msg.read(objPath, interface);
+
+    for (const auto& element : interface)
+    {
+        if (element == "xyz.openbmc_project.Object.Delete")
+        {
+            if (objPath == lastPelObjPath)
+            {
+                // We need to disable function 11 to 19 as the last PEL of
+                // required severity has been deleted.
+                stateManager->disableFunctonality(
+                    {11, 12, 13, 14, 15, 16, 17, 18, 19});
+                lastPelObjPath.clear();
+
+                // reset LCD panel to display function 01 as there can be a
+                // situation where user is already on one of the function
+                // between 11-19 before deleting the PEL. After disabling these
+                // function user should not have access to them.
+                auto curState =
+                    std::get<0>(stateManager->getPanelCurrentStateInfo());
+                if (curState >= 11 && curState <= 19)
+                {
+                    stateManager->resetStateManager();
+                }
+            }
+        }
+    }
 }
 
 void BootProgressCode::listenProgressCode()
