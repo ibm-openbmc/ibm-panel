@@ -400,6 +400,8 @@ void PELListener::setPelRelatedFunctionState(
 
             // Need to show max 6 callout src.
             auto size = std::min(callOutList.size(), static_cast<size_t>(6));
+            // if resolution is not there size should not be set to negative.
+            size = (size == 0) ? static_cast<size_t>(0) : (size - 1);
 
             // default list: 14 to 19 are the functions to display
             // callout SRCs.
