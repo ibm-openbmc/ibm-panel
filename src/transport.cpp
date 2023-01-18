@@ -215,8 +215,19 @@ bool Transport::readPanelVersion(types::Binary& versionBuffer) const
     {
         std::cerr << "Failed to read panel current version [" << devPath << ", "
                   << i2cAddress << "]. Bytes read: " << readSize
-                  << ", errno: " << errno
-                  << "error statement = " << std::to_string(errno) << std::endl;
+                  << ", errno: " << errno << std::endl;
+        if (constants::errnoNoDeviceOrAddress == errno)
+        {
+            // creating errorlog as device not found, it could be due to
+            // hardware issue or it could be due to blank firmware.
+            std::map<std::string, std::string> errorInfo{};
+            errorInfo.emplace("CALLOUT_IIC_BUS", devPath);
+            errorInfo.emplace("CALLOUT_IIC_ADDR", i2cAddress);
+            errorInfo.emplace("CALLOUT_ERRNO", std::to_string(err));
+            utils::createPEL(constants::deviceReadFailure,
+                             "xyz.openbmc_project.Logging.Entry.Level.Error",
+                             errorInfo);
+        }
         return false;
     }
     return true;
