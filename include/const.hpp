@@ -72,6 +72,9 @@ static constexpr auto deviceWriteFailure =
 static constexpr auto codeUpdateFailure =
     "com.ibm.Panel.Error.CodeUpdateFailure";
 
+// Errno defines
+static constexpr auto errnoNoDeviceOrAddress = 6;
+
 // Map of system type to that of path to the FRU on which BootFail PIC is
 // physically present
 static const types::PICFRUPathMap bootFailPIC = {{rain2s2uIM, systemDbusObj},
