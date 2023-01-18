@@ -223,7 +223,7 @@ bool Transport::readPanelVersion(types::Binary& versionBuffer) const
             std::map<std::string, std::string> errorInfo{};
             errorInfo.emplace("CALLOUT_IIC_BUS", devPath);
             errorInfo.emplace("CALLOUT_IIC_ADDR", i2cAddress);
-            errorInfo.emplace("CALLOUT_ERRNO", std::to_string(err));
+            errorInfo.emplace("CALLOUT_ERRNO", std::to_string(errno));
             utils::createPEL(constants::deviceReadFailure,
                              "xyz.openbmc_project.Logging.Entry.Level.Error",
                              errorInfo);
