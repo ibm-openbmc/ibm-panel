@@ -111,6 +111,8 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                             utils::sendCurrDisplayToPanel(
                                 hexWords.at(4), std::string{}, transport);
                         }
+                        executor->storeLastPelEventId(*eventId);
+                        lastPelObjPath = objPath;
                         return;
                     }
                     std::cerr << "Event Id length is invalid" << std::endl;
@@ -260,6 +262,9 @@ void PELListener::PELDeleteEventCallBack(sdbusplus::message::message& msg)
                 stateManager->disableFunctonality(
                     {11, 12, 13, 14, 15, 16, 17, 18, 19});
                 lastPelObjPath.clear();
+
+                // as functions are disabled, set the flag to false
+                functionStateEnabled = false;
 
                 // reset LCD panel to display function 01 as there can be a
                 // situation where user is already on one of the function
