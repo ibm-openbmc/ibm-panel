@@ -21,13 +21,17 @@ panel::types::PanelDataMap baseDataMap = {
       panel::constants::rainBaseDbusObj}},
     {panel::constants::everestIM,
      {panel::constants::baseDevPath, panel::constants::devAddr,
-      panel::constants::everBaseDbusObj}}};
+      panel::constants::everBaseDbusObj}},
+    {panel::constants::bonnellIM,
+     {panel::constants::bonnellBaseDevPath, panel::constants::devAddr,
+      panel::constants::bonnellBaseDbusObj}}};
 
 std::string getInputDevicePath(const std::string& imValue)
 {
     if (imValue == panel::constants::rain2s2uIM ||
         imValue == panel::constants::rain2s4uIM ||
-        imValue == panel::constants::rain1s4uIM)
+        imValue == panel::constants::rain1s4uIM ||
+        imValue == panel::constants::bonnellIM)
     {
         return "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick";
     }
