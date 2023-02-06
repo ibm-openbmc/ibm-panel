@@ -1,4 +1,5 @@
 #pragma once
+#include <const.hpp>
 #include <sdbusplus/asio/object_server.hpp>
 #include <sstream>
 #include <string>
@@ -10,6 +11,20 @@ namespace panel
 {
 namespace utils
 {
+static types::PanelDataMap lcdDataMap = {
+    {constants::rain2s2uIM,
+     {constants::rainLcdDevPath, constants::devAddr,
+      constants::rainLcdDbusObj}},
+    {constants::rain2s4uIM,
+     {constants::rainLcdDevPath, constants::devAddr,
+      constants::rainLcdDbusObj}},
+    {constants::rain1s4uIM,
+     {constants::rainLcdDevPath, constants::devAddr,
+      constants::rainLcdDbusObj}},
+    {constants::everestIM,
+     {constants::everLcdDevPath, constants::devAddr,
+      constants::everLcdDbusObj}}};
+
 /** @brief Read inventory manager properties from dbus.
  * @param[in] service - Dbus service name
  * @param[in] obj - Dbus object to query for the property.
@@ -230,6 +245,24 @@ void sortPels(types::GetManagedObjects& listOfPels);
  */
 void filterPel(const types::GetManagedObjects& listOfPels,
                types::PelPathAndSRCList& finalListOFPELs);
+
+/**
+ * @brief Get the systems IM value.
+ *
+ * @return the IM value of the system.
+ */
+std::string getSystemIM();
+
+/**
+ * @brief Get the presence of the LCD panel.
+ * This api returns the value of the present property
+ * for the LCD panel on the system interface.
+ *
+ * @param[in] imValue - IM value of the system.
+ *
+ * @return The value of the presence property.
+ */
+bool getLcdPanelPresentProperty(const std::string& imValue);
 
 } // namespace utils
 } // namespace panel

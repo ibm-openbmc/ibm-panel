@@ -70,32 +70,52 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
     {
         if (buffer.size()) // check if the given buffer has data in it.
         {
-            static constexpr auto maxRetry = 5; // Just a random value
+            ssize_t returnedSize = 0;
+            int retriesDone = 0;
+            bool writeFailed = false;
+            int failedErrno = 0;
+            static constexpr auto maxRetry = 6; // Just a random value
             for (auto retryLoop = 0; retryLoop < maxRetry; ++retryLoop)
             {
-                auto returnedSize =
+                retriesDone = retryLoop;
+                writeFailed = false;
+                returnedSize =
                     write(panelFileDescriptor, buffer.data(), buffer.size());
                 if (returnedSize !=
                     static_cast<int>(buffer.size())) // write failure
                 {
-                    std::cerr << "\n I2C Write failure. Errno : " << errno
-                              << ". Errno description : " << strerror(errno)
-                              << ". Bytes written = " << returnedSize
-                              << ". Actual Bytes = " << buffer.size()
-                              << ". Retry = " << retryLoop << std::endl;
-                    std::map<std::string, std::string> additionData{};
-                    additionData.emplace("DESCRIPTION", strerror(errno));
-                    additionData.emplace("CALLOUT_IIC_BUS", devPath);
-                    additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
-                    additionData.emplace("CALLOUT_ERRNO",
-                                         std::to_string(errno));
-                    panel::utils::createPEL(
-                        "xyz.openbmc_project.Common.Device.Error.WriteFailure",
-                        "xyz.openbmc_project.Logging.Entry.Level.Warning",
-                        additionData);
-                    continue;
+                    writeFailed = true;
+                    failedErrno = errno;
+                    sleep(1);
+                    const std::string imValue = utils::getSystemIM();
+                    if (false == utils::getLcdPanelPresentProperty(imValue))
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
                 break;
+            }
+            if (writeFailed == true)
+            {
+                std::cerr << "\n I2C Write failure. Errno : " << failedErrno
+                          << ". Errno description : " << strerror(failedErrno)
+                          << ". Bytes written = " << returnedSize
+                          << ". Actual Bytes = " << buffer.size()
+                          << ". Retry = " << retriesDone << std::endl;
+                std::map<std::string, std::string> additionData{};
+                additionData.emplace("DESCRIPTION", strerror(failedErrno));
+                additionData.emplace("CALLOUT_IIC_BUS", devPath);
+                additionData.emplace("CALLOUT_IIC_ADDR", i2cAddress.str());
+                additionData.emplace("CALLOUT_ERRNO",
+                                     std::to_string(failedErrno));
+                panel::utils::createPEL(
+                    "xyz.openbmc_project.Common.Device.Error.WriteFailure",
+                    "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                    additionData);
             }
         }
         else
