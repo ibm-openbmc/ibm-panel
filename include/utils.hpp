@@ -23,7 +23,10 @@ static types::PanelDataMap lcdDataMap = {
       constants::rainLcdDbusObj}},
     {constants::everestIM,
      {constants::everLcdDevPath, constants::devAddr,
-      constants::everLcdDbusObj}}};
+      constants::everLcdDbusObj}},
+    {constants::bonnellIM,
+     {constants::bonnellLcdDevPath, constants::devAddr,
+      constants::bonnellLcdDbusObj}}};
 
 /** @brief Read inventory manager properties from dbus.
  * @param[in] service - Dbus service name
