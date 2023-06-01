@@ -224,7 +224,7 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                             // code is for BMC i.e "BD". Send it
                             // directly to display.
                             utils::sendCurrDisplayToPanel(
-                                hexWords.at(4), std::string{}, transport);
+                                hexWords.at(0), std::string{}, transport);
                         }
                         executor->storeLastPelEventId(*eventId);
                         lastPelObjPath = objPath;
