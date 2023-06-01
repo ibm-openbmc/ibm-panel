@@ -217,7 +217,7 @@ void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
                         types::Byte byte =
                             ::strtoul(valueAtIndexZero, nullptr, 16);
 
-                        if ((byte & constants::terminatingBit) != 0x00 &&
+                        if ((byte & constants::terminatingBits) != 0x00 &&
                             (hexWords[0][0] == 'B' && hexWords[0][1] == 'D'))
                         {
                             // if terminating bit is set and response
