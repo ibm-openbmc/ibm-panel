@@ -386,11 +386,10 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
     {
         const std::string& objPath =
             std::get<sdbusplus::message::object_path>(obj);
-        // search for eth0/eth1 ipv4 objects based on input
-        // eg: /xyz/openbmc_project/network/eth0/ipv4/bb39e832
-        std::string ethV4 = "/";
-        ethV4 += ethPort;
-        ethV4 += "/ipv4/";
+
+        // search for eth0/eth1 objects
+        std::string ethV4 = "/" + ethPort + "/";
+
         const auto& intfPropVector = std::get<1>(obj);
         if (objPath.find(ethV4) != std::string::npos)
         {
