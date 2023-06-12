@@ -48,7 +48,7 @@ static constexpr auto locCodeIntf =
 static constexpr auto tmKwdDataLength = 8;
 static constexpr auto ccinDataLength = 4;
 static constexpr auto fiveHexWordsWithSpaces = 44;
-static constexpr auto terminatingBit = 2;
+static constexpr auto terminatingBits = 0xA; // Checkstop and Term due to FW
 
 // Progress code src equivalent to  ascii "00000000"
 static constexpr auto clearDisplayProgressCode = 0x3030303030303030;
