@@ -183,7 +183,7 @@ class PanelStateManager
     void displayDebounce() const;
 
     /** @brief Api to display function 2 on panel */
-    void displayFunc02() const;
+    void displayFunc02();
 
     /**
      * @brief An api to initialise function 02 with its initial values.

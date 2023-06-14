@@ -123,6 +123,22 @@ class Executor
     }
 
     /**
+     * @brief API to get value of panel DBus property osIplMode.
+     *
+     * This api is called to fetch the current value of osIplMode property which
+     * is exposed under panel interface. Value of this property tells wether
+     * OS IPL Mode fetched from the BIOS attribute should be displayed in
+     * function 01 and function 02.
+     *
+     * @param[in] osIPLModeState - current osIPLMode
+     * @return Value of the property as set in case of setOSIPLMode API.
+     */
+    inline bool isOSIPLModeEnabled() const
+    {
+        return osIplMode;
+    }
+
+    /**
      * @brief An api to store event id of last PEL.
      * This is required to be dispalyed in function 11 to 13.
      *
