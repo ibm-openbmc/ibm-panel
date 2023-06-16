@@ -864,7 +864,7 @@ void PanelStateManager::displayDebounce() const
 0 2 _ _ B_ _N __ __ _ _ _ _
 _ _ _ _ __ __ __ __ T < _ _
 */
-void PanelStateManager::displayFunc02() const
+void PanelStateManager::displayFunc02()
 {
     std::string line1(16, ' ');
     std::string line2(16, ' ');
@@ -873,7 +873,23 @@ void PanelStateManager::displayFunc02() const
 
     if (isSubrangeActive)
     {
-        line1.replace(4, 1, functionality02.at(0).at(panelCurSubStates.at(0)));
+        // If this property is set as false under panel interface,
+        // implies that panel should not display OS IPL mode via function-02.
+        if (funcExecutor->isOSIPLModeEnabled())
+        {
+            line1.replace(4, 1,
+                          functionality02.at(0).at(panelCurSubStates.at(0)));
+        }
+        else
+        {
+            // Move the cursor to second level in case OS IPL mode is not
+            // displayed.
+            if (levelToOperate == 0)
+            {
+                levelToOperate++;
+            }
+        }
+
         line1.replace(7, 1, functionality02.at(1).at(panelCurSubStates.at(1)));
         line2.replace(12, 1, functionality02.at(2).at(panelCurSubStates.at(2)));
 
