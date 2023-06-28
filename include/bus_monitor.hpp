@@ -227,10 +227,10 @@ class SystemStatus
     void listenBootProgressState();
 
     /**
-     * @brief Listen for system operating mode parameters.
+     * @brief Listen for system operating mode in BIOS attributes.
      * An api to register call back for system operating mode change.
      */
-    void listenSystemOperatingModeParameters();
+    void listenSystemOperatingMode();
 
     /**
      * @brief Api to handle BMC state change callback.
@@ -263,19 +263,21 @@ class SystemStatus
     void rebootPolicyStateCallback(sdbusplus::message::message& msg);
 
     /**
-     * @brief Api to initialize system operating parameters.
+     * @brief Api to initialize system operating mode.
+     *
+     * The API sets the state manager's system state based on the operating mode
+     * at the time of panel coming up.
      */
-    void initSystemOperatingParameters();
+    void initSystemOperatingMode();
 
     /**
-     * @brief Set system operating mode.
-     * An api to set system operating mode based on the value of three
-     * parameters required to detect operating mode.
-     * a) Logging Setting.
-     * b) Power policy.
-     * c) Reboot policy.
+     * @brief BIOS attribute change callback.
+     *
+     * Listens to system operating mode property change in BIOS base table.
+     *
+     * @param[in] msg - Callback message.
      */
-    void setSystemCurrentOperatingMode();
+    void biosAttributesCallback(sdbusplus::message::message& msg);
 
     /* D-Bus connection. */
     std::shared_ptr<sdbusplus::asio::connection> conn;

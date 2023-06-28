@@ -40,19 +40,20 @@ map{InterfaceName, map{propertyName, value}}
 */
 using DbusInterfaceMap = std::map<std::string, PropertyValueMap>;
 
+using BiosProperty = std::tuple<
+    std::string, bool, std::string, std::string, std::string,
+    std::variant<int64_t, std::string>, std::variant<int64_t, std::string>,
+    std::vector<std::tuple<std::string, std::variant<int64_t, std::string>>>>;
 /*baseBIOSTable reference
 map{attributeName,struct{attributeType,readonlyStatus,displayname,
               description,menuPath,current,default,
               array{struct{optionstring,optionvalue}}}}
 */
-using BiosBaseTableItem = std::pair<
-    std::string,
-    std::tuple<
-        std::string, bool, std::string, std::string, std::string,
-        std::variant<int64_t, std::string>, std::variant<int64_t, std::string>,
-        std::vector<
-            std::tuple<std::string, std::variant<int64_t, std::string>>>>>;
+using BiosBaseTableItem = std::pair<std::string, BiosProperty>;
 using BiosBaseTable = std::vector<BiosBaseTableItem>;
+
+using BiosBaseTableType =
+    std::map<std::string, std::variant<std::map<std::string, BiosProperty>>>;
 
 /* SystemParameterValues reference
  std::tuple<os_ipl_type, system_operating_mode, hmc_managed, fw_boot_side,
