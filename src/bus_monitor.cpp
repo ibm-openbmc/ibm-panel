@@ -517,11 +517,11 @@ SystemStatus::SystemStatus(
     conn(con),
     stateManager(manager)
 {
-    initSystemOperatingParameters();
+    initSystemOpeartingMode();
     listenBmcState();
     listenBootProgressState();
     listenPowerState();
-    listenSystemOperatingModeParameters();
+    listenSystemOperatingMode();
 }
 
 void SystemStatus::bmcStateCallback(sdbusplus::message::message& msg)
@@ -670,6 +670,7 @@ void SystemStatus::listenBootProgressState()
         });
 }
 
+/*
 void SystemStatus::powerPolicyStateCallback(sdbusplus::message::message& msg)
 {
     std::string object{};
@@ -714,12 +715,62 @@ void SystemStatus::rebootPolicyStateCallback(sdbusplus::message::message& msg)
             std::cerr << "Failed to read reboot policy from Dbus" << std::endl;
         }
     }
+}*/
+
+void SystemStatus::biosAttribsCallback(sdbusplus::message::message& msg)
+{
+    if (msg.is_method_error())
+    {
+        std::cerr << "Error in reading BIOS attribute signal " << std::endl;
+        return;
+    }
+
+    std::string object;
+    types::BiosBaseTableType propMap;
+    msg.read(object, propMap);
+
+    for (auto property : propMap)
+    {
+        std::cout << "Table type = " << property.first << std::endl;
+        if (property.first == "BaseBIOSTable")
+        {
+            auto boisBaseTable = property.second;
+            for (const auto& biosItem : boisBaseTable)
+            {
+                auto attributeName = std::get<0>(biosItem);
+                if (attributeName == "pvm_system_operating_mode")
+                {
+                    auto attrValue = std::get<5>(std::get<1>(biosItem));
+                    if (auto val = std::get_if<std::string>(&attrValue))
+                    {
+                        std::cout << "System operating mode = " << *val
+                                  << std::endl;
+                        stateManager->setSystemOperatingMode(*val);
+                    }
+                    else
+                    {
+                        std::cerr << "Error reading bios attribute for system "
+                                     "operating mode"
+                                  << std::endl;
+                    }
+                }
+            }
+        }
+    }
 }
 
-void SystemStatus::listenSystemOperatingModeParameters()
+void SystemStatus::listenSystemOperatingMode()
 {
-    static auto sigPowerPolicy = std::make_unique<sdbusplus::bus::match::match>(
-        *conn,
+    static std::shared_ptr<sdbusplus::bus::match_t> biosMatcher =
+        std::make_shared<sdbusplus::bus::match_t>(
+            *conn,
+            sdbusplus::bus::match::rules::propertiesChanged(
+                "/xyz/openbmc_project/bios_config/manager",
+                "xyz.openbmc_project.BIOSConfig.Manager"),
+            [this](sdbusplus::message_t& msg) { biosAttribsCallback(msg); });
+
+    /*static auto sigPowerPolicy =
+    std::make_unique<sdbusplus::bus::match::match>( *conn,
         sdbusplus::bus::match::rules::propertiesChanged(
             "/xyz/openbmc_project/control/host0/power_restore_policy",
             "xyz.openbmc_project.Control.Power.RestorePolicy"),
@@ -735,48 +786,64 @@ void SystemStatus::listenSystemOperatingModeParameters()
                 "xyz.openbmc_project.Control.Boot.RebootPolicy"),
             [this](sdbusplus::message::message& msg) {
                 rebootPolicyStateCallback(msg);
-            });
+            });*/
 }
 
-void SystemStatus::initSystemOperatingParameters()
+void SystemStatus::initSystemOpeartingMode()
 {
-    auto retPowerSettings = utils::readBusProperty<std::variant<std::string>>(
-        "xyz.openbmc_project.Settings",
-        "/xyz/openbmc_project/control/host0/power_restore_policy",
-        "xyz.openbmc_project.Control.Power.RestorePolicy",
-        "PowerRestorePolicy");
+    auto systemOperatingMode = std::get<4>(utils::readSystemParameters());
 
-    if (auto powerSettings = std::get_if<std::string>(&retPowerSettings))
+    if (systemOperatingMode.empty())
     {
-        powerPolicy = *powerSettings;
-    }
-    else
-    {
-        // for error set the parameters for Normal mode value.
-        powerPolicy = "xyz.openbmc_project.Control.Power.RestorePolicy."
-                      "Policy.Restore";
-        std::cerr << "Failed to read power policy from Dbus" << std::endl;
+        std::cerr << "System operating mode read as empty from Bios "
+                     "attributes, set as default- Normal"
+                  << std::endl;
+        stateManager->setSystemOperatingMode("Normal");
+        return;
     }
 
-    auto retRebootSetting = utils::readBusProperty<std::variant<bool>>(
-        "xyz.openbmc_project.Settings",
-        "/xyz/openbmc_project/control/host0/auto_reboot",
-        "xyz.openbmc_project.Control.Boot.RebootPolicy", "AutoReboot");
+    stateManager->setSystemOperatingMode(systemOperatingMode);
+        /*
+        auto retPowerSettings =
+        utils::readBusProperty<std::variant<std::string>>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/control/host0/power_restore_policy",
+            "xyz.openbmc_project.Control.Power.RestorePolicy",
+            "PowerRestorePolicy");
 
-    if (auto rebootSettings = std::get_if<bool>(&retRebootSetting))
-    {
-        rebootPolicy = *rebootSettings;
-    }
-    else
-    {
-        // for error set the parameters for Normal mode value.
-        rebootPolicy = true;
-        std::cerr << "Failed t read reboot folicy form Dbus" << std::endl;
-    }
+        if (auto powerSettings = std::get_if<std::string>(&retPowerSettings))
+        {
+            powerPolicy = *powerSettings;
+        }
+        else
+        {
+            // for error set the parameters for Normal mode value.
+            powerPolicy = "xyz.openbmc_project.Control.Power.RestorePolicy."
+                          "Policy.Restore";
+            std::cerr << "Failed to read power policy from Dbus" << std::endl;
+        }
 
-    setSystemCurrentOperatingMode();
+        auto retRebootSetting = utils::readBusProperty<std::variant<bool>>(
+            "xyz.openbmc_project.Settings",
+            "/xyz/openbmc_project/control/host0/auto_reboot",
+            "xyz.openbmc_project.Control.Boot.RebootPolicy", "AutoReboot");
+
+        if (auto rebootSettings = std::get_if<bool>(&retRebootSetting))
+        {
+            rebootPolicy = *rebootSettings;
+        }
+        else
+        {
+            // for error set the parameters for Normal mode value.
+            rebootPolicy = true;
+            std::cerr << "Failed t read reboot folicy form Dbus" << std::endl;
+        }
+
+        setSystemCurrentOperatingMode();
+        */
 }
 
+/*
 void SystemStatus::setSystemCurrentOperatingMode()
 {
     if (powerPolicy == "xyz.openbmc_project.Control.Power.RestorePolicy.Policy."
@@ -794,5 +861,5 @@ void SystemStatus::setSystemCurrentOperatingMode()
                   << std::endl;
         stateManager->setSystemOperatingMode("Normal");
     }
-}
+}*/
 } // namespace panel

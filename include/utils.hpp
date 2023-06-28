@@ -114,7 +114,7 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
  *
  * @param[out] sysOperatingMode - Operating mode.
  */
-void readSystemOperatingMode(std::string& sysOperatingMode);
+// void readSystemOperatingMode(std::string& sysOperatingMode);
 
 /**
  * @brief An api to read initial values of OS IPL types, System operating

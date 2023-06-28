@@ -110,8 +110,10 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
     }
 }
 
+/*
 void readSystemOperatingMode(std::string& sysOperatingMode)
 {
+
     auto readRestorePolicy = readBusProperty<std::variant<std::string>>(
         "xyz.openbmc_project.Settings",
         "/xyz/openbmc_project/control/host0/power_restore_policy",
@@ -143,7 +145,9 @@ void readSystemOperatingMode(std::string& sysOperatingMode)
     {
         std::cerr << "Failed to read Bus property" << std::endl;
     }
+
 }
+*/
 
 types::SystemParameterValues readSystemParameters()
 {
@@ -187,6 +191,12 @@ types::SystemParameterValues readSystemParameters()
                 {
                     hypType = *val;
                 }
+                else if (attributeName == "pvm_system_operating_mode")
+                {
+                    systemOperatingMode = *val;
+                    std::cout<<"System operating mode = "<<systemOperatingMode<<std::endl;
+                    
+                }
             }
         }
     }
@@ -195,7 +205,7 @@ types::SystemParameterValues readSystemParameters()
         std::cerr << "Failed to read BIOS base table" << std::endl;
     }
 
-    readSystemOperatingMode(systemOperatingMode);
+    // readSystemOperatingMode(systemOperatingMode);
 
     return std::make_tuple(OSBootType, systemOperatingMode, HMCManaged,
                            FWIPLType, hypType);
