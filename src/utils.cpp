@@ -110,41 +110,6 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
     }
 }
 
-void readSystemOperatingMode(std::string& sysOperatingMode)
-{
-    auto readRestorePolicy = readBusProperty<std::variant<std::string>>(
-        "xyz.openbmc_project.Settings",
-        "/xyz/openbmc_project/control/host0/power_restore_policy",
-        "xyz.openbmc_project.Control.Power.RestorePolicy",
-        "PowerRestorePolicy");
-
-    auto readRebootPolicy = readBusProperty<std::variant<bool>>(
-        "xyz.openbmc_project.Settings",
-        "/xyz/openbmc_project/control/host0/auto_reboot",
-        "xyz.openbmc_project.Control.Boot.RebootPolicy", "AutoReboot");
-
-    const auto restorePolicy = std::get_if<std::string>(&readRestorePolicy);
-    const auto autoRebootPolicy = std::get_if<bool>(&readRebootPolicy);
-
-    if (restorePolicy != nullptr && autoRebootPolicy != nullptr)
-    {
-        if (*restorePolicy == "xyz.openbmc_project.Control.Power."
-                              "RestorePolicy.Policy.AlwaysOff" &&
-            *autoRebootPolicy == false)
-        {
-            sysOperatingMode = "Manual";
-        }
-        else
-        {
-            sysOperatingMode = "Normal";
-        }
-    }
-    else
-    {
-        std::cerr << "Failed to read Bus property" << std::endl;
-    }
-}
-
 types::SystemParameterValues readSystemParameters()
 {
     auto retVal = readBusProperty<std::variant<types::BiosBaseTable>>(
@@ -187,6 +152,10 @@ types::SystemParameterValues readSystemParameters()
                 {
                     hypType = *val;
                 }
+                else if (attributeName == "pvm_system_operating_mode")
+                {
+                    systemOperatingMode = *val;
+                }
             }
         }
     }
@@ -194,8 +163,6 @@ types::SystemParameterValues readSystemParameters()
     {
         std::cerr << "Failed to read BIOS base table" << std::endl;
     }
-
-    readSystemOperatingMode(systemOperatingMode);
 
     return std::make_tuple(OSBootType, systemOperatingMode, HMCManaged,
                            FWIPLType, hypType);
