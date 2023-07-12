@@ -136,6 +136,14 @@ class PanelStateManager
      */
     void setCEState();
 
+    /**
+     * @brief API to trigger functions on request from external source
+     * @param[in] funcNum - Function number
+     * @return status of the function
+     */
+    types::ReturnStatus
+        triggerFunctionDirectly(const types::FunctionNumber funcNum);
+
   private:
     /**
      * @brief An Api to set the initial state of PanelState class.
@@ -198,6 +206,13 @@ class PanelStateManager
      * check if any panel function can be enabled/disabled based on that.
      */
     void updateFunctionStatus();
+
+    /**
+     * @brief API which tells if the function is enabled or not
+     * @param[in] funcNum - Function number
+     * @return (true/false) if function is enabled/disabled respectively.
+     */
+    bool isFunctionEnabled(const types::FunctionNumber funcNum);
 
     /**
      * @brief A structure to store information related to a particular

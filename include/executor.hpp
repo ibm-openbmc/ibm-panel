@@ -149,6 +149,18 @@ class Executor
         latestSrcAndHexwords = pelEventId;
     }
 
+    /**
+     * @brief API to execute functions on requests from external source
+     * This method is called whenever there is an external request to trigger a
+     * function.
+     *
+     * @param[in] funcNum - Function number.
+     *
+     * @return status(success/failure, display line 1, display line2)
+     */
+    types::ReturnStatus
+        executeFunctionDirectly(const types::FunctionNumber funcNum);
+
   private:
     /**
      * @brief An api to store event id of last 25 PELs.
@@ -324,5 +336,9 @@ class Executor
     /* SRC and HEX words */
     std::string latestSrcAndHexwords;
 
+    /* To keep track if the execute request is from external or not */
+    bool isExternallyTriggered = false;
+
+    types::ReturnStatus executionStatus = std::make_tuple(false, "", "");
 }; // class Executor
 } // namespace panel

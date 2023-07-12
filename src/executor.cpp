@@ -30,6 +30,13 @@ void Executor::displayExecutionStatus(
     }
 
     convert << (result ? " 00" : " FF");
+
+    if (isExternallyTriggered)
+    {
+        executionStatus = std::make_tuple(result, convert.str(), "");
+        return;
+    }
+
     utils::sendCurrDisplayToPanel(convert.str(), "", transport);
 }
 
@@ -1038,4 +1045,40 @@ void Executor::execute74()
     displayExecutionStatus(74, std::vector<types::FunctionNumber>(), true);
 }
 
+types::ReturnStatus
+    Executor::executeFunctionDirectly(const types::FunctionNumber funcNum)
+{
+    isExternallyTriggered = true;
+    try
+    {
+        switch (funcNum)
+        {
+            case 21:
+            case 22:
+            case 34:
+            case 65:
+            case 66:
+            case 67:
+            case 68:
+            case 69:
+            case 70:
+                sendFuncNumToPhyp(funcNum);
+                break;
+
+            default:
+                std::cerr << "Given function number "
+                          << static_cast<int>(funcNum) << " is not supported."
+                          << std::endl;
+                executionStatus = std::make_tuple(false, "", "");
+        }
+    }
+    catch (std::exception& e)
+    {
+        executionStatus = std::make_tuple(false, "", "");
+        std::cerr << e.what() << std::endl;
+    }
+
+    isExternallyTriggered = false;
+    return executionStatus;
+}
 } // namespace panel

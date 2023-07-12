@@ -69,6 +69,8 @@ using InterfacePropertyPair = std::pair<std::string, PropertyValueMap>;
 using singleObjectEntry = std::pair<sdbusplus::message::object_path,
                                     std::vector<InterfacePropertyPair>>;
 
+using ReturnStatus = std::tuple<bool, std::string, std::string>;
+
 /** Get managed objects for Network manager:
  * array{pair(network-object-paths :
  * array{pair(all-interfaces-of-that-obj-path :

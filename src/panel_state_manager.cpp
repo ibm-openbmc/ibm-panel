@@ -1095,6 +1095,33 @@ void PanelStateManager::setCEState()
         }
     }
 }
+
+bool PanelStateManager::isFunctionEnabled(const types::FunctionNumber funcNum)
+{
+    auto pos = find_if(panelFunctions.begin(), panelFunctions.end(),
+                       [funcNum](const PanelFunctionality& afunctionality) {
+                           return afunctionality.functionNumber == funcNum;
+                       });
+    if (pos != panelFunctions.end())
+    {
+        return pos->functionActiveState;
+    }
+
+    return false;
+}
+
+types::ReturnStatus PanelStateManager::triggerFunctionDirectly(
+    const types::FunctionNumber funcNum)
+{
+    if (isFunctionEnabled(funcNum))
+    {
+        return (funcExecutor->executeFunctionDirectly(funcNum));
+    }
+
+    std::cerr << "Function " << static_cast<int>(funcNum) << " is disabled."
+              << std::endl;
+    return std::make_tuple(false, "", "");
+}
 } // namespace manager
 } // namespace state
 } // namespace panel
