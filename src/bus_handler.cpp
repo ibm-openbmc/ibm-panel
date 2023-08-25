@@ -88,4 +88,8 @@ types::ReturnStatus
     return (stateManager->triggerFunctionDirectly(funcNum));
 }
 
+types::Binary BusHandler::getEnabledFunctionsList()
+{
+    return (stateManager->getEnabledFunctionsList());
+}
 } // namespace panel

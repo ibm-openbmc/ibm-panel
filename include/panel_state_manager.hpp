@@ -144,6 +144,13 @@ class PanelStateManager
     types::ReturnStatus
         triggerFunctionDirectly(const types::FunctionNumber funcNum);
 
+    /**
+     * @brief API to get list of enabled functions
+     *
+     * @return List of enabled functions
+     */
+    types::Binary getEnabledFunctionsList();
+
   private:
     /**
      * @brief An Api to set the initial state of PanelState class.

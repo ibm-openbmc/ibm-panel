@@ -70,6 +70,10 @@ class BusHandler
                                [this](const types::FunctionNumber funcNum) {
                                    return this->triggerPanelFunc(funcNum);
                                });
+
+        iface->register_method("getEnabledFunctions", [this]() {
+            return this->getEnabledFunctionsList();
+        });
     }
 
   private:
@@ -131,6 +135,13 @@ class BusHandler
      * @return a tuple with status(true/false) and display lines.
      */
     types::ReturnStatus triggerPanelFunc(const types::FunctionNumber funcNum);
+
+    /**
+     * @brief API to get list of enabled functions.
+     *
+     * @return List of enabled functions.
+     */
+    types::Binary getEnabledFunctionsList();
 };
 
 } // namespace panel

@@ -1122,6 +1122,23 @@ types::ReturnStatus PanelStateManager::triggerFunctionDirectly(
               << std::endl;
     return std::make_tuple(false, "", "");
 }
+
+types::Binary PanelStateManager::getEnabledFunctionsList()
+{
+    types::Binary inputFunctions = {21, 22, 34, 65, 66, 67, 68, 69, 70};
+
+    types::Binary enabledFunctions;
+    enabledFunctions.reserve(inputFunctions.size());
+
+    for (auto& val : inputFunctions)
+    {
+        if (isFunctionEnabled(val))
+        {
+            enabledFunctions.push_back(val);
+        }
+    }
+    return enabledFunctions;
+}
 } // namespace manager
 } // namespace state
 } // namespace panel
