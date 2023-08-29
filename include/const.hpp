@@ -2,6 +2,8 @@
 
 #include "types.hpp"
 
+#include <cstdint>
+
 namespace panel
 {
 namespace constants
