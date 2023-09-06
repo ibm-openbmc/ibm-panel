@@ -57,7 +57,7 @@ static void resetLEDState()
     }
 }
 
-void PanelPresence::readBasePresentProperty(sdbusplus::message::message& msg)
+void PanelPresence::readBasePresentProperty(sdbusplus::message_t& msg)
 {
     if (msg.is_method_error())
     {
@@ -85,7 +85,7 @@ void PanelPresence::readBasePresentProperty(sdbusplus::message::message& msg)
     }
 }
 
-void PanelPresence::readPresentProperty(sdbusplus::message::message& msg)
+void PanelPresence::readPresentProperty(sdbusplus::message_t& msg)
 {
     if (msg.is_method_error())
     {
@@ -137,30 +137,29 @@ void PanelPresence::listenPanelPresence()
     // LEDs.
     if (objectPath == constants::everBaseDbusObj)
     {
-        static std::shared_ptr<sdbusplus::bus::match::match>
-            everBasePanelPresence =
-                std::make_shared<sdbusplus::bus::match::match>(
-                    *conn,
-                    sdbusplus::bus::match::rules::propertiesChanged(
-                        objectPath, constants::itemInterface),
-                    [this](sdbusplus::message::message& msg) {
-                        readBasePresentProperty(msg);
-                    });
-    }
-    else
-    {
-        static std::shared_ptr<sdbusplus::bus::match::match>
-            matchPanelPresence = std::make_shared<sdbusplus::bus::match::match>(
+        static std::shared_ptr<sdbusplus::bus::match_t> everBasePanelPresence =
+            std::make_shared<sdbusplus::bus::match_t>(
                 *conn,
                 sdbusplus::bus::match::rules::propertiesChanged(
                     objectPath, constants::itemInterface),
-                [this](sdbusplus::message::message& msg) {
+                [this](sdbusplus::message_t& msg) {
+                    readBasePresentProperty(msg);
+                });
+    }
+    else
+    {
+        static std::shared_ptr<sdbusplus::bus::match_t> matchPanelPresence =
+            std::make_shared<sdbusplus::bus::match_t>(
+                *conn,
+                sdbusplus::bus::match::rules::propertiesChanged(
+                    objectPath, constants::itemInterface),
+                [this](sdbusplus::message_t& msg) {
                     readPresentProperty(msg);
                 });
     }
 }
 
-void PELListener::PELEventCallBack(sdbusplus::message::message& msg)
+void PELListener::PELEventCallBack(sdbusplus::message_t& msg)
 {
     sdbusplus::message::object_path objPath;
 
@@ -344,25 +343,22 @@ void PELListener::getListOfExistingPels()
 
 void PELListener::listenPelEvents()
 {
-    static auto sigMatch = std::make_unique<sdbusplus::bus::match::match>(
+    static auto sigMatch = std::make_unique<sdbusplus::bus::match_t>(
         *conn,
         sdbusplus::bus::match::rules::interfacesAdded(
             "/xyz/openbmc_project/logging"),
-        [this](sdbusplus::message::message& msg) { PELEventCallBack(msg); });
+        [this](sdbusplus::message_t& msg) { PELEventCallBack(msg); });
 
-    static auto infRemovedSigMatch =
-        std::make_unique<sdbusplus::bus::match::match>(
-            *conn,
-            sdbusplus::bus::match::rules::interfacesRemoved(
-                "/xyz/openbmc_project/logging"),
-            [this](sdbusplus::message::message& msg) {
-                PELDeleteEventCallBack(msg);
-            });
+    static auto infRemovedSigMatch = std::make_unique<sdbusplus::bus::match_t>(
+        *conn,
+        sdbusplus::bus::match::rules::interfacesRemoved(
+            "/xyz/openbmc_project/logging"),
+        [this](sdbusplus::message_t& msg) { PELDeleteEventCallBack(msg); });
 
     getListOfExistingPels();
 }
 
-void PELListener::PELDeleteEventCallBack(sdbusplus::message::message& msg)
+void PELListener::PELDeleteEventCallBack(sdbusplus::message_t& msg)
 {
     sdbusplus::message::object_path objPath;
     std::vector<std::string> interface;
@@ -401,17 +397,15 @@ void PELListener::PELDeleteEventCallBack(sdbusplus::message::message& msg)
 void BootProgressCode::listenProgressCode()
 {
     // signal match for sdbusplus
-    static auto sigMatch = std::make_unique<sdbusplus::bus::match::match>(
+    static auto sigMatch = std::make_unique<sdbusplus::bus::match_t>(
         *conn,
         sdbusplus::bus::match::rules::propertiesChanged(
             "/xyz/openbmc_project/state/boot/raw0",
             "xyz.openbmc_project.State.Boot.Raw"),
-        [this](sdbusplus::message::message& msg) {
-            progressCodeCallBack(msg);
-        });
+        [this](sdbusplus::message_t& msg) { progressCodeCallBack(msg); });
 }
 
-void BootProgressCode::progressCodeCallBack(sdbusplus::message::message& msg)
+void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
 {
     using PostCode = std::tuple<uint64_t, std::vector<types::Byte>>;
 
@@ -524,7 +518,7 @@ SystemStatus::SystemStatus(
     listenSystemOperatingMode();
 }
 
-void SystemStatus::bmcStateCallback(sdbusplus::message::message& msg)
+void SystemStatus::bmcStateCallback(sdbusplus::message_t& msg)
 {
     std::string object{};
     types::ItemInterfaceMap invItemMap;
@@ -563,14 +557,14 @@ void SystemStatus::listenBmcState()
             "xyz.openbmc_project.State.BMC.BMCState.NotReady");
     }
 
-    static auto sigBmcState = std::make_unique<sdbusplus::bus::match::match>(
+    static auto sigBmcState = std::make_unique<sdbusplus::bus::match_t>(
         *conn,
         sdbusplus::bus::match::rules::propertiesChanged(
             "/xyz/openbmc_project/state/bmc0", "xyz.openbmc_project.State.BMC"),
-        [this](sdbusplus::message::message& msg) { bmcStateCallback(msg); });
+        [this](sdbusplus::message_t& msg) { bmcStateCallback(msg); });
 }
 
-void SystemStatus::powerStateCallback(sdbusplus::message::message& msg)
+void SystemStatus::powerStateCallback(sdbusplus::message_t& msg)
 {
     std::string object{};
     types::ItemInterfaceMap invItemMap;
@@ -610,15 +604,15 @@ void SystemStatus::listenPowerState()
             "xyz.openbmc_project.State.Chassis.PowerState.Off");
     }
 
-    static auto sigPowerState = std::make_unique<sdbusplus::bus::match::match>(
+    static auto sigPowerState = std::make_unique<sdbusplus::bus::match_t>(
         *conn,
         sdbusplus::bus::match::rules::propertiesChanged(
             "/xyz/openbmc_project/state/chassis0",
             "xyz.openbmc_project.State.Chassis"),
-        [this](sdbusplus::message::message& msg) { powerStateCallback(msg); });
+        [this](sdbusplus::message_t& msg) { powerStateCallback(msg); });
 }
 
-void SystemStatus::bootProgressStateCallback(sdbusplus::message::message& msg)
+void SystemStatus::bootProgressStateCallback(sdbusplus::message_t& msg)
 {
     std::string object{};
     types::ItemInterfaceMap invItemMap;
@@ -660,17 +654,15 @@ void SystemStatus::listenBootProgressState()
             "ProgressStages.Unspecified");
     }
 
-    static auto sigBootState = std::make_unique<sdbusplus::bus::match::match>(
+    static auto sigBootState = std::make_unique<sdbusplus::bus::match_t>(
         *conn,
         sdbusplus::bus::match::rules::propertiesChanged(
             "/xyz/openbmc_project/state/host0",
             "xyz.openbmc_project.State.Boot.Progress"),
-        [this](sdbusplus::message::message& msg) {
-            bootProgressStateCallback(msg);
-        });
+        [this](sdbusplus::message_t& msg) { bootProgressStateCallback(msg); });
 }
 
-void SystemStatus::biosAttributesCallback(sdbusplus::message::message& msg)
+void SystemStatus::biosAttributesCallback(sdbusplus::message_t& msg)
 {
     if (msg.is_method_error())
     {
@@ -710,14 +702,12 @@ void SystemStatus::biosAttributesCallback(sdbusplus::message::message& msg)
 
 void SystemStatus::listenSystemOperatingMode()
 {
-    static auto biosMatcher = std::make_unique<sdbusplus::bus::match::match>(
+    static auto biosMatcher = std::make_unique<sdbusplus::bus::match_t>(
         *conn,
         sdbusplus::bus::match::rules::propertiesChanged(
             "/xyz/openbmc_project/bios_config/manager",
             "xyz.openbmc_project.BIOSConfig.Manager"),
-        [this](sdbusplus::message::message& msg) {
-            biosAttributesCallback(msg);
-        });
+        [this](sdbusplus::message_t& msg) { biosAttributesCallback(msg); });
 }
 
 void SystemStatus::initSystemOperatingMode()
