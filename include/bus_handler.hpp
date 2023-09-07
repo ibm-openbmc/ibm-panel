@@ -65,6 +65,15 @@ class BusHandler
                                      }
                                      return 0;
                                  });
+
+        iface->register_method("ExecuteFunction",
+                               [this](const types::FunctionNumber funcNum) {
+                                   return this->triggerPanelFunc(funcNum);
+                               });
+
+        iface->register_method("getEnabledFunctions", [this]() {
+            return this->getEnabledFunctionsList();
+        });
     }
 
   private:
@@ -116,6 +125,23 @@ class BusHandler
      * @param[in] event: Button event
      */
     void btnRequest(int event);
+
+    /**
+     * @brief API to execute panel function number.
+     *
+     * Method to trigger panel function from external source.
+     *
+     * @param[in] funcNum - Function number to execute
+     * @return a tuple with status(true/false) and display lines.
+     */
+    types::ReturnStatus triggerPanelFunc(const types::FunctionNumber funcNum);
+
+    /**
+     * @brief API to get list of enabled functions.
+     *
+     * @return List of enabled functions.
+     */
+    types::Binary getEnabledFunctionsList();
 };
 
 } // namespace panel
