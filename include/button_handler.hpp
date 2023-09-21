@@ -6,6 +6,7 @@
 #include <linux/input.h>
 
 #include <sdbusplus/asio/connection.hpp>
+
 #include <string>
 #include <vector>
 

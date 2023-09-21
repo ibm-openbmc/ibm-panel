@@ -169,8 +169,8 @@ void PanelStateManager::enableFunctonality(
         auto pos =
             find_if(panelFunctions.begin(), panelFunctions.end(),
                     [functionNumber](const PanelFunctionality& afunctionality) {
-                        return afunctionality.functionNumber == functionNumber;
-                    });
+            return afunctionality.functionNumber == functionNumber;
+            });
         if (pos != panelFunctions.end())
         {
             // before enabling the function check if all the pre-conditions are
@@ -198,8 +198,8 @@ void PanelStateManager::disableFunctonality(
         auto pos =
             find_if(panelFunctions.begin(), panelFunctions.end(),
                     [functionNumber](const PanelFunctionality& afunctionality) {
-                        return afunctionality.functionNumber == functionNumber;
-                    });
+            return afunctionality.functionNumber == functionNumber;
+            });
         if (pos != panelFunctions.end())
         {
             if ((pos->functionEnableMask == SystemStateMask::NO_MASK) ||
@@ -228,8 +228,8 @@ void PanelStateManager::toggleFuncStateFromPhyp(
     {
         auto pos = find_if(list.begin(), list.end(),
                            [&aFunction](const types::FunctionNumber funNum) {
-                               return funNum == aFunction.functionNumber;
-                           });
+            return funNum == aFunction.functionNumber;
+        });
 
         if (pos != list.end())
         {
@@ -607,12 +607,12 @@ void PanelStateManager::incrementState()
             // reset the panelCurState
             auto pos = find_if(panelFunctions.begin(), panelFunctions.end(),
                                [](const PanelFunctionality& funcState) {
-                                   if (funcState.functionActiveState)
-                                   {
-                                       return true;
-                                   }
-                                   return false;
-                               });
+                if (funcState.functionActiveState)
+                {
+                    return true;
+                }
+                return false;
+            });
 
             panelCurState = distance(panelFunctions.begin(), pos);
         }
@@ -669,15 +669,15 @@ void PanelStateManager::decrementState()
         if (it == panelFunctions.rend())
         {
             // reset the panelCurState
-            auto nextpos =
-                find_if(panelFunctions.rbegin(), panelFunctions.rend(),
-                        [](const PanelFunctionality& funcState) {
-                            if (funcState.functionActiveState)
-                            {
-                                return true;
-                            }
-                            return false;
-                        });
+            auto nextpos = find_if(panelFunctions.rbegin(),
+                                   panelFunctions.rend(),
+                                   [](const PanelFunctionality& funcState) {
+                if (funcState.functionActiveState)
+                {
+                    return true;
+                }
+                return false;
+            });
 
             panelCurState = distance(nextpos, (panelFunctions.rend() - 1));
         }
@@ -944,8 +944,8 @@ void PanelStateManager::updateBMCState(const std::string& bmcState)
         if ((systemState & SystemStateMask::ENABLE_BMC_STANDBY_STATE) == 0x00)
         {
             // set the bit.
-            systemState =
-                systemState | SystemStateMask::ENABLE_BMC_STANDBY_STATE;
+            systemState = systemState |
+                          SystemStateMask::ENABLE_BMC_STANDBY_STATE;
             updateFunctionStatus();
         }
     }
@@ -1100,8 +1100,8 @@ bool PanelStateManager::isFunctionEnabled(const types::FunctionNumber funcNum)
 {
     auto pos = find_if(panelFunctions.begin(), panelFunctions.end(),
                        [funcNum](const PanelFunctionality& afunctionality) {
-                           return afunctionality.functionNumber == funcNum;
-                       });
+        return afunctionality.functionNumber == funcNum;
+    });
     if (pos != panelFunctions.end())
     {
         return pos->functionActiveState;
