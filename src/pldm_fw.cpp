@@ -8,9 +8,10 @@
 #include <libpldm/pldm.h>
 #include <libpldm/state_set.h>
 
-#include <iostream>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
+
+#include <iostream>
 
 namespace panel
 {
@@ -113,9 +114,9 @@ types::PldmPacket
 void PldmFramework::sendPanelFunctionToPhyp(
     const types::FunctionNumber& funcNumber)
 {
-    types::PdrList pdrs =
-        utils::getPDR(phypTerminusID, frontPanelBoardEntityId,
-                      stateIdToEnablePanelFunc, "FindStateEffecterPDR");
+    types::PdrList pdrs = utils::getPDR(phypTerminusID, frontPanelBoardEntityId,
+                                        stateIdToEnablePanelFunc,
+                                        "FindStateEffecterPDR");
 
     if (pdrs.empty())
     {
@@ -130,8 +131,8 @@ void PldmFramework::sendPanelFunctionToPhyp(
 
     types::Byte instance = getInstanceID();
 
-    types::PldmPacket packet =
-        prepareSetEffecterReq(pdrs, instance, funcNumber);
+    types::PldmPacket packet = prepareSetEffecterReq(pdrs, instance,
+                                                     funcNumber);
 
     if (packet.empty())
     {

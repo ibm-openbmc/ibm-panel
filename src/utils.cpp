@@ -401,10 +401,9 @@ void sortPels(types::GetManagedObjects& listOfPels)
         std::sort(listOfPels.begin(), listOfPels.end(),
                   [](const types::singleObjectEntry& curPelObject,
                      const types::singleObjectEntry& nextPelObject) {
-                      return (
-                          std::stoi((std::get<0>(curPelObject)).filename()) >
-                          std::stoi((std::get<0>(nextPelObject)).filename()));
-                  });
+            return (std::stoi((std::get<0>(curPelObject)).filename()) >
+                    std::stoi((std::get<0>(nextPelObject)).filename()));
+        });
     }
     catch (const std::exception& e)
     {
@@ -424,14 +423,13 @@ types::PelPathAndSRCList geListOfPELsAndSRCs()
     if (!listOfPels.empty())
     {
         // Remove objects that do not denote PEL entries
-        listOfPels.erase(
-            std::remove_if(
-                listOfPels.begin(), listOfPels.end(),
-                [](const auto& pelObject) {
-                    return !(std::string{std::get<0>(pelObject)}.starts_with(
-                        "/xyz/openbmc_project/logging/entry/"));
-                }),
-            listOfPels.end());
+        listOfPels.erase(std::remove_if(
+                             listOfPels.begin(), listOfPels.end(),
+                             [](const auto& pelObject) {
+            return !(std::string{std::get<0>(pelObject)}.starts_with(
+                "/xyz/openbmc_project/logging/entry/"));
+                             }),
+                         listOfPels.end());
 
         sortPels(listOfPels);
         filterPel(listOfPels, finalListOfFPELs);

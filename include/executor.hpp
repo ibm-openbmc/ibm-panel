@@ -3,10 +3,11 @@
 #include "transport.hpp"
 #include "types.hpp"
 
-#include <deque>
-#include <memory>
 #include <sdbusplus/asio/object_server.hpp>
 #include <sdbusplus/message/native_types.hpp>
+
+#include <deque>
+#include <memory>
 
 namespace panel
 {
@@ -35,8 +36,7 @@ class Executor
              std::shared_ptr<boost::asio::io_context>& io) :
         transport(transport),
         iface(iface), io_context(io)
-    {
-    }
+    {}
 
     /**
      * @brief An api to execute a given function/sub-function.

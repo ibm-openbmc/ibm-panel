@@ -7,6 +7,7 @@
 #include <assert.h>
 
 #include <boost/asio.hpp>
+
 #include <ranges>
 
 namespace panel
@@ -65,7 +66,7 @@ void ButtonHandler::performAsyncRead()
         *streamDescriptor, boost::asio::buffer(ipEvent),
         boost::asio::transfer_at_least(sizeof(input_event)),
         [this](const boost::system::error_code& ec, size_t bytesTransferred) {
-            processInputEvent(ec, bytesTransferred);
+        processInputEvent(ec, bytesTransferred);
         });
 }
 
@@ -78,7 +79,7 @@ void ButtonHandler::processInputEvent(const boost::system::error_code& ec,
     // process only if bytes read is atleast size of input event structure.
     if (!ec)
     {
-        auto const numOfEvents = bytesTransferred / sizeof(input_event);
+        const auto numOfEvents = bytesTransferred / sizeof(input_event);
 
         for (auto& ev : std::views::counted(ipEvent.begin(), numOfEvents))
         {
