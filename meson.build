@@ -88,6 +88,8 @@ executable(
     ],
 )
 
+subdir('logger')
+
 if get_option('tests').enabled()
   gtest = dependency('gtest', main: true)
   gmock = dependency('gmock')
