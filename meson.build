@@ -61,6 +61,11 @@ panel_tool_a = static_library(
      'tools/src/dbus_call.cpp',
      include_directories: ['include', 'tools/include']
 )
+logger_a = static_library(
+     'logger', 
+     'logger/src/logger.cpp',
+     include_directories:[ 'logger/include']
+)
 executable(
       'paneltool',
       'tools/src/panel_tool.cpp',
