@@ -29,7 +29,7 @@ cxx.get_supported_arguments([
 language : 'cpp')
 add_global_arguments('-Wno-psabi', language : ['c', 'cpp'])
 
-systemd_system_unit_dir = systemd.get_pkgconfig_variable('systemdsystemunitdir')
+systemd_system_unit_dir = systemd.get_variable('systemdsystemunitdir')
 
 service_file = 'service_files/com.ibm.panel.service'
 
