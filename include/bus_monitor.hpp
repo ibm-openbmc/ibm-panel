@@ -53,7 +53,7 @@ class PanelPresence
     /** @brief Read panel's "Present" property and set the transport key.
      * @param[in] msg - pointer to the msg sent by the PropertiesChanged signal.
      */
-    void readPresentProperty(sdbusplus::message::message& msg);
+    void readPresentProperty(sdbusplus::message_t& msg);
 
     /**
      * @brief Base panel "Present" property callback.
@@ -61,7 +61,7 @@ class PanelPresence
      *
      * @param[in] msg - pointer to the msg sent by the PropertiesChanged signal.
      */
-    void readBasePresentProperty(sdbusplus::message::message& msg);
+    void readBasePresentProperty(sdbusplus::message_t& msg);
 };
 
 /** @class PELListener
@@ -102,10 +102,10 @@ class PELListener
 
   private:
     /* Callback to listen for PEL event log */
-    void PELEventCallBack(sdbusplus::message::message& msg);
+    void PELEventCallBack(sdbusplus::message_t& msg);
 
     /* Callback to listen for PEL Delete event log */
-    void PELDeleteEventCallBack(sdbusplus::message::message& msg);
+    void PELDeleteEventCallBack(sdbusplus::message_t& msg);
 
     /**
      * @brief An Api to set panel function state based on PEL data.
@@ -182,7 +182,7 @@ class BootProgressCode
      * An Api to handle callback in case of progress code property change.
      * @param[in] msg - Callback message.
      */
-    void progressCodeCallBack(sdbusplus::message::message& msg);
+    void progressCodeCallBack(sdbusplus::message_t& msg);
 
     /*Transport Class object */
     std::shared_ptr<Transport> transport;
@@ -246,31 +246,31 @@ class SystemStatus
      * @brief Api to handle BMC state change callback.
      * @param[in] msg - Callback message.
      */
-    void bmcStateCallback(sdbusplus::message::message& msg);
+    void bmcStateCallback(sdbusplus::message_t& msg);
 
     /**
      * @brief Api to handle power state change callback.
      * @param[in] msg - Callback message.
      */
-    void powerStateCallback(sdbusplus::message::message& msg);
+    void powerStateCallback(sdbusplus::message_t& msg);
 
     /**
      * @brief Api to handle boot progress state change callback.
      * @param[in] msg - Callback message.
      */
-    void bootProgressStateCallback(sdbusplus::message::message& msg);
+    void bootProgressStateCallback(sdbusplus::message_t& msg);
 
     /**
      * @brief Api to handle power policy state change callback.
      * @param[in] msg - Callback message.
      */
-    void powerPolicyStateCallback(sdbusplus::message::message& msg);
+    void powerPolicyStateCallback(sdbusplus::message_t& msg);
 
     /**
      * @brief Api to handle reboot policy state change callback.
      * @param[in] msg - Callback message.
      */
-    void rebootPolicyStateCallback(sdbusplus::message::message& msg);
+    void rebootPolicyStateCallback(sdbusplus::message_t& msg);
 
     /**
      * @brief Api to initialize system operating mode.
@@ -287,7 +287,7 @@ class SystemStatus
      *
      * @param[in] msg - Callback message.
      */
-    void biosAttributesCallback(sdbusplus::message::message& msg);
+    void biosAttributesCallback(sdbusplus::message_t& msg);
 
     /* D-Bus connection. */
     std::shared_ptr<sdbusplus::asio::connection> conn;

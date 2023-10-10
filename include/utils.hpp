@@ -81,7 +81,7 @@ void createPEL(const std::string& errIntf, const std::string& sev,
  * @param[in] path -  Dbus object path
  * @param[in] interface - Interface
  */
-std::string getService(sdbusplus::bus::bus& bus, const std::string& path,
+std::string getService(sdbusplus::bus_t& bus, const std::string& path,
                        const std::string& interface);
 
 /** @brief Display on panel using transport class api.
