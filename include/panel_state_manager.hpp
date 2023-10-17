@@ -222,6 +222,12 @@ class PanelStateManager
     bool isFunctionEnabled(const types::FunctionNumber funcNum);
 
     /**
+     * @brief Check if function is supported to execute from d-bus
+     * @param[in] funcNum - Function number
+     * @return true if function is supported, false otherwise.
+     */
+    bool isFunctionSupported(const types::FunctionNumber funcNum);
+    /**
      * @brief A structure to store information related to a particular
      * functionality. It will carry information like function number, its
      * subrange etc. It will also store active state of a functionality at a

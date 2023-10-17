@@ -16,6 +16,7 @@ project(
 
 systemd = dependency('systemd')
 sdbusplus = dependency('sdbusplus')
+phosphor_dbus_interfaces = dependency('phosphor-dbus-interfaces')
 
 cxx = meson.get_compiler('cpp')
 add_project_arguments(
@@ -79,7 +80,8 @@ executable(
     'src/panel_app_main.cpp',
     dependencies: [
       sdbusplus,
-      dependency('libpldm')
+      dependency('libpldm'),
+      phosphor_dbus_interfaces
     ],
     include_directories: 'include',
     install: true,
@@ -100,7 +102,8 @@ if get_option('tests').enabled()
           sdbusplus,
           gmock,
           gtest,
-          dependency('libpldm')
+          dependency('libpldm'),
+          phosphor_dbus_interfaces
       ],
       include_directories: [
           'include',
