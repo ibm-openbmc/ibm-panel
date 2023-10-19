@@ -5,6 +5,7 @@
 #include "utils.hpp"
 
 #include <algorithm>
+#include <xyz/openbmc_project/Common/error.hpp>
 
 namespace panel
 {
@@ -12,7 +13,6 @@ namespace state
 {
 namespace manager
 {
-
 enum StateType
 {
     INITIAL_STATE = 0,
@@ -1096,6 +1096,19 @@ void PanelStateManager::setCEState()
     }
 }
 
+bool PanelStateManager::isFunctionSupported(const types::FunctionNumber funcNum)
+{
+    types::FunctionalityList supportedFuncs = {21, 22, 34, 65, 66,
+                                               67, 68, 69, 70};
+
+    if (find(supportedFuncs.begin(), supportedFuncs.end(), funcNum) !=
+        supportedFuncs.end())
+    {
+        return true;
+    }
+    return false;
+}
+
 bool PanelStateManager::isFunctionEnabled(const types::FunctionNumber funcNum)
 {
     auto pos = find_if(panelFunctions.begin(), panelFunctions.end(),
@@ -1113,14 +1126,14 @@ bool PanelStateManager::isFunctionEnabled(const types::FunctionNumber funcNum)
 types::ReturnStatus PanelStateManager::triggerFunctionDirectly(
     const types::FunctionNumber funcNum)
 {
-    if (isFunctionEnabled(funcNum))
+    if (isFunctionSupported(funcNum) && isFunctionEnabled(funcNum))
     {
         return (funcExecutor->executeFunctionDirectly(funcNum));
     }
 
     std::cerr << "Function " << static_cast<int>(funcNum) << " is disabled."
               << std::endl;
-    return std::make_tuple(false, "", "");
+    throw sdbusplus::xyz::openbmc_project::Common::Error::NotAllowed();
 }
 
 types::Binary PanelStateManager::getEnabledFunctionsList()

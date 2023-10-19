@@ -8,6 +8,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <string_view>
+#include <xyz/openbmc_project/Common/error.hpp>
 
 namespace panel
 {
@@ -1064,18 +1065,14 @@ types::ReturnStatus
             case 70:
                 sendFuncNumToPhyp(funcNum);
                 break;
-
-            default:
-                std::cerr << "Given function number "
-                          << static_cast<int>(funcNum) << " is not supported."
-                          << std::endl;
-                executionStatus = std::make_tuple(false, "", "");
         }
     }
     catch (std::exception& e)
     {
-        executionStatus = std::make_tuple(false, "", "");
-        std::cerr << e.what() << std::endl;
+        isExternallyTriggered = false;
+        std::cerr << "Function " << static_cast<int>(funcNum)
+                  << " execution failed. " << e.what() << std::endl;
+        throw sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure();
     }
 
     isExternallyTriggered = false;
