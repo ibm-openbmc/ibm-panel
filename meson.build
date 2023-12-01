@@ -62,6 +62,13 @@ panel_tool_a = static_library(
      'tools/src/dbus_call.cpp',
      include_directories: ['include', 'tools/include']
 )
+
+logger = static_library(
+     'logger', 
+     'logger/src/logger.cpp',
+     include_directories:[ 'logger/include']
+)
+
 executable(
       'paneltool',
       'tools/src/panel_tool.cpp',
@@ -83,10 +90,11 @@ executable(
       dependency('libpldm'),
       phosphor_dbus_interfaces
     ],
-    include_directories: 'include',
+    include_directories: ['include','logger/include'],
     install: true,
     link_with: [
         panel_app_a,
+        logger,
     ],
 )
 
