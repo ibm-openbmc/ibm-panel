@@ -4,10 +4,11 @@
 #include "const.hpp"
 #include "utils.hpp"
 
-#include <exception>
-#include <iostream>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
+
+#include <exception>
+#include <iostream>
 
 panel::types::PanelDataMap baseDataMap = {
     {panel::constants::rain2s2uIM,
