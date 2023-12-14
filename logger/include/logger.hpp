@@ -45,4 +45,14 @@ void logMessage(
     const std::string& message,
     const std::source_location& location = std::source_location::current());
 
+/**
+ * @brief Fetches specified number of logs and dump to a file
+ *
+ * The API fetches the specified number of logs from the buffer
+ * and dumps the logs into a file.
+ *
+ * @param[in] noOfLogs - Number of logs to be fetched
+ */
+void fetchNLogs(size_t noOfLogs);
+
 }; // namespace Logger
