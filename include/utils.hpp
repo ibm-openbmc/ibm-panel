@@ -1,10 +1,11 @@
 #pragma once
 #include <const.hpp>
 #include <sdbusplus/asio/object_server.hpp>
-#include <sstream>
-#include <string>
 #include <transport.hpp>
 #include <types.hpp>
+
+#include <sstream>
+#include <string>
 #include <vector>
 
 namespace panel
@@ -43,9 +44,9 @@ T readBusProperty(const std::string& service, const std::string& object,
     try
     {
         auto bus = sdbusplus::bus::new_default();
-        auto properties =
-            bus.new_method_call(service.c_str(), object.c_str(),
-                                "org.freedesktop.DBus.Properties", "Get");
+        auto properties = bus.new_method_call(service.c_str(), object.c_str(),
+                                              "org.freedesktop.DBus.Properties",
+                                              "Get");
         properties.append(inf);
         properties.append(prop);
         auto result = bus.call(properties);

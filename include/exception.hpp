@@ -21,9 +21,7 @@ class BaseException : public std::exception
     /** @brief Constructor
      * @param[in] msg - Error message.
      */
-    explicit BaseException(const std::string& msg) : error(msg)
-    {
-    }
+    explicit BaseException(const std::string& msg) : error(msg) {}
 
     /** @brief what method
      * This method overrides the what() method in base std::exception class.
@@ -55,8 +53,6 @@ class FunctionFailure : public BaseException
     /** @brief Constructor
      * @param[in] msg - Error message.
      */
-    explicit FunctionFailure(const std::string& msg) : BaseException(msg)
-    {
-    }
+    explicit FunctionFailure(const std::string& msg) : BaseException(msg) {}
 };
 } // namespace panel

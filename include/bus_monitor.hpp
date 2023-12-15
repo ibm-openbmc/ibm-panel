@@ -4,8 +4,9 @@
 #include "panel_state_manager.hpp"
 #include "transport.hpp"
 
-#include <memory>
 #include <sdbusplus/asio/object_server.hpp>
+
+#include <memory>
 #include <string>
 namespace panel
 {
@@ -35,8 +36,7 @@ class PanelPresence
                   std::shared_ptr<state::manager::PanelStateManager> state) :
         objectPath(objPath),
         conn(conn), transport(transport), stateManager(state)
-    {
-    }
+    {}
 
     /** @brief Listen to the Panel Present property.
      * Match signal is created to continuously listen to dbus
@@ -92,8 +92,7 @@ class PELListener
                 std::shared_ptr<Transport>& transport) :
         conn(con),
         stateManager(manager), executor(execute), transport(transport)
-    {
-    }
+    {}
 
     /**
      * @brief Api to listen for PEL addition/deletion events.
@@ -168,8 +167,7 @@ class BootProgressCode
                      std::shared_ptr<Executor> execute) :
         transport(transport),
         conn(con), executor(execute)
-    {
-    }
+    {}
 
     /**
      * @brief Api to register call back for progress code.

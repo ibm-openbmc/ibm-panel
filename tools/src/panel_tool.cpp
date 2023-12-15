@@ -1,6 +1,7 @@
 #include "dbus_call.hpp"
 
 #include <CLI/CLI.hpp>
+
 #include <iostream>
 
 int main(int argc, char** argv)

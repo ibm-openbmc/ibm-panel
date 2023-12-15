@@ -39,14 +39,15 @@ class BusHandler
             this->display(line1, line2);
         });
 
-        iface->register_method(
-            "TriggerPanelLampTest",
-            [this](const bool status) { this->triggerPanelLampTest(status); });
+        iface->register_method("TriggerPanelLampTest",
+                               [this](const bool status) {
+            this->triggerPanelLampTest(status);
+        });
 
         iface->register_method("toggleFunctionState",
                                [this](const types::FunctionalityList& list) {
-                                   this->toggleFunctionState(list);
-                               });
+            this->toggleFunctionState(list);
+        });
 
         iface->register_property(
             "ACFWindowActive", false,
@@ -57,19 +58,19 @@ class BusHandler
 
         iface->register_property("OSIPLMode", false,
                                  [this](const bool newVal, bool& oldVal) {
-                                     if (newVal != oldVal)
-                                     {
-                                         this->executor->setOSIPLMode(newVal);
-                                         oldVal = newVal;
-                                         return 1;
-                                     }
-                                     return 0;
-                                 });
+            if (newVal != oldVal)
+            {
+                this->executor->setOSIPLMode(newVal);
+                oldVal = newVal;
+                return 1;
+            }
+            return 0;
+        });
 
         iface->register_method("ExecuteFunction",
                                [this](const types::FunctionNumber funcNum) {
-                                   return this->triggerPanelFunc(funcNum);
-                               });
+            return this->triggerPanelFunc(funcNum);
+        });
 
         iface->register_method("getEnabledFunctions", [this]() {
             return this->getEnabledFunctionsList();
