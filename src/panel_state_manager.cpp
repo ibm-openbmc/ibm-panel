@@ -1109,7 +1109,8 @@ bool PanelStateManager::isFunctionSupported(const types::FunctionNumber funcNum)
     return false;
 }
 
-bool PanelStateManager::isFunctionEnabled(const types::FunctionNumber funcNum)
+bool PanelStateManager::isRemoteAccessEnabled(
+    const types::FunctionNumber funcNum)
 {
     auto pos = find_if(panelFunctions.begin(), panelFunctions.end(),
                        [funcNum](const PanelFunctionality& afunctionality) {
@@ -1117,7 +1118,9 @@ bool PanelStateManager::isFunctionEnabled(const types::FunctionNumber funcNum)
                        });
     if (pos != panelFunctions.end())
     {
-        return pos->functionActiveState;
+        return pos->functionEnabledByPhyp &&
+               ((systemState & SystemStateMask::ENABLE_PHYP_RUNTIME_STATE) ==
+                0x00);
     }
 
     return false;
@@ -1126,7 +1129,7 @@ bool PanelStateManager::isFunctionEnabled(const types::FunctionNumber funcNum)
 types::ReturnStatus PanelStateManager::triggerFunctionDirectly(
     const types::FunctionNumber funcNum)
 {
-    if (isFunctionSupported(funcNum) && isFunctionEnabled(funcNum))
+    if (isFunctionSupported(funcNum) && isRemoteAccessEnabled(funcNum))
     {
         return (funcExecutor->executeFunctionDirectly(funcNum));
     }
@@ -1145,7 +1148,7 @@ types::Binary PanelStateManager::getEnabledFunctionsList()
 
     for (auto& val : inputFunctions)
     {
-        if (isFunctionEnabled(val))
+        if (isRemoteAccessEnabled(val))
         {
             enabledFunctions.push_back(val);
         }

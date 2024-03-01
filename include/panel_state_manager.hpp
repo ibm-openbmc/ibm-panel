@@ -215,11 +215,17 @@ class PanelStateManager
     void updateFunctionStatus();
 
     /**
-     * @brief API which tells if the function is enabled or not
+     * @brief API to check remote access for a given function.
+     *
+     * Parameters to determine function state can be different for physical
+     * access i.e via physical panel and remote access i.e. via GUI. The API
+     * validated if the given function should be marked as enabled for remote
+     * access or not.
+     *
      * @param[in] funcNum - Function number
      * @return (true/false) if function is enabled/disabled respectively.
      */
-    bool isFunctionEnabled(const types::FunctionNumber funcNum);
+    bool isRemoteAccessEnabled(const types::FunctionNumber funcNum);
 
     /**
      * @brief Check if function is supported to execute from d-bus
