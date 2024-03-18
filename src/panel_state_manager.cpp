@@ -1118,9 +1118,10 @@ bool PanelStateManager::isRemoteAccessEnabled(
                        });
     if (pos != panelFunctions.end())
     {
+        // if the function is enabled by PHYP and system at PHYP runtime.
         return pos->functionEnabledByPhyp &&
                ((systemState & SystemStateMask::ENABLE_PHYP_RUNTIME_STATE) ==
-                0x00);
+                SystemStateMask::ENABLE_PHYP_RUNTIME_STATE);
     }
 
     return false;
