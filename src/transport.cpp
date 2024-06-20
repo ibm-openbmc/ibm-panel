@@ -87,8 +87,8 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
             {
                 retriesDone = retryLoop;
                 writeFailed = false;
-                returnedSize =
-                    write(panelFileDescriptor, buffer.data(), buffer.size());
+                returnedSize = write(panelFileDescriptor, buffer.data(),
+                                     buffer.size());
                 if (returnedSize !=
                     static_cast<int>(buffer.size())) // write failure
                 {
@@ -160,8 +160,8 @@ void Transport::checkAndFixBootLoaderBug()
     {
         // Read the version (2 bytes)
         // Check if we are in the bootloader: 0x42 0x4c ('B', 'L')
-        auto readSize =
-            ::read(panelFileDescriptor, readBuff.data(), readBuff.size());
+        auto readSize = ::read(panelFileDescriptor, readBuff.data(),
+                               readBuff.size());
         if (readSize != (int)readBuff.size())
         {
             std::cerr << "Failed to read panel version. Read bytes: "
@@ -208,8 +208,8 @@ bool Transport::readPanelVersion(types::Binary& versionBuffer) const
     const size_t versionSize = 6;
     versionBuffer.resize(versionSize);
 
-    auto readSize =
-        ::read(panelFileDescriptor, versionBuffer.data(), versionSize);
+    auto readSize = ::read(panelFileDescriptor, versionBuffer.data(),
+                           versionSize);
 
     if (readSize != versionSize)
     {
@@ -366,8 +366,8 @@ bool Transport::gotoBootloader() const
 {
     auto writeBuff = encoder::MessageEncoder().jumpToBootLoader();
 
-    auto writeSize =
-        ::write(panelFileDescriptor, writeBuff.data(), writeBuff.size());
+    auto writeSize = ::write(panelFileDescriptor, writeBuff.data(),
+                             writeBuff.size());
     if (writeSize != (int)writeBuff.size())
     {
         logCodeUpdateError(
@@ -397,8 +397,8 @@ bool Transport::updateFlash() const
     const void* lcdPtr = &(firmware::lcd);
     const void* basePtr = &(firmware::base);
 
-    const void* fwUpdateBuffer =
-        (panelType == types::PanelType::LCD) ? lcdPtr : basePtr;
+    const void* fwUpdateBuffer = (panelType == types::PanelType::LCD) ? lcdPtr
+                                                                      : basePtr;
     const int fwCodeSize = (panelType == types::PanelType::LCD)
                                ? (firmware::lcd).size()
                                : (firmware::base).size();
@@ -436,8 +436,8 @@ bool Transport::gotoMainProgram() const
 {
     auto writeBuff = encoder::MessageEncoder().jumpToMainProgram();
 
-    auto writeSize =
-        ::write(panelFileDescriptor, writeBuff.data(), writeBuff.size());
+    auto writeSize = ::write(panelFileDescriptor, writeBuff.data(),
+                             writeBuff.size());
 
     std::this_thread::sleep_for(1s);
 

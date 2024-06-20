@@ -7,6 +7,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/steady_timer.hpp>
+
 #include <string_view>
 #include <xyz/openbmc_project/Common/error.hpp>
 
@@ -457,12 +458,11 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
         }
         if (objPath == ethObjPath)
         {
-            auto intfItr = std::find_if(
-                intfPropVector.begin(), intfPropVector.end(),
-                [](const auto& intf) {
-                    return (intf.first ==
-                            "xyz.openbmc_project.Network.MACAddress");
-                });
+            auto intfItr = std::find_if(intfPropVector.begin(),
+                                        intfPropVector.end(),
+                                        [](const auto& intf) {
+                return (intf.first == "xyz.openbmc_project.Network.MACAddress");
+            });
             if (intfItr == intfPropVector.end())
             {
                 std::cerr << "Mac address interface not found." << std::endl;

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <sdbusplus/server.hpp>
+
 #include <iostream>
 #include <map>
-#include <sdbusplus/server.hpp>
 #include <tuple>
 #include <unordered_map>
 #include <variant>
