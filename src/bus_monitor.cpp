@@ -3,8 +3,9 @@
 #include "const.hpp"
 #include "utils.hpp"
 
-#include <algorithm>
 #include <boost/algorithm/string.hpp>
+
+#include <algorithm>
 #include <vector>
 
 namespace panel
@@ -102,7 +103,6 @@ void PanelPresence::readPresentProperty(sdbusplus::message_t& msg)
             transport->setTransportKey(*present);
             if (transport->getPanelType() == types::PanelType::LCD && *present)
             {
-
                 const auto bmcState =
                     utils::readBusProperty<std::variant<std::string>>(
                         "xyz.openbmc_project.State.BMC",
@@ -143,7 +143,7 @@ void PanelPresence::listenPanelPresence()
                 sdbusplus::bus::match::rules::propertiesChanged(
                     objectPath, constants::itemInterface),
                 [this](sdbusplus::message_t& msg) {
-                    readBasePresentProperty(msg);
+            readBasePresentProperty(msg);
                 });
     }
     else
@@ -154,7 +154,7 @@ void PanelPresence::listenPanelPresence()
                 sdbusplus::bus::match::rules::propertiesChanged(
                     objectPath, constants::itemInterface),
                 [this](sdbusplus::message_t& msg) {
-                    readPresentProperty(msg);
+            readPresentProperty(msg);
                 });
     }
 }
@@ -213,8 +213,8 @@ void PELListener::PELEventCallBack(sdbusplus::message_t& msg)
                         // picking a nibble value from MSB end (Big
                         // Endian) of the hexword and storing as a char.
                         char valueAtIndexZero[2] = {hexWords[4][0], '\0'};
-                        types::Byte byte =
-                            ::strtoul(valueAtIndexZero, nullptr, 16);
+                        types::Byte byte = ::strtoul(valueAtIndexZero, nullptr,
+                                                     16);
 
                         if ((byte & constants::terminatingBits) != 0x00 &&
                             (hexWords[0][0] == 'B' && hexWords[0][1] == 'D'))
@@ -466,8 +466,8 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
             if (hexWordArray.at(0) != 0x20)
             {
                 // store the SRC.
-                std::string hexWordsWithSRC =
-                    std::string(byteArray.begin(), byteArray.end());
+                std::string hexWordsWithSRC = std::string(byteArray.begin(),
+                                                          byteArray.end());
 
                 // 4th byte will return number of valid hex words.
                 types::Byte validHexWords = hexWordArray.at(3);
