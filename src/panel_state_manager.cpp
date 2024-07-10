@@ -5,6 +5,7 @@
 #include "utils.hpp"
 
 #include <algorithm>
+#include <xyz/openbmc_project/Common/error.hpp>
 
 namespace panel
 {
@@ -12,7 +13,6 @@ namespace state
 {
 namespace manager
 {
-
 enum StateType
 {
     INITIAL_STATE = 0,
@@ -864,7 +864,7 @@ void PanelStateManager::displayDebounce() const
 0 2 _ _ B_ _N __ __ _ _ _ _
 _ _ _ _ __ __ __ __ T < _ _
 */
-void PanelStateManager::displayFunc02() const
+void PanelStateManager::displayFunc02()
 {
     std::string line1(16, ' ');
     std::string line2(16, ' ');
@@ -873,7 +873,23 @@ void PanelStateManager::displayFunc02() const
 
     if (isSubrangeActive)
     {
-        line1.replace(4, 1, functionality02.at(0).at(panelCurSubStates.at(0)));
+        // If this property is set as false under panel interface,
+        // implies that panel should not display OS IPL mode via function-02.
+        if (funcExecutor->isOSIPLModeEnabled())
+        {
+            line1.replace(4, 1,
+                          functionality02.at(0).at(panelCurSubStates.at(0)));
+        }
+        else
+        {
+            // Move the cursor to second level in case OS IPL mode is not
+            // displayed.
+            if (levelToOperate == 0)
+            {
+                levelToOperate++;
+            }
+        }
+
         line1.replace(7, 1, functionality02.at(1).at(panelCurSubStates.at(1)));
         line2.replace(12, 1, functionality02.at(2).at(panelCurSubStates.at(2)));
 
@@ -1078,6 +1094,68 @@ void PanelStateManager::setCEState()
                 panelCurSubStates);
         }
     }
+}
+
+bool PanelStateManager::isFunctionSupported(const types::FunctionNumber funcNum)
+{
+    types::FunctionalityList supportedFuncs = {21, 22, 34, 65, 66,
+                                               67, 68, 69, 70};
+
+    if (find(supportedFuncs.begin(), supportedFuncs.end(), funcNum) !=
+        supportedFuncs.end())
+    {
+        return true;
+    }
+    return false;
+}
+
+bool PanelStateManager::isRemoteAccessEnabled(
+    const types::FunctionNumber funcNum)
+{
+    auto pos = find_if(panelFunctions.begin(), panelFunctions.end(),
+                       [funcNum](const PanelFunctionality& afunctionality) {
+                           return afunctionality.functionNumber == funcNum;
+                       });
+    if (pos != panelFunctions.end())
+    {
+        // if the function is enabled by PHYP and system at PHYP runtime.
+        return (
+            (pos->functionEnabledByPhyp == SystemStateMask::ENABLE_BY_PHYP) &&
+            ((systemState & SystemStateMask::ENABLE_PHYP_RUNTIME_STATE) ==
+             SystemStateMask::ENABLE_PHYP_RUNTIME_STATE));
+    }
+
+    return false;
+}
+
+types::ReturnStatus PanelStateManager::triggerFunctionDirectly(
+    const types::FunctionNumber funcNum)
+{
+    if (isFunctionSupported(funcNum) && isRemoteAccessEnabled(funcNum))
+    {
+        return (funcExecutor->executeFunctionDirectly(funcNum));
+    }
+
+    std::cerr << "Function " << static_cast<int>(funcNum) << " is disabled."
+              << std::endl;
+    throw sdbusplus::xyz::openbmc_project::Common::Error::NotAllowed();
+}
+
+types::Binary PanelStateManager::getEnabledFunctionsList()
+{
+    types::Binary inputFunctions = {21, 22, 34, 65, 66, 67, 68, 69, 70};
+
+    types::Binary enabledFunctions;
+    enabledFunctions.reserve(inputFunctions.size());
+
+    for (auto& val : inputFunctions)
+    {
+        if (isRemoteAccessEnabled(val))
+        {
+            enabledFunctions.push_back(val);
+        }
+    }
+    return enabledFunctions;
 }
 } // namespace manager
 } // namespace state

@@ -123,6 +123,22 @@ class Executor
     }
 
     /**
+     * @brief API to get value of panel DBus property osIplMode.
+     *
+     * This api is called to fetch the current value of osIplMode property which
+     * is exposed under panel interface. Value of this property tells wether
+     * OS IPL Mode fetched from the BIOS attribute should be displayed in
+     * function 01 and function 02.
+     *
+     * @param[in] osIPLModeState - current osIPLMode
+     * @return Value of the property as set in case of setOSIPLMode API.
+     */
+    inline bool isOSIPLModeEnabled() const
+    {
+        return osIplMode;
+    }
+
+    /**
      * @brief An api to store event id of last PEL.
      * This is required to be dispalyed in function 11 to 13.
      *
@@ -132,6 +148,18 @@ class Executor
     {
         latestSrcAndHexwords = pelEventId;
     }
+
+    /**
+     * @brief API to execute functions on requests from external source
+     * This method is called whenever there is an external request to trigger a
+     * function.
+     *
+     * @param[in] funcNum - Function number.
+     *
+     * @return status(success/failure, display line 1, display line2)
+     */
+    types::ReturnStatus
+        executeFunctionDirectly(const types::FunctionNumber funcNum);
 
   private:
     /**
@@ -308,5 +336,9 @@ class Executor
     /* SRC and HEX words */
     std::string latestSrcAndHexwords;
 
+    /* To keep track if the execute request is from external or not */
+    bool isExternallyTriggered = false;
+
+    types::ReturnStatus executionStatus = std::make_tuple(false, "", "");
 }; // class Executor
 } // namespace panel

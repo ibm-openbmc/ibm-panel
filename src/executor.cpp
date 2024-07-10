@@ -8,6 +8,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <string_view>
+#include <xyz/openbmc_project/Common/error.hpp>
 
 namespace panel
 {
@@ -30,6 +31,13 @@ void Executor::displayExecutionStatus(
     }
 
     convert << (result ? " 00" : " FF");
+
+    if (isExternallyTriggered)
+    {
+        executionStatus = std::make_tuple(result, convert.str(), "");
+        return;
+    }
+
     utils::sendCurrDisplayToPanel(convert.str(), "", transport);
 }
 
@@ -386,11 +394,10 @@ void Executor::execute30(const types::FunctionalityList& subFuncNumber)
     {
         const std::string& objPath =
             std::get<sdbusplus::message::object_path>(obj);
-        // search for eth0/eth1 ipv4 objects based on input
-        // eg: /xyz/openbmc_project/network/eth0/ipv4/bb39e832
-        std::string ethV4 = "/";
-        ethV4 += ethPort;
-        ethV4 += "/ipv4/";
+
+        // search for eth0/eth1 objects
+        std::string ethV4 = "/" + ethPort + "/";
+
         const auto& intfPropVector = std::get<1>(obj);
         if (objPath.find(ethV4) != std::string::npos)
         {
@@ -1039,4 +1046,36 @@ void Executor::execute74()
     displayExecutionStatus(74, std::vector<types::FunctionNumber>(), true);
 }
 
+types::ReturnStatus
+    Executor::executeFunctionDirectly(const types::FunctionNumber funcNum)
+{
+    isExternallyTriggered = true;
+    try
+    {
+        switch (funcNum)
+        {
+            case 21:
+            case 22:
+            case 34:
+            case 65:
+            case 66:
+            case 67:
+            case 68:
+            case 69:
+            case 70:
+                sendFuncNumToPhyp(funcNum);
+                break;
+        }
+    }
+    catch (std::exception& e)
+    {
+        isExternallyTriggered = false;
+        std::cerr << "Function " << static_cast<int>(funcNum)
+                  << " execution failed. " << e.what() << std::endl;
+        throw sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure();
+    }
+
+    isExternallyTriggered = false;
+    return executionStatus;
+}
 } // namespace panel

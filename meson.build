@@ -11,11 +11,12 @@ project(
     ],
     license: 'Apache-2.0',
     version: '0.1',
-    meson_version: '>= 0.57',
+    meson_version: '>= 1.0.1',
 )
 
 systemd = dependency('systemd')
 sdbusplus = dependency('sdbusplus')
+phosphor_dbus_interfaces = dependency('phosphor-dbus-interfaces')
 
 cxx = meson.get_compiler('cpp')
 add_project_arguments(
@@ -29,7 +30,7 @@ cxx.get_supported_arguments([
 language : 'cpp')
 add_global_arguments('-Wno-psabi', language : ['c', 'cpp'])
 
-systemd_system_unit_dir = systemd.get_pkgconfig_variable('systemdsystemunitdir')
+systemd_system_unit_dir = systemd.get_variable('systemdsystemunitdir')
 
 service_file = 'service_files/com.ibm.panel.service'
 
@@ -61,6 +62,13 @@ panel_tool_a = static_library(
      'tools/src/dbus_call.cpp',
      include_directories: ['include', 'tools/include']
 )
+
+logger = static_library(
+     'logger', 
+     'logger/src/logger.cpp',
+     include_directories:[ 'logger/include']
+)
+
 executable(
       'paneltool',
       'tools/src/panel_tool.cpp',
@@ -79,12 +87,14 @@ executable(
     'src/panel_app_main.cpp',
     dependencies: [
       sdbusplus,
-      dependency('libpldm')
+      dependency('libpldm'),
+      phosphor_dbus_interfaces
     ],
-    include_directories: 'include',
+    include_directories: ['include','logger/include'],
     install: true,
     link_with: [
         panel_app_a,
+        logger,
     ],
 )
 
@@ -100,7 +110,8 @@ if get_option('tests').enabled()
           sdbusplus,
           gmock,
           gtest,
-          dependency('libpldm')
+          dependency('libpldm'),
+          phosphor_dbus_interfaces
       ],
       include_directories: [
           'include',

@@ -81,4 +81,15 @@ void BusHandler::btnRequest(int event)
             std::cerr << "Invalid Input" << std::endl;
     }
 }
+
+types::ReturnStatus
+    BusHandler::triggerPanelFunc(const types::FunctionNumber funcNum)
+{
+    return (stateManager->triggerFunctionDirectly(funcNum));
+}
+
+types::Binary BusHandler::getEnabledFunctionsList()
+{
+    return (stateManager->getEnabledFunctionsList());
+}
 } // namespace panel

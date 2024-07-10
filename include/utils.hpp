@@ -23,7 +23,10 @@ static types::PanelDataMap lcdDataMap = {
       constants::rainLcdDbusObj}},
     {constants::everestIM,
      {constants::everLcdDevPath, constants::devAddr,
-      constants::everLcdDbusObj}}};
+      constants::everLcdDbusObj}},
+    {constants::bonnellIM,
+     {constants::bonnellLcdDevPath, constants::devAddr,
+      constants::bonnellLcdDbusObj}}};
 
 /** @brief Read inventory manager properties from dbus.
  * @param[in] service - Dbus service name
@@ -78,7 +81,7 @@ void createPEL(const std::string& errIntf, const std::string& sev,
  * @param[in] path -  Dbus object path
  * @param[in] interface - Interface
  */
-std::string getService(sdbusplus::bus::bus& bus, const std::string& path,
+std::string getService(sdbusplus::bus_t& bus, const std::string& path,
                        const std::string& interface);
 
 /** @brief Display on panel using transport class api.
@@ -94,24 +97,6 @@ std::string getService(sdbusplus::bus::bus& bus, const std::string& path,
  */
 void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
                             std::shared_ptr<Transport> transport);
-
-/**
- * @brief An api to read System operating mode.
- * It will use combination of below mentioned three parameters to
- * decide the operating mode of the system.
- *
- * By default it will be "Normal " mode.
- * Value of three parameters in "Manual" mode would be,
- * QuiesceOnHwError - true.
- * PowerRestorePolicy -
- * "xyz.openbmc_project.Control.Power.RestorePolicy.Policy.AlwaysOff".
- * AutoReboot - false.
- *
- * Any other value combination will set the system to "Normal" mode.
- *
- * @param[out] sysOperatingMode - Operating mode.
- */
-void readSystemOperatingMode(std::string& sysOperatingMode);
 
 /**
  * @brief An api to read initial values of OS IPL types, System operating

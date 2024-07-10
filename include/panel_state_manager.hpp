@@ -136,6 +136,21 @@ class PanelStateManager
      */
     void setCEState();
 
+    /**
+     * @brief API to trigger functions on request from external source
+     * @param[in] funcNum - Function number
+     * @return status of the function
+     */
+    types::ReturnStatus
+        triggerFunctionDirectly(const types::FunctionNumber funcNum);
+
+    /**
+     * @brief API to get list of enabled functions
+     *
+     * @return List of enabled functions
+     */
+    types::Binary getEnabledFunctionsList();
+
   private:
     /**
      * @brief An Api to set the initial state of PanelState class.
@@ -183,7 +198,7 @@ class PanelStateManager
     void displayDebounce() const;
 
     /** @brief Api to display function 2 on panel */
-    void displayFunc02() const;
+    void displayFunc02();
 
     /**
      * @brief An api to initialise function 02 with its initial values.
@@ -199,6 +214,25 @@ class PanelStateManager
      */
     void updateFunctionStatus();
 
+    /**
+     * @brief API to check remote access for a given function.
+     *
+     * Parameters to determine function state can be different for physical
+     * access i.e via physical panel and remote access i.e. via GUI. The API
+     * validated if the given function should be marked as enabled for remote
+     * access or not.
+     *
+     * @param[in] funcNum - Function number
+     * @return (true/false) if function is enabled/disabled respectively.
+     */
+    bool isRemoteAccessEnabled(const types::FunctionNumber funcNum);
+
+    /**
+     * @brief Check if function is supported to execute from d-bus
+     * @param[in] funcNum - Function number
+     * @return true if function is supported, false otherwise.
+     */
+    bool isFunctionSupported(const types::FunctionNumber funcNum);
     /**
      * @brief A structure to store information related to a particular
      * functionality. It will carry information like function number, its
