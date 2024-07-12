@@ -159,7 +159,9 @@ std::vector<FunctionalityAttributes> functionalityList = {
     {73, false, true, "A170800B", StateType::INITIAL_STATE,
      (SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_CE_MODE)},
     {74, false, false, "NONE", StateType::INITIAL_STATE,
-     (SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_CE_MODE)}};
+     (SystemStateMask::ENABLE_MANUAL_MODE | SystemStateMask::ENABLE_CE_MODE)},
+    {75, false, true, "A1003075", StateType::INITIAL_STATE,
+     (SystemStateMask::ENABLE_CE_MODE | SystemStateMask::ENABLE_MANUAL_MODE)}};
 
 void PanelStateManager::enableFunctonality(
     const types::FunctionalityList& listOfFunctionalities)
