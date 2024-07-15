@@ -259,6 +259,11 @@ class Executor
     void execute74();
 
     /**
+     * @brief An api to execute function 75.
+     */
+    void execute75();
+
+    /**
      * @brief Api to get PEL eventId.
      *
      * This is a helper function to get the eventId(SRC) data for the PEL
