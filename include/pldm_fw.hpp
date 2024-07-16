@@ -2,6 +2,7 @@
 
 #include <libpldm/instance-id.h>
 #include <libpldm/transport.h>
+#include <libpldm/transport/af-mctp.h>
 #include <libpldm/transport/mctp-demux.h>
 #include <stdint.h>
 
@@ -71,7 +72,13 @@ class PldmFramework
     /** pldm transport instance  */
     pldm_transport* pldmTransport = nullptr;
 
-    pldm_transport_mctp_demux* mctpDemux = nullptr;
+    union TransportImpl
+    {
+        pldm_transport_mctp_demux* mctpDemux;
+        pldm_transport_af_mctp* afMctp;
+    };
+
+    TransportImpl impl;
 
     // Constants required for PLDM packet.
     static constexpr auto phypTerminusID = (types::Byte)208;
@@ -134,6 +141,11 @@ class PldmFramework
      *
      */
     int openMctpDemuxTransport();
+
+    /** @brief Opens the MCTP AF_MCTP for sending and receiving messages.
+     *
+     */
+    int openAfMctpTransport();
 
     /** @brief Close the PLDM file */
     void pldmClose();

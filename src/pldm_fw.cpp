@@ -60,7 +60,16 @@ int PldmFramework::openPldm()
         return fd;
     }
 
+#if defined(PLDM_TRANSPORT_WITH_MCTP_DEMUX)
     fd = openMctpDemuxTransport();
+#elif defined(PLDM_TRANSPORT_WITH_AF_MCTP)
+    fd = openAfMctpTransport();
+#else
+    std::cerr << "open: No valid transport defined!" << std::endl;
+    throw FunctionFailure("Required host dump action via PLDM is not allowed: "
+                          "No valid transport defined!");
+#endif
+
     if (fd < 0)
     {
         auto e = errno;
@@ -72,9 +81,10 @@ int PldmFramework::openPldm()
     return fd;
 }
 
-int PldmFramework::openMctpDemuxTransport()
+[[maybe_unused]] int PldmFramework::openMctpDemuxTransport()
 {
-    int rc = pldm_transport_mctp_demux_init(&mctpDemux);
+    impl.mctpDemux = nullptr;
+    int rc = pldm_transport_mctp_demux_init(&impl.mctpDemux);
     if (rc)
     {
         std::cerr << "openMctpDemuxTransport: Failed to init MCTP demux "
@@ -83,7 +93,7 @@ int PldmFramework::openMctpDemuxTransport()
         throw FunctionFailure("Failed to init MCTP demux transport");
     }
 
-    rc = pldm_transport_mctp_demux_map_tid(mctpDemux, tid, tid);
+    rc = pldm_transport_mctp_demux_map_tid(impl.mctpDemux, tid, tid);
     if (rc)
     {
         std::cerr << "openMctpDemuxTransport: Failed to setup tid to eid "
@@ -92,7 +102,7 @@ int PldmFramework::openMctpDemuxTransport()
         pldmClose();
         throw FunctionFailure("Failed to setup tid to eid mapping");
     }
-    pldmTransport = pldm_transport_mctp_demux_core(mctpDemux);
+    pldmTransport = pldm_transport_mctp_demux_core(impl.mctpDemux);
 
     struct pollfd pollfd;
     rc = pldm_transport_mctp_demux_init_pollfd(pldmTransport, &pollfd);
@@ -106,10 +116,50 @@ int PldmFramework::openMctpDemuxTransport()
     return pollfd.fd;
 }
 
+[[maybe_unused]] int PldmFramework::openAfMctpTransport()
+{
+    impl.afMctp = nullptr;
+    int rc = pldm_transport_af_mctp_init(&impl.afMctp);
+    if (rc)
+    {
+        std::cerr
+            << "openAfMctpTransport: Failed to init AF MCTP transport. rc = "
+            << rc << std::endl;
+        throw FunctionFailure("Failed to init AF MCTP transport");
+    }
+
+    rc = pldm_transport_af_mctp_map_tid(impl.afMctp, tid, tid);
+    if (rc)
+    {
+        std::cerr
+            << "openAfMctpTransport: Failed to setup tid to eid mapping. rc = "
+            << rc << std::endl;
+        pldmClose();
+        throw FunctionFailure("Failed to setup tid to eid mapping");
+    }
+    pldmTransport = pldm_transport_af_mctp_core(impl.afMctp);
+
+    struct pollfd pollfd;
+    rc = pldm_transport_af_mctp_init_pollfd(pldmTransport, &pollfd);
+    if (rc)
+    {
+        std::cerr << "openAfMctpTransport: Failed to get pollfd. rc = " << rc
+                  << std::endl;
+        pldmClose();
+        throw FunctionFailure("Failed to get pollfd");
+    }
+    return pollfd.fd;
+}
+
 void PldmFramework::pldmClose()
 {
-    pldm_transport_mctp_demux_destroy(mctpDemux);
-    mctpDemux = nullptr;
+#if defined(PLDM_TRANSPORT_WITH_MCTP_DEMUX)
+    pldm_transport_mctp_demux_destroy(impl.mctpDemux);
+    impl.mctpDemux = nullptr;
+#elif defined(PLDM_TRANSPORT_WITH_AF_MCTP)
+    pldm_transport_af_mctp_destroy(impl.afMctp);
+    impl.afMctp = nullptr;
+#endif
     pldmTransport = nullptr;
 }
 
