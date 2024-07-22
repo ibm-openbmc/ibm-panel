@@ -24,18 +24,35 @@ panel::types::PanelDataMap baseDataMap = {
       panel::constants::everBaseDbusObj}},
     {panel::constants::bonnellIM,
      {panel::constants::bonnellBaseDevPath, panel::constants::devAddr,
-      panel::constants::bonnellBaseDbusObj}}};
+      panel::constants::bonnellBaseDbusObj}},
+    {panel::constants::blueridge2s2uIM,
+     {panel::constants::baseDevPath, panel::constants::devAddr,
+      panel::constants::blueridgeBaseDbusObj}},
+    {panel::constants::blueridge2s4uIM,
+     {panel::constants::baseDevPath, panel::constants::devAddr,
+      panel::constants::blueridgeBaseDbusObj}},
+    {panel::constants::blueridge1s4uIM,
+     {panel::constants::baseDevPath, panel::constants::devAddr,
+      panel::constants::blueridgeBaseDbusObj}},
+    {panel::constants::fujiIM,
+     {panel::constants::baseDevPath, panel::constants::devAddr,
+      panel::constants::fujiBaseDbusObj}},
+};
 
 std::string getInputDevicePath(const std::string& imValue)
 {
     if (imValue == panel::constants::rain2s2uIM ||
         imValue == panel::constants::rain2s4uIM ||
         imValue == panel::constants::rain1s4uIM ||
-        imValue == panel::constants::bonnellIM)
+        imValue == panel::constants::bonnellIM ||
+        imValue == panel::constants::blueridge2s2uIM ||
+        imValue == panel::constants::blueridge2s4uIM ||
+        imValue == panel::constants::blueridge1s4uIM)
     {
         return "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick";
     }
-    else if (imValue == panel::constants::everestIM)
+    else if (imValue == panel::constants::everestIM ||
+             imValue == panel::constants::fujiIM)
     {
         return "/dev/input/by-path/platform-1e78a780.i2c-bus-event-joystick";
     }
@@ -124,7 +141,8 @@ int main(int, char**)
 
             // if it is base panel of Everest, register for its presence to
             // enable CM.
-            if (baseObjPath == panel::constants::everBaseDbusObj)
+            if (baseObjPath == panel::constants::everBaseDbusObj ||
+                baseObjPath == panel::constants::fujiBaseDbusObj)
             {
                 basePanelPresence = std::make_unique<panel::PanelPresence>(
                     baseObjPath, conn, basePanel, stateManager);

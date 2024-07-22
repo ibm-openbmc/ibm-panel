@@ -14,6 +14,8 @@ static constexpr auto bonnellBaseDevPath = "/dev/i2c-2";
 static constexpr auto rainLcdDevPath = "/dev/i2c-7";
 static constexpr auto everLcdDevPath = "/dev/i2c-28";
 static constexpr auto tacomaLcdDevPath = "/dev/i2c-0";
+static constexpr auto blueridgeLcdDevPath = "/dev/i2c-7";
+static constexpr auto fujiLcdDevPath = "/dev/i2c-28";
 static constexpr auto bonnellLcdDevPath = rainLcdDevPath;
 
 static constexpr auto devAddr = 0x5a;
@@ -27,11 +29,17 @@ static constexpr auto everBaseDbusObj =
     "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/"
     "panel0";
 static constexpr auto bonnellBaseDbusObj = rainBaseDbusObj;
+static constexpr auto blueridgeBaseDbusObj = rainBaseDbusObj;
+static constexpr auto fujiBaseDbusObj = everBaseDbusObj;
+
 static constexpr auto rainLcdDbusObj = "/xyz/openbmc_project/inventory/system/"
                                        "chassis/motherboard/lcd_op_panel_hill";
 static constexpr auto everLcdDbusObj =
     "/xyz/openbmc_project/inventory/system/chassis/motherboard/dasd_backplane/"
     "panel1";
+static constexpr auto blueridgeLcdDbusObj = rainLcdDbusObj;
+static constexpr auto fujiLcdDbusObj = everLcdDbusObj;
+
 static constexpr auto everBMCObj =
     "/xyz/openbmc_project/inventory/system/chassis/motherboard/bmc";
 static constexpr auto bonnellLcdDbusObj = rainLcdDbusObj;
@@ -41,6 +49,10 @@ static constexpr auto rain2s4uIM = "50001000";
 static constexpr auto rain1s4uIM = "50001002";
 static constexpr auto everestIM = "50003000";
 static constexpr auto bonnellIM = "50004000";
+static constexpr auto blueridge2s2uIM = "60001001";
+static constexpr auto blueridge2s4uIM = "60001000";
+static constexpr auto blueridge1s4uIM = "60001002";
+static constexpr auto fujiIM = "60002000";
 
 static constexpr auto imInterface = "com.ibm.ipzvpd.VSBP";
 static constexpr auto imKeyword = "IM";
@@ -84,10 +96,15 @@ static constexpr auto errnoNoDeviceOrAddress = 6;
 
 // Map of system type to that of path to the FRU on which BootFail PIC is
 // physically present
-static const types::PICFRUPathMap bootFailPIC = {{rain2s2uIM, systemDbusObj},
-                                                 {rain2s4uIM, systemDbusObj},
-                                                 {rain1s4uIM, systemDbusObj},
-                                                 {everestIM, everBMCObj},
-                                                 {bonnellIM, systemDbusObj}};
+static const types::PICFRUPathMap bootFailPIC = {
+    {rain2s2uIM, systemDbusObj},
+    {rain2s4uIM, systemDbusObj},
+    {rain1s4uIM, systemDbusObj},
+    {everestIM, everBMCObj},
+    {bonnellIM, systemDbusObj},
+    {blueridge2s2uIM, systemDbusObj},
+    {blueridge2s4uIM, systemDbusObj},
+    {blueridge1s4uIM, systemDbusObj},
+    {fujiIM, everBMCObj}};
 } // namespace constants
 } // namespace panel
