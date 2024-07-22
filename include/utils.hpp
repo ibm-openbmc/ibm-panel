@@ -26,7 +26,19 @@ static types::PanelDataMap lcdDataMap = {
       constants::everLcdDbusObj}},
     {constants::bonnellIM,
      {constants::bonnellLcdDevPath, constants::devAddr,
-      constants::bonnellLcdDbusObj}}};
+      constants::bonnellLcdDbusObj}},
+    {constants::blueridge2s2uIM,
+     {constants::blueridgeLcdDevPath, constants::devAddr,
+      constants::blueridgeLcdDbusObj}},
+    {constants::blueridge2s4uIM,
+     {constants::blueridgeLcdDevPath, constants::devAddr,
+      constants::blueridgeLcdDbusObj}},
+    {constants::blueridge1s4uIM,
+     {constants::blueridgeLcdDevPath, constants::devAddr,
+      constants::blueridgeLcdDbusObj}},
+    {constants::fujiIM,
+     {constants::fujiLcdDevPath, constants::devAddr,
+      constants::fujiLcdDbusObj}}};
 
 /** @brief Read inventory manager properties from dbus.
  * @param[in] service - Dbus service name
