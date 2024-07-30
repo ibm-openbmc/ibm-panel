@@ -34,6 +34,16 @@ systemd_system_unit_dir = systemd.get_variable('systemdsystemunitdir')
 
 service_file = 'service_files/com.ibm.panel.service'
 
+if(get_option('transport-implementation')) == 'mctp-demux'
+   add_project_arguments('-DPLDM_TRANSPORT_WITH_MCTP_DEMUX', language : 'cpp')
+else
+   add_project_arguments('-DPLDM_TRANSPORT_WITH_AF_MCTP', language: 'cpp')
+endif
+
+if cxx.has_header('poll.h')
+  add_project_arguments('-DPLDM_HAS_POLL=1', language: 'cpp')
+endif
+
 if get_option('system-vpd-dependency').enabled()
  service_file = 'service_files/ibm.panel.system.vpd.dependent.service'
 endif
