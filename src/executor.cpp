@@ -153,6 +153,10 @@ void Executor::executeFunction(const types::FunctionNumber funcNumber,
                 execute74();
                 break;
 
+            case 75:
+                execute75();
+                break;
+
             default:
                 break;
         }
@@ -1039,4 +1043,13 @@ void Executor::execute74()
     displayExecutionStatus(74, std::vector<types::FunctionNumber>(), true);
 }
 
+void Executor::execute75()
+{
+    utils::writeBusProperty<std::string>(
+        "xyz.openbmc_project.State.BMC", "/xyz/openbmc_project/state/bmc0",
+        "xyz.openbmc_project.State.BMC", "RequestedBMCTransition",
+        "xyz.openbmc_project.State.BMC.Transition.Reboot");
+
+    utils::sendCurrDisplayToPanel("REBOOTING BMC", " ", transport);
+}
 } // namespace panel
