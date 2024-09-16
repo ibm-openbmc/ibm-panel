@@ -672,28 +672,40 @@ void SystemStatus::biosAttributesCallback(sdbusplus::message_t& msg)
     std::string object;
     types::BiosBaseTableType propMap;
     msg.read(object, propMap);
+
     for (auto property : propMap)
     {
         if (property.first == "BaseBIOSTable")
         {
-            auto biosBaseTable = std::get<0>(property.second);
-            for (const auto& biosItem : biosBaseTable)
+            if (auto biosBaseTable =
+                    std::get_if<std::map<std::string, types::BiosProperty>>(
+                        &(property.second)))
             {
-                auto attributeName = std::get<0>(biosItem);
-                if (attributeName == "pvm_system_operating_mode")
+                for (const auto& biosItem : *biosBaseTable)
                 {
-                    auto attrValue = std::get<5>(std::get<1>(biosItem));
-                    if (auto val = std::get_if<std::string>(&attrValue))
+                    auto attributeName = std::get<0>(biosItem);
+                    if (attributeName == "pvm_system_operating_mode")
                     {
-                        stateManager->setSystemOperatingMode(*val);
-                    }
-                    else
-                    {
-                        std::cerr << "Error reading bios attribute for system "
-                                     "operating mode"
-                                  << std::endl;
+                        auto attrValue = std::get<5>(std::get<1>(biosItem));
+                        if (auto val = std::get_if<std::string>(&attrValue))
+                        {
+                            stateManager->setSystemOperatingMode(*val);
+                        }
+                        else
+                        {
+                            std::cerr
+                                << "Error reading bios attribute for system "
+                                   "operating mode"
+                                << std::endl;
+                        }
                     }
                 }
+            }
+            else
+            {
+                std::cerr
+                    << "Invalid type received for BIOS base table property"
+                    << std::endl;
             }
         }
     }

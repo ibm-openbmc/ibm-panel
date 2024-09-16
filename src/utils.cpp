@@ -112,10 +112,11 @@ void sendCurrDisplayToPanel(const std::string& line1, const std::string& line2,
 
 types::SystemParameterValues readSystemParameters()
 {
-    auto retVal = readBusProperty<std::variant<types::BiosBaseTable>>(
-        "xyz.openbmc_project.BIOSConfigManager",
-        "/xyz/openbmc_project/bios_config/manager",
-        "xyz.openbmc_project.BIOSConfig.Manager", "BaseBIOSTable");
+    auto retVal =
+        readBusProperty<std::variant<std::monostate, types::BiosBaseTable>>(
+            "xyz.openbmc_project.BIOSConfigManager",
+            "/xyz/openbmc_project/bios_config/manager",
+            "xyz.openbmc_project.BIOSConfig.Manager", "BaseBIOSTable");
 
     const auto baseBiosTable = std::get_if<types::BiosBaseTable>(&retVal);
 
@@ -161,7 +162,8 @@ types::SystemParameterValues readSystemParameters()
     }
     else
     {
-        std::cerr << "Failed to read BIOS base table" << std::endl;
+        std::cerr << "Failed to read BIOS base table. Invalid type received."
+                  << std::endl;
     }
 
     return std::make_tuple(OSBootType, systemOperatingMode, HMCManaged,
