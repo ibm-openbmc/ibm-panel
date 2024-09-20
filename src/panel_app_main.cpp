@@ -49,12 +49,12 @@ std::string getInputDevicePath(const std::string& imValue)
         imValue == panel::constants::blueridge2s4uIM ||
         imValue == panel::constants::blueridge1s4uIM)
     {
-        return "/dev/input/by-path/platform-1e78a400.i2c-bus-event-joystick";
+        return "/dev/input/by-path/platform-1e78a400.i2c-event-joystick";
     }
     else if (imValue == panel::constants::everestIM ||
              imValue == panel::constants::fujiIM)
     {
-        return "/dev/input/by-path/platform-1e78a780.i2c-bus-event-joystick";
+        return "/dev/input/by-path/platform-1e78a780.i2c-event-joystick";
     }
 
     // default to tacoma
