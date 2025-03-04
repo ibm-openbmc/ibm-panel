@@ -290,27 +290,17 @@ void Executor::execute20()
 
 void Executor::execute11()
 {
-    if (!latestSrcAndHexwords.empty())
+    if (latestSrcAndHexwords.size() >= wordLength)
     {
-        // find the first space to get response code
-        auto pos = latestSrcAndHexwords.find_first_of(" ");
-
-        // length of src data need to be 8
-        if (pos != std::string::npos && pos == 8)
-        {
-            utils::sendCurrDisplayToPanel((latestSrcAndHexwords).substr(0, pos),
-                                          std::string{}, transport);
-        }
-        else
-        {
-            std::cerr << "Invalid srcData received = " << latestSrcAndHexwords
-                      << std::endl;
-        }
-        return;
+        utils::sendCurrDisplayToPanel(
+            (latestSrcAndHexwords).substr(primarySrcOffset, wordLength),
+            std::string{}, transport);
     }
-
-    // TODO: Decide what needs to be done in this case.
-    std::cerr << "Error getting SRC data" << std::endl;
+    else
+    {
+        std::cerr << "Invalid SRC data received = " << latestSrcAndHexwords
+                  << std::endl;
+    }
 }
 
 static std::string getEthLocPort(const std::string& macAddr)
@@ -561,51 +551,42 @@ void Executor::execute01()
 
 void Executor::execute12()
 {
-    // Need to show blank spaces in case no srcData as function is enabled.
-    constexpr auto blankHexWord = "        ";
-    std::vector<std::string> output(4, blankHexWord);
+    displayHexWords(constants::FUNCTION_12);
+}
+
+void Executor::displayHexWords(const uint8_t function)
+{
+    // Need to show zeroes in case no srcData as function is enabled.
+    std::vector<std::string> output(constants::WORDS_PER_DISPLAY,
+                                    constants::defaultHexWordValue);
 
     if (!latestSrcAndHexwords.empty())
     {
-        std::vector<std::string> src;
-        boost::split(src, latestSrcAndHexwords, boost::is_any_of(" "));
-
-        const auto size = std::min(src.size(), (size_t)5);
-        // ignoring the first hexword as that will be SRC.
-        for (size_t i = 1; i < size; ++i)
+        if (function == constants::FUNCTION_12)
         {
-            output[i - 1] = src[i];
+            output = std::vector<std::string>(
+                {latestSrcAndHexwords.substr(offsetOfHexWord2, wordLength),
+                 latestSrcAndHexwords.substr(offsetOfHexWord3, wordLength),
+                 latestSrcAndHexwords.substr(offsetOfHexWord4, wordLength),
+                 latestSrcAndHexwords.substr(offsetOfHexWord5, wordLength)});
+        }
+        else if (function == constants::FUNCTION_13)
+        {
+            output = std::vector<std::string>(
+                {latestSrcAndHexwords.substr(offsetOfHexWord6, wordLength),
+                 latestSrcAndHexwords.substr(offsetOfHexWord7, wordLength),
+                 latestSrcAndHexwords.substr(offsetOfHexWord8, wordLength),
+                 latestSrcAndHexwords.substr(offsetOfHexWord9, wordLength)});
         }
     }
 
-    // send blank display if string is empty
     utils::sendCurrDisplayToPanel((output.at(0) + output.at(1)),
                                   (output.at(2) + output.at(3)), transport);
 }
 
 void Executor::execute13()
 {
-    // Need to show blank spaces in case of no hex word as function is
-    // enabled.
-    constexpr auto blankHexWord = "        ";
-    std::vector<std::string> output(4, blankHexWord);
-
-    if (!latestSrcAndHexwords.empty())
-    {
-        std::vector<std::string> src;
-        boost::split(src, latestSrcAndHexwords, boost::is_any_of(" "));
-
-        const auto size = std::min(src.size(), (size_t)9);
-        // ignoring the first five hexword
-        for (size_t i = 5; i < size; ++i)
-        {
-            output[i - 5] = src[i];
-        }
-    }
-
-    // send blank display if string is empty
-    utils::sendCurrDisplayToPanel((output.at(0) + output.at(1)),
-                                  (output.at(2) + output.at(3)), transport);
+    displayHexWords(constants::FUNCTION_13);
 }
 
 void Executor::execute14to19(const types::FunctionNumber funcNumber)

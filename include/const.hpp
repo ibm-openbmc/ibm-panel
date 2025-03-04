@@ -89,5 +89,22 @@ static const types::PICFRUPathMap bootFailPIC = {{rain2s2uIM, systemDbusObj},
                                                  {rain1s4uIM, systemDbusObj},
                                                  {everestIM, everBMCObj},
                                                  {bonnellIM, systemDbusObj}};
+
+static const uint8_t FUNCTION_12 = 12;
+static const uint8_t FUNCTION_13 = 13;
+
+/** PEL SRC data structure has the following sub sections:
+ * 1. 8 byte header.
+ * 2. HEX words each of length 4 bytes.
+ * 3. 32 bytes ascii character string.
+ *
+ * Refer PEL SRC data structure for more details.
+ */
+static const uint8_t FIRST_HEX_WORD_START_OFFSET = 8;
+static const uint8_t LAST_HEX_WORD_START_OFFSET = 36;
+static const uint8_t LEN_OF_RAW_HEX_WORD = 4;
+static const uint8_t WORDS_PER_DISPLAY = 4;
+
+static const std::string defaultHexWordValue = "00000000";
 } // namespace constants
 } // namespace panel

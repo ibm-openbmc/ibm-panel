@@ -461,60 +461,53 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
                 return;
             }
 
-            // To detect if there is a need to save SRCs and hexwords in func 11
-            // to 13, check for array data filled with space.
-            if (hexWordArray.at(0) != 0x20)
+            // store the primary SRC.
+            std::string hexWordsWithSRC =
+                std::string(byteArray.begin(), byteArray.end());
+
+            /* Skip first 8 byte header to get the hex word start offset */
+            for (auto hexWordStartOffset =
+                     constants::FIRST_HEX_WORD_START_OFFSET;
+                 hexWordStartOffset <= constants::LAST_HEX_WORD_START_OFFSET;)
             {
-                // store the SRC.
-                std::string hexWordsWithSRC =
-                    std::string(byteArray.begin(), byteArray.end());
-
-                // 4th byte will return number of valid hex words.
-                types::Byte validHexWords = hexWordArray.at(3);
-
-                // Ignoring the first 8 bytes from the array as those are some
-                // header related data not HEX words. Hex words are represented
-                // as 4 bytes so read 4*validHexWords bytes to read all the
-                // hexwords.
                 std::ostringstream convert;
-                for (size_t arrayLoop = 8; arrayLoop <= (4 * validHexWords);)
+
+                // Add a space in between each extended hex SRC word
+                hexWordsWithSRC += " ";
+
+                // Read 4 bytes and convert each byte to hex byte of width 2
+                for (size_t hexWordLoop = 0;
+                     hexWordLoop < constants::LEN_OF_RAW_HEX_WORD;
+                     ++hexWordLoop)
                 {
-                    // clear any previous data.
-                    convert.str("");
-
-                    hexWordsWithSRC += " ";
-
-                    // From this offet read 4 bytes, convert them to HEX and
-                    // then append to final string of hexwords and SRC.
-                    for (size_t hexWordLoop = 0; hexWordLoop < 4; ++hexWordLoop)
-                    {
-                        convert
-                            << std::setfill('0') << std::setw(2) << std::hex
-                            << static_cast<int>(hexWordArray.at(arrayLoop++));
-
-                        hexWordsWithSRC += convert.str();
-                        // clear the buffer
-                        convert.str("");
-                    }
+                    convert << std::setfill('0') << std::setw(2) << std::hex
+                            << static_cast<int>(
+                                   hexWordArray.at(hexWordStartOffset++));
                 }
-                executor->storeSRCAndHexwords(hexWordsWithSRC);
-
-                // Enable functions when progress code is received
-                types::FunctionalityList list;
-                list.reserve(3);
-
-                // these functions needs to be enabled once when progress code
-                // is received
-                list.emplace_back(11);
-                list.emplace_back(12);
-                list.emplace_back(13);
-
-                stateManager->enableFunctonality(list);
+                // Append the 8 byte extended hex SRC word to the string
+                hexWordsWithSRC += convert.str();
             }
+
+            executor->storeSRCAndHexwords(hexWordsWithSRC);
+
+            // Enable functions when progress code is received
+            types::FunctionalityList list;
+            list.reserve(3);
+
+            // these functions needs to be enabled once when progress code
+            // is received
+            list.emplace_back(11);
+            list.emplace_back(12);
+            list.emplace_back(13);
+
+            stateManager->enableFunctonality(list);
         }
         else
         {
-            std::cerr << "Progress code Data error" << std::endl;
+            std::cerr
+                << "Unable to get progress code from "
+                   "xyz.openbmc_project.State.Boot.Raw.Value D-bus property."
+                << std::endl;
         }
     }
 }
