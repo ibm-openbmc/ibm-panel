@@ -314,6 +314,15 @@ class Executor
      */
     void sendFuncNumToPhyp(const types::FunctionNumber& funcNumber);
 
+    /**
+     * @brief API to display SRC functions 12 and 13
+     * This is a common API which can be used to display extended hex SRC words
+     * in function 12 and function 13 on request.
+     *
+     * @param[in] function - Function number (12/13).
+     */
+    void displayHexWords(const uint8_t function);
+
     /*Transport class object*/
     std::shared_ptr<Transport> transport;
 
@@ -338,8 +347,27 @@ class Executor
     /* OS IPL mode state */
     bool osIplMode = false;
 
-    /* SRC and HEX words */
+    /**
+     * Primary SRC and 8 extended hex SRC words are saved in the string
+     * latestSrcAndHexwords. Primary SRC and each extended hex SRC words is of
+     * length 8 bytes. A space is provided as a delimiter between every 8 bytes.
+     */
     std::string latestSrcAndHexwords;
+
+    /** Offsets to find the SRC words stored in the string
+     * latestSrcAndHexwords.*/
+    const uint8_t primarySrcOffset = 0;
+    const uint8_t offsetOfHexWord2 = 9;
+    const uint8_t offsetOfHexWord3 = 18;
+    const uint8_t offsetOfHexWord4 = 27;
+    const uint8_t offsetOfHexWord5 = 36;
+    const uint8_t offsetOfHexWord6 = 45;
+    const uint8_t offsetOfHexWord7 = 54;
+    const uint8_t offsetOfHexWord8 = 63;
+    const uint8_t offsetOfHexWord9 = 72;
+
+    /** Word length */
+    const uint8_t wordLength = 8;
 
     /* To keep track if the execute request is from external or not */
     bool isExternallyTriggered = false;
