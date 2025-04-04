@@ -928,16 +928,18 @@ void Executor::execute08()
     utils::sendCurrDisplayToPanel("SHUTDOWN SERVER", "INITIATED", transport);
 }
 
-static void createDump(const sdbusplus::message::object_path& object)
+static void
+    createDump(const sdbusplus::message::object_path& object,
+               const std::vector<
+                   std::pair<std::string, std::variant<std::string, uint64_t>>>&
+                   param = {})
 {
     sdbusplus::message::object_path retVal{};
     auto bus = sdbusplus::bus::new_default();
     auto properties = bus.new_method_call(
         "xyz.openbmc_project.Dump.Manager", std::string(object).c_str(),
         "xyz.openbmc_project.Dump.Create", "CreateDump");
-    properties.append(
-        std::vector<
-            std::pair<std::string, std::variant<std::string, uint64_t>>>());
+    properties.append(param);
     auto result = bus.call(properties);
     result.read(retVal);
     std::cout << "Dump initiated. " << std::string(retVal) << std::endl;
@@ -952,8 +954,13 @@ void Executor::execute43()
 
 void Executor::execute42()
 {
+    const std::vector<
+        std::pair<std::string, std::variant<std::string, uint64_t>>>& param{
+        std::make_pair("com.ibm.Dump.Create.CreateParameters.DumpType",
+                       "com.ibm.Dump.Create.DumpType.System")};
     createDump(
-        sdbusplus::message::object_path("/xyz/openbmc_project/dump/system"));
+        sdbusplus::message::object_path("/xyz/openbmc_project/dump/system"),
+        param);
     displayExecutionStatus(42, std::vector<types::FunctionNumber>(), true);
 }
 
