@@ -22,9 +22,9 @@ panel::types::PanelDataMap baseDataMap = {
     {panel::constants::everestIM,
      {panel::constants::baseDevPath, panel::constants::devAddr,
       panel::constants::everBaseDbusObj}},
-    {panel::constants::bonnellIM,
-     {panel::constants::bonnellBaseDevPath, panel::constants::devAddr,
-      panel::constants::bonnellBaseDbusObj}},
+    {panel::constants::balconesIM,
+     {panel::constants::balconesBaseDevPath, panel::constants::devAddr,
+      panel::constants::balconesBaseDbusObj}},
     {panel::constants::blueridge2s2uIM,
      {panel::constants::baseDevPath, panel::constants::devAddr,
       panel::constants::blueridgeBaseDbusObj}},
@@ -44,7 +44,7 @@ std::string getInputDevicePath(const std::string& imValue)
     if (imValue == panel::constants::rain2s2uIM ||
         imValue == panel::constants::rain2s4uIM ||
         imValue == panel::constants::rain1s4uIM ||
-        imValue == panel::constants::bonnellIM ||
+        imValue == panel::constants::balconesIM ||
         imValue == panel::constants::blueridge2s2uIM ||
         imValue == panel::constants::blueridge2s4uIM ||
         imValue == panel::constants::blueridge1s4uIM)
