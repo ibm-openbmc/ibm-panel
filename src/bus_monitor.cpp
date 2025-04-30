@@ -407,7 +407,8 @@ void BootProgressCode::listenProgressCode()
 
 void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
 {
-    using PostCode = std::tuple<uint64_t, std::vector<types::Byte>>;
+    using PostCode =
+        std::tuple<std::vector<types::Byte>, std::vector<types::Byte>>;
 
     std::string interface;
     std::map<std::string, std::variant<PostCode>> propertyMap;
@@ -426,6 +427,7 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
             // "00000000"
             if (src == constants::clearDisplayProgressCode)
             {
+                std::cout << "Got clear dispaly progress code" << std::endl;
                 utils::sendCurrDisplayToPanel(std::string{}, std::string{},
                                               transport);
                 // default the display by executing function 01.
@@ -433,21 +435,10 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
                 return;
             }
 
-            std::vector<types::Byte> byteArray;
-            byteArray.reserve(sizeof(src));
+            utils::sendCurrDisplayToPanel(std::string(src.begin(), src.end()),
+                                          std::string{}, transport);
 
-            for (size_t i = 0; i < sizeof(src); i++)
-            {
-                byteArray.emplace_back(types::Byte(src >> (sizeof(src) * i)) &
-                                       0xFF);
-            }
-
-            utils::sendCurrDisplayToPanel(
-                std::string(byteArray.begin(), byteArray.end()), std::string{},
-                transport);
-
-            executor->storeIPLSRC(
-                std::string(byteArray.begin(), byteArray.end()));
+            executor->storeIPLSRC(std::string(src.begin(), src.end()));
 
             // Read the hexwords sent down by Phyp. If the hexwords are present
             // we need to store the SRC to show in function 11 and Hexwords to
@@ -462,8 +453,7 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
             }
 
             // store the primary SRC.
-            std::string hexWordsWithSRC =
-                std::string(byteArray.begin(), byteArray.end());
+            std::string hexWordsWithSRC = std::string(src.begin(), src.end());
 
             /* Skip first 8 byte header to get the hex word start offset */
             for (auto hexWordStartOffset =
