@@ -4,14 +4,14 @@ project(
     default_options: [
         'warning_level=3',
         'werror=true',
-        'cpp_std=c++20',
+        'cpp_std=c++23',
         # note: This is allowed in certain contexts, but provides binary size
         # improvements for applications that don't require rtti
         'cpp_rtti=false',
     ],
     license: 'Apache-2.0',
     version: '0.1',
-    meson_version: '>= 1.0.1',
+    meson_version: '>= 1.1.1',
 )
 
 systemd = dependency('systemd')
