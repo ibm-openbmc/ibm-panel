@@ -989,7 +989,8 @@ void PanelStateManager::updatePowerState(const std::string& powerState)
         // As this property is not updated while power off currently, we need to
         // update progress code at poweroff to ASCII 0 so that HMC can clear
         // standby state.
-        utils::writeBusProperty<std::tuple<uint64_t, std::vector<uint8_t>>>(
+        utils::writeBusProperty<
+            std::tuple<std::vector<uint8_t>, std::vector<uint8_t>>>(
             "xyz.openbmc_project.State.Boot.Raw",
             "/xyz/openbmc_project/state/boot/raw0",
             "xyz.openbmc_project.State.Boot.Raw", "Value",

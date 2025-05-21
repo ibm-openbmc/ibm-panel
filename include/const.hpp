@@ -72,7 +72,8 @@ static constexpr auto fiveHexWordsWithSpaces = 44;
 static constexpr auto terminatingBits = 0xA; // Checkstop and Term due to FW
 
 // Progress code src equivalent to  ascii "00000000"
-static constexpr auto clearDisplayProgressCode = 0x3030303030303030;
+static const types::Binary clearDisplayProgressCode = {0x30, 0x30, 0x30, 0x30,
+                                                       0x30, 0x30, 0x30, 0x30};
 static constexpr auto loggerObjectPath = "/xyz/openbmc_project/logging";
 static constexpr auto loggerCreateInterface =
     "xyz.openbmc_project.Logging.Create";
