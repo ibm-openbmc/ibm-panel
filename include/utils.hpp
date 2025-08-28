@@ -40,6 +40,16 @@ static types::PanelDataMap lcdDataMap = {
      {constants::fujiLcdDevPath, constants::devAddr,
       constants::fujiLcdDbusObj}}};
 
+static const types::GpioInfoMap gpioInfo = {
+    {"gpioPresence", {"RUSSEL_OPPANEL_PRESENCE_N", 0}},
+    {"setGpio", {"RUSSEL_FW_I2C_ENABLE_N", 0}}};
+
+static const std::vector<std::string> systemsNeedsI2cEnableForLcd = {
+    constants::rain2s2uIM,      constants::rain2s4uIM,
+    constants::rain1s4uIM,      constants::balconesIM,
+    constants::blueridge2s2uIM, constants::blueridge2s4uIM,
+    constants::blueridge1s4uIM};
+
 /** @brief Read inventory manager properties from dbus.
  * @param[in] service - Dbus service name
  * @param[in] obj - Dbus object to query for the property.
@@ -260,6 +270,69 @@ void sortPels(types::GetManagedObjects& listOfPels);
  */
 void filterPel(const types::GetManagedObjects& listOfPels,
                types::PelPathAndSRCList& finalListOFPELs);
+
+/**
+ * @brief API to check if device is present.
+ *
+ * This API checks whether the device is present or not by reading device's gpio
+ * presence pin value.
+ *
+ * @param[in] gpioPinName - GPIO pin name.
+ * @param[in] expectedPinState - GPIO pin value to check.
+ * @param[in,out] errorReadingPin -  Flag to set in case of any error occured
+ * while reading the gpio pin.
+ *
+ * @return - Returns true if device is present, false otherwise.
+ */
+bool isDevicePresent(const std::string& gpioPinName,
+                     const uint8_t& expectedPinState,
+                     bool& errorReadingPin) noexcept;
+
+/**
+ * @brief API to set GPIO pin with given value.
+ *
+ * @param gpioPinName[in] - GPIO pin name.
+ * @param pinValue[in] - GPIO pin value.
+ *
+ * @return - Returns true if able to set gpio pin, false otherwise.
+ */
+bool setGpioPin(const std::string& gpioPinName,
+                const uint8_t& pinValue) noexcept;
+
+/**
+ * @brief API to enable gpio access for the given device.
+ *
+ * This API reads the device's gpio presence pin, if found enabled or in case of
+ * any error, will try to set the gpio output pin.
+ *
+ * In case of read or set gpio pin fails, will try to directly read the
+ * microcontroller firmware version, if succeds then it is considered as i2c
+ * access is enabled for the given device.
+ *
+ * @param gpioInfo[in] - Map containing gpio presence and output pin
+ * information.
+ * @param devPath[in] - Device i2c path.
+ * @param devAddress[in] - Device address.
+ *
+ * @return - true if able to access the device, false otherwise.
+ */
+bool enableDeviceI2cAccess(const panel::types::GpioInfoMap& gpioInfo,
+                           const std::string& devPath,
+                           const uint8_t& devAddress) noexcept;
+
+/**
+ * @brief API to check if device is accessible.
+ *
+ * This API checks whether the device is accessible or not by reading the
+ * microcontroller firmware version.
+ *
+ * @param[in] devPath - Device path.
+ * @param[in] devAddress - Device address.
+ *
+ * @return - true if device is accessible, false otherwise.
+ */
+bool isDeviceAccessible(const std::string& devPath,
+                        const uint8_t& devAddress) noexcept;
 
 } // namespace utils
 } // namespace panel
