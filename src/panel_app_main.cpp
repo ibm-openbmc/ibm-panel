@@ -4,6 +4,9 @@
 #include "const.hpp"
 #include "utils.hpp"
 
+#include <unistd.h>
+
+#include <algorithm>
 #include <exception>
 #include <iostream>
 #include <sdbusplus/asio/connection.hpp>
@@ -170,8 +173,22 @@ int main(int, char**)
              * change from false to true; but the transport key is still
              * true(unchanged). To maintain data accuracy get the "Present"
              * property from dbus and set the transport key again.*/
-            lcdPanel->setTransportKey(
-                panel::utils::getLcdPanelPresentProperty(imValue));
+            if (std::find(panel::utils::systemsNeedsI2cEnableForLcd.begin(),
+                          panel::utils::systemsNeedsI2cEnableForLcd.end(),
+                          imValue) !=
+                panel::utils::systemsNeedsI2cEnableForLcd.end())
+            {
+                if (panel::utils::enableDeviceI2cAccess(panel::utils::gpioInfo,
+                                                        lcdDevPath, lcdDevAddr))
+                {
+                    lcdPanel->setTransportKey(true);
+                }
+            }
+            else
+            {
+                lcdPanel->setTransportKey(
+                    panel::utils::getLcdPanelPresentProperty(imValue));
+            }
         }
         else
         {
