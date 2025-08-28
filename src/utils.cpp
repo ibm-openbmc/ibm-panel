@@ -5,6 +5,13 @@
 #include "i2c_message_encoder.hpp"
 
 #include <libpldm/platform.h>
+#include <linux/i2c-dev.h>
+
+#include <chrono>
+#include <gpiod.hpp>
+#include <thread>
+
+using namespace std::chrono_literals;
 
 namespace panel
 {
@@ -440,6 +447,194 @@ types::PelPathAndSRCList geListOfPELsAndSRCs()
     }
 
     return finalListOfFPELs;
+}
+
+bool isDevicePresent(const std::string& gpioPinName,
+                     const uint8_t& expectedPinState,
+                     bool& errorReadingPin) noexcept
+{
+    if (gpioPinName.empty())
+    {
+        return false;
+    }
+
+    std::string errMsg{};
+    auto retries = constants::RETRY_COUNT;
+
+    while (retries--)
+    {
+        try
+        {
+            gpiod::line l_presenceLine = gpiod::find_line(gpioPinName);
+
+            if (!l_presenceLine)
+            {
+                throw std::runtime_error("Couldn't find the GPIO line.");
+            }
+
+            l_presenceLine.request({"Read the presence line",
+                                    gpiod::line_request::DIRECTION_INPUT, 0});
+
+            errorReadingPin = false;
+            return (l_presenceLine.get_value() == expectedPinState);
+        }
+        catch (const std::exception& ex)
+        {
+            errorReadingPin = true;
+            errMsg = ex.what();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    if (errorReadingPin)
+    {
+        std::cerr << "Error occured while checking gpio presence pin value "
+                     "for the pin ["
+                  << gpioPinName << "], expected pin state[" << expectedPinState
+                  << "], error: " << errMsg << std::endl;
+    }
+
+    return true;
+}
+
+bool setGpioPin(const std::string& gpioPinName,
+                const uint8_t& pinValue) noexcept
+{
+    if (gpioPinName.empty())
+    {
+        return false;
+    }
+
+    auto retries = constants::RETRY_COUNT;
+    std::string errMsg{};
+
+    while (retries--)
+    {
+        try
+        {
+            gpiod::line l_outputLine = gpiod::find_line(gpioPinName);
+            if (l_outputLine)
+            {
+                l_outputLine.request({"Panel App Action",
+                                      ::gpiod::line_request::DIRECTION_OUTPUT,
+                                      0},
+                                     pinValue);
+                return true;
+            }
+        }
+        catch (const std::exception& ex)
+        {
+            errMsg = ex.what();
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    if (!errMsg.empty())
+    {
+        std::cerr << "Error occured while enabling gpio line[" << gpioPinName
+                  << "], error: " << errMsg << std::endl;
+    }
+    return false;
+}
+
+bool isDeviceAccessible(const std::string& devPath,
+                        const uint8_t& devAddress) noexcept
+{
+    int panelFileDescriptor = -1;
+    bool isReadSuccessful = false;
+    try
+    {
+        if ((panelFileDescriptor = open(devPath.data(), O_RDWR | O_NONBLOCK)) ==
+            -1) // open failure
+        {
+            throw std::runtime_error("open system call failed, error code: " +
+                                     std::string(std::strerror(errno)));
+        }
+        if (ioctl(panelFileDescriptor, I2C_SLAVE, devAddress) ==
+            -1) // access failure
+        {
+            throw std::runtime_error("ioctl call failed, error code: " +
+                                     std::string(std::strerror(errno)));
+        }
+
+        panel::types::Binary versionBuffer;
+        constexpr const size_t versionSize = 6;
+        versionBuffer.resize(versionSize);
+
+        auto readSize =
+            ::read(panelFileDescriptor, versionBuffer.data(), versionSize);
+
+        if (versionSize == readSize)
+        {
+            isReadSuccessful = true;
+        }
+        else
+        {
+            std::cerr << "Failed to read device [" << devPath
+                      << "], number of bytes read: " << readSize
+                      << ", errno: " << errno << std::endl;
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr << "Failed device access, for the device [" << devPath
+                  << "], address: " << unsigned(devAddress)
+                  << ", error: " << ex.what() << std::endl;
+    }
+
+    if (panelFileDescriptor != -1)
+    {
+        if (close(panelFileDescriptor) == -1)
+        {
+            std::cerr << "close system call failed for the device [" << devPath
+                      << "], with error code: " << std::strerror(errno)
+                      << std::endl;
+        }
+    }
+    return isReadSuccessful;
+}
+
+bool enableDeviceI2cAccess(const panel::types::GpioInfoMap& gpioInfo,
+                           const std::string& devPath,
+                           const uint8_t& devAddress) noexcept
+{
+    try
+    {
+        if (gpioInfo.find("gpioPresence") != gpioInfo.end() &&
+            gpioInfo.find("setGpio") != gpioInfo.end())
+        {
+            bool errorReadingPin = false;
+
+            bool presenceValue = isDevicePresent(
+                std::get<0>(gpioInfo.at("gpioPresence")),
+                std::get<1>(gpioInfo.at("gpioPresence")), errorReadingPin);
+
+            if (presenceValue || errorReadingPin)
+            {
+                bool setGpioSuccess =
+                    setGpioPin(std::get<0>(gpioInfo.at("setGpio")),
+                               std::get<1>(gpioInfo.at("setGpio")));
+                if (setGpioSuccess && !errorReadingPin)
+                {
+                    return true;
+                }
+
+                // Read microcontroller firmware version
+                return isDeviceAccessible(devPath, devAddress);
+            }
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr
+            << "Error occured while enabling gpio line for the device path: "
+            << devPath << ", address: " << devAddress << ", error " << ex.what()
+            << std::endl;
+    }
+
+    // Failed to check panel presence
+    return false;
 }
 
 } // namespace utils
