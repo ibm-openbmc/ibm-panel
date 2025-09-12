@@ -17,6 +17,11 @@ project(
 systemd = dependency('systemd')
 sdbusplus = dependency('sdbusplus')
 phosphor_dbus_interfaces = dependency('phosphor-dbus-interfaces')
+libgpiodcxx = dependency(
+    'libgpiodcxx',
+    default_options: ['bindings=cxx'],
+    version: '<1.7.0',
+)
 
 cxx = meson.get_compiler('cpp')
 add_project_arguments(
@@ -88,7 +93,12 @@ executable(
 executable(
     'ibm-panel',
     'src/panel_app_main.cpp',
-    dependencies: [sdbusplus, dependency('libpldm'), phosphor_dbus_interfaces],
+    dependencies: [
+        sdbusplus,
+        dependency('libpldm'),
+        phosphor_dbus_interfaces,
+        libgpiodcxx,
+    ],
     include_directories: ['include', 'logger/include'],
     install: true,
     link_with: [panel_app_a, logger],
@@ -108,6 +118,7 @@ if get_option('tests').enabled()
             gtest,
             dependency('libpldm'),
             phosphor_dbus_interfaces,
+            libgpiodcxx,
         ],
         include_directories: ['include'],
         link_with: [panel_app_a],

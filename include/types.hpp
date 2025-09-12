@@ -27,6 +27,12 @@ using PdrList = std::vector<PldmPacket>;
 using PICFRUPathMap = std::unordered_map<std::string, std::string>;
 using PelPathAndSRCList = std::vector<std::pair<std::string, std::string>>;
 
+// map of {"gpio action": {"gpio pin name", pin value}}
+using GpioInfoMap =
+    std::unordered_map<std::string, std::tuple<std::string, uint8_t>>;
+// map of {"IM value": GpioInfoMap}
+using LcdPanelGpioDataMap = std::unordered_map<std::string, GpioInfoMap>;
+
 // map{property::value}
 using PropertyValueMap = std::map<
     std::string,

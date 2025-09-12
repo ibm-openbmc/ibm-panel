@@ -128,5 +128,7 @@ static const std::string defaultHexWordValue = "00000000";
 
 // Maximum valid instance IDs' which can be created by libpldm
 static constexpr auto PLDM_INST_ID_MAX = 32;
+
+static constexpr auto RETRY_COUNT = 3;
 } // namespace constants
 } // namespace panel
