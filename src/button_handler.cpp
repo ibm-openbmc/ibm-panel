@@ -55,7 +55,7 @@ ButtonHandler::ButtonHandler(
     }
     else
     {
-        assert("Empty device path");
+        throw std::runtime_error("Device path is empty");
     }
 }
 

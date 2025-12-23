@@ -21,6 +21,13 @@ namespace panel
 {
 void Transport::panelI2CSetup()
 {
+    if (devPath.empty() || (devAddress == 0))
+    {
+        std::cerr << "Device details are empty; failed to set up I2C for "
+                  << (panelType ? "LCD" : "Base") << " panel." << std::endl;
+        return;
+    }
+
     std::ostringstream byteStream;
     byteStream << "0x" << std::hex << std::uppercase
                << static_cast<int>(devAddress);
@@ -96,6 +103,14 @@ void Transport::panelI2CWrite(const types::Binary& buffer) const
                     failedErrno = errno;
                     sleep(1);
                     const std::string imValue = utils::getSystemIM();
+                    if (imValue.empty())
+                    {
+                        std::cerr << "I2C write failed, as failed to get IM "
+                                     "value from DBus."
+                                  << std::endl;
+                        return;
+                    }
+
                     if (false == utils::getLcdPanelPresentProperty(imValue))
                     {
                         return;
