@@ -313,6 +313,13 @@ std::string getSystemIM()
 
 bool getLcdPanelPresentProperty(const std::string& imValue)
 {
+    if (lcdDataMap.find(imValue) == lcdDataMap.end())
+    {
+        std::cerr << "Panel info is missing for the given IM value."
+                  << std::endl;
+        return false;
+    }
+
     auto present = readBusProperty<std::variant<bool>>(
         constants::inventoryManagerIntf,
         std::get<2>((lcdDataMap.find(imValue))->second),
