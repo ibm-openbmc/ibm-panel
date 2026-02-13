@@ -19,8 +19,7 @@ static constexpr auto balconesLcdDevPath = rainLcdDevPath;
 
 static constexpr auto devAddr = 0x5a;
 
-static constexpr auto systemDbusObj =
-    "/xyz/openbmc_project/inventory/system/chassis/motherboard";
+static constexpr auto systemDbusObj = "/xyz/openbmc_project/inventory/system";
 static constexpr auto rainBaseDbusObj =
     "/xyz/openbmc_project/inventory/system/chassis/motherboard/"
     "base_op_panel_blyth";
