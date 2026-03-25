@@ -131,5 +131,7 @@ static const std::string defaultHexWordValue = "00000000";
 static constexpr auto PLDM_INST_ID_MAX = 32;
 
 static constexpr auto RETRY_COUNT = 3;
+
+static constexpr auto SECONDARY_PROGRESS_CODE_SIZE = 72;
 } // namespace constants
 } // namespace panel
