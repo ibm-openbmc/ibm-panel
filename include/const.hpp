@@ -106,5 +106,7 @@ static const uint8_t LEN_OF_RAW_HEX_WORD = 4;
 static const uint8_t WORDS_PER_DISPLAY = 4;
 
 static const std::string defaultHexWordValue = "00000000";
+
+static constexpr auto SECONDARY_PROGRESS_CODE_SIZE = 72;
 } // namespace constants
 } // namespace panel
