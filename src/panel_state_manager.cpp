@@ -994,7 +994,8 @@ void PanelStateManager::updatePowerState(const std::string& powerState)
             "/xyz/openbmc_project/state/boot/raw0",
             "xyz.openbmc_project.State.Boot.Raw", "Value",
             std::make_tuple(constants::clearDisplayProgressCode,
-                            std::vector<uint8_t>{0}));
+                            std::vector<uint8_t>(
+                                constants::SECONDARY_PROGRESS_CODE_SIZE, 0)));
 
         //  default function displayed when we power down.
         funcExecutor->executeFunction(1, types::FunctionalityList{});
