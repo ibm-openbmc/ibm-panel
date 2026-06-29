@@ -428,6 +428,15 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
             if (src == constants::clearDisplayProgressCode)
             {
                 std::cout << "Got clear dispaly progress code" << std::endl;
+
+                // Disable function 11 to 19
+                stateManager->disableFunctonality(
+                    {11, 12, 13, 14, 15, 16, 17, 18, 19});
+
+                // as functions are disabled, set the function state flag to
+                // false
+                pelListener->DisableFunctionState();
+
                 utils::sendCurrDisplayToPanel(std::string{}, std::string{},
                                               transport);
                 // default the display by executing function 01.
@@ -479,6 +488,9 @@ void BootProgressCode::progressCodeCallBack(sdbusplus::message_t& msg)
             }
 
             executor->storeSRCAndHexwords(hexWordsWithSRC);
+
+            // Disable functions from 14-19 showing callouts from previous PEL
+            stateManager->disableFunctonality({14, 15, 16, 17, 18, 19});
 
             // Enable functions when progress code is received
             types::FunctionalityList list;
