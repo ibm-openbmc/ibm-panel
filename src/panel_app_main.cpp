@@ -214,12 +214,13 @@ int main(int, char**)
                       << std::endl;
         }
 
-        panel::PELListener pelEvent(conn, stateManager, executor, lcdPanel);
-        pelEvent.listenPelEvents();
+        auto pelEvent = std::make_shared<panel::PELListener>(
+            conn, stateManager, executor, lcdPanel);
+        pelEvent->listenPelEvents();
 
         // register property change call back for progress code.
         panel::BootProgressCode progressCode(lcdPanel, conn, executor,
-                                             stateManager);
+                                             stateManager, pelEvent);
         progressCode.listenProgressCode();
 
         panel::BusHandler busHandle(lcdPanel, iface, stateManager, executor);
