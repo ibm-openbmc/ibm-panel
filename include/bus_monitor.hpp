@@ -100,6 +100,24 @@ class PELListener
      */
     void listenPelEvents();
 
+    /**
+     * @brief Disables the function state flag for SRC-related functions.
+     *
+     * Sets the internal functionStateEnabled flag to false, preventing
+     * SRC functions (11–19) from being treated as active. This should
+     * be called when the panel display is cleared (e.g., on receiving
+     * clear progress code) to ensure SRC functions are not
+     * accessible until a new PEL is logged.
+     *
+     * @note This flag is also evaluated by the PEL event listener to
+     *       determine whether SRC functions should be re-enabled on the
+     *       next PEL event.
+     */
+    void DisableFunctionState()
+    {
+        functionStateEnabled = false;
+    }
+
   private:
     /* Callback to listen for PEL event log */
     void PELEventCallBack(sdbusplus::message_t& msg);
@@ -163,13 +181,13 @@ class BootProgressCode
      * @param[in] con - Bus connection.
      * @param[in] execute - pointer to Executor.
      */
-    BootProgressCode(
-        std::shared_ptr<Transport> transport,
-        std::shared_ptr<sdbusplus::asio::connection> con,
-        std::shared_ptr<Executor> execute,
-        std::shared_ptr<state::manager::PanelStateManager> manager) :
+    BootProgressCode(std::shared_ptr<Transport> transport,
+                     std::shared_ptr<sdbusplus::asio::connection> con,
+                     std::shared_ptr<Executor> execute,
+                     std::shared_ptr<state::manager::PanelStateManager> manager,
+                     std::shared_ptr<PELListener> pelListener) :
         transport(transport), conn(con), executor(execute),
-        stateManager(manager)
+        stateManager(manager), pelListener(pelListener)
     {
     }
 
@@ -197,6 +215,8 @@ class BootProgressCode
 
     /* State manager */
     std::shared_ptr<state::manager::PanelStateManager> stateManager;
+
+    std::shared_ptr<PELListener> pelListener;
 }; // class BootProgressCode
 
 /**
