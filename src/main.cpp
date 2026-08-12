@@ -1,10 +1,12 @@
 #include "const.hpp"
+#include "utils.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <memory>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
+#include <string>
 
 int main()
 {
@@ -23,6 +25,13 @@ int main()
         std::shared_ptr<sdbusplus::asio::dbus_interface> iface =
             server.add_interface(panel::constants::panelObjectPath,
                                  panel::constants::panelInterface);
+
+        // Determine BMC Redundancy Role
+        const std::string bmcRole = panel::utils::getBmcRedundancyRole();
+        lg2::info(
+            "Based on the BMC Role: {ROLE}, Panel is starting in {MODE} mode",
+            "ROLE", bmcRole, "MODE",
+            panel::utils::getModeBasedOnBmcRole(bmcRole));
 
         iface->initialize();
 
