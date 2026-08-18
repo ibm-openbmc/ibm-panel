@@ -50,10 +50,13 @@ configure_file(
     install: true,
 )
 
+common_SOURCES = ['src/transport.cpp', 'src/panel_state_manager.cpp']
+
+panel_SOURCE = ['src/main.cpp'] + common_SOURCES
+
 executable(
     'ibm-panel',
-    'src/main.cpp',
-    'src/transport.cpp',
+    panel_SOURCE,
     dependencies: [sdbusplus, phosphor_dbus_interfaces, phosphor_logging],
     include_directories: ['include'],
     install: true,
