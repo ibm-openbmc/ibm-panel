@@ -1,6 +1,15 @@
 #include "transport.hpp"
 
 #include "const.hpp"
+#include "utils.hpp"
+
+#include <fcntl.h>
+#include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
+
+#include <cstring>
+#include <format>
+#include <phosphor-logging/lg2.hpp>
 
 namespace panel
 {
@@ -15,40 +24,132 @@ Transport::Transport(const std::string& devPath, const uint8_t& devAddr,
                      const std::string& objectPath) :
     devPath(devPath), devAddress(devAddr), fruPath(objectPath)
 {
-    // TODO: Invoke panelI2CSetup() to open the I2C device file and
-    // bind to the slave address.
+    panelI2CSetup();
 }
 
 Transport::~Transport() noexcept
 {
-    // TODO: Close panelFileDescriptor if it holds a valid fd.
+    if (panelFileDescriptor != -1)
+    {
+        close(panelFileDescriptor);
+    }
 }
 
 void Transport::panelI2CSetup()
 {
-    // TODO: Establish the I2C connection to the panel.
-    //  1. Validate devPath and devAddress are non-empty / non-zero.
-    //  2. open() the device node at devPath.
-    //     On failure log a PEL and throw .
-    //  3. ioctl(fd, I2C_SLAVE, devAddress) to bind to the slave address.
-    //     On failure log a PEL and throw.
-    //  4. Store the formatted hex address in i2cAddress for use in PELs.
+    // Convert to hex address formatting
+    i2cAddress = std::format("0x{:02X}", devAddress);
+
+    if ((panelFileDescriptor = open(devPath.data(), O_RDWR | O_NONBLOCK)) == -1)
+    {
+        auto err = errno;
+        std::string error =
+            std::format("Failed to open device file. Errno : {}. "
+                        "Errno description : {} for device path {}",
+                        err, strerror(err), devPath);
+
+        types::PelAdditionalData additionData{
+            {"DESCRIPTION", error},
+            {"CALLOUT_IIC_BUS", devPath},
+            {"CALLOUT_IIC_ADDR", i2cAddress},
+            {"CALLOUT_ERRNO", std::to_string(err)}};
+
+        panel::utils::createPEL(
+            "com.ibm.Panel.Error.I2CSetupFailure",
+            "xyz.openbmc_project.Logging.Entry.Level.Warning", additionData);
+
+        throw std::runtime_error(error);
+    }
+
+    if (ioctl(panelFileDescriptor, I2C_SLAVE, devAddress) == -1)
+    {
+        auto err = errno;
+        std::string error =
+            std::format("Failed to access device path. <{}> at device address"
+                        " <{}>. Errno : {}. Errno description : {}",
+                        devPath, i2cAddress, err, strerror(err));
+
+        types::PelAdditionalData additionData{
+            {"DESCRIPTION", error},
+            {"CALLOUT_IIC_BUS", devPath},
+            {"CALLOUT_IIC_ADDR", i2cAddress},
+            {"CALLOUT_ERRNO", std::to_string(err)}};
+
+        panel::utils::createPEL(
+            "com.ibm.Panel.Error.I2CSetupFailure",
+            "xyz.openbmc_project.Logging.Entry.Level.Warning", additionData);
+
+        throw std::runtime_error(error);
+    }
+
+    lg2::info("Success opening and accessing the device path: {PATH}", "PATH",
+              devPath);
 }
 
-void Transport::panelI2CWrite(
-    [[maybe_unused]] const types::Binary& buffer) const noexcept
+void Transport::panelI2CWrite(const types::Binary& buffer) const noexcept
 {
-    // TODO: Write buffer bytes to the panel over I2C.
-    //  - Guard on transportKey; skip silently if key is false.
-    //  - Guard on non-empty buffer.
-    //  - Attempt write() up to max retry times;
-    //  - After exhausting retries log a PEL (deviceWriteFailure).
+    if (transportKey)
+    {
+        if (!buffer.empty())
+        {
+            ssize_t returnedSize = 0;
+            int retriesDone = 0;
+            bool writeFailed = false;
+            int failedErrno = 0;
+
+            for (auto retryLoop = 0;
+                 retryLoop < panel::constants::maxRetryCount; ++retryLoop)
+            {
+                retriesDone = retryLoop;
+                writeFailed = false;
+                returnedSize =
+                    write(panelFileDescriptor, buffer.data(), buffer.size());
+
+                if (returnedSize != static_cast<int>(buffer.size()))
+                {
+                    writeFailed = true;
+                    failedErrno = errno;
+                    sleep(1);
+                    continue;
+                }
+                break;
+            }
+
+            if (writeFailed)
+            {
+                lg2::error(
+                    "I2C Write failure. Errno:{ERRNO}, Description:{DESC}, "
+                    "Bytes written:{WRITTEN}, Actual bytes:{ACTUAL}, "
+                    "Retries:{RETRY}",
+                    "ERRNO", failedErrno, "DESC", strerror(failedErrno),
+                    "WRITTEN", returnedSize, "ACTUAL", buffer.size(), "RETRY",
+                    retriesDone);
+
+                types::PelAdditionalData additionData{
+                    {"DESCRIPTION", strerror(failedErrno)},
+                    {"CALLOUT_IIC_BUS", devPath},
+                    {"CALLOUT_IIC_ADDR", i2cAddress},
+                    {"CALLOUT_ERRNO", std::to_string(failedErrno)}};
+
+                panel::utils::createPEL(
+                    constants::deviceWriteFailure,
+                    "xyz.openbmc_project.Logging.Entry.Level.Warning",
+                    additionData);
+            }
+        }
+        else
+        {
+            lg2::warning("Buffer empty. Skipping I2C Write.");
+        }
+    }
 }
 
-void Transport::setTransportKey([[maybe_unused]] bool keyValue) noexcept
+void Transport::setTransportKey(bool keyValue) noexcept
 {
-    // TODO: Flip transportKey to keyValue.
-    //  - Log the new key value and device details for diagnostics.
+    transportKey = keyValue;
+
+    lg2::info("Transport key set to {KEY} for panel at {PATH}, {ADDR}", "KEY",
+              transportKey, "PATH", devPath, "ADDR", i2cAddress);
 }
 
 } // namespace panel
