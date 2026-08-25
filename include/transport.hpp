@@ -7,6 +7,7 @@
 namespace panel
 {
 /** @class Transport
+ *
  * @brief The Transport class is to communicate with the i2c devices.
  * When the BMC needs to communicate with the panel microcontroller, raw i2c
  * writes are made using transport class api.
@@ -15,72 +16,72 @@ class Transport
 {
   public:
     /**
-     * A Default Constructor
-     * For testing purpose
+     * Deleted methods
      */
-    Transport() :
-        devPath(" "), devAddress(0), panelType(panel::types::PanelType::LCD)
-    {
-        setTransportKey(false);
-    }
+    Transport(const Transport&) = delete;
+    Transport& operator=(const Transport&) = delete;
+    Transport& operator=(Transport&&) = delete;
+    Transport(Transport&&) = delete;
 
     /**
-     * A Constructor
-     * Initialise the transport class object with the right panel device path
-     * and device address based on the system type.
+     * @brief Default constructor
+     *
+     * Creates a Transport instance with no device path or address.
+     * The transport key is left false; intended for testing / stub use.
+     */
+    Transport() noexcept;
+
+    /**
+     * @brief Parameterised constructor
+     *
+     * Initialises the Transport object with the panel's device path, I2C
+     * address and FRU inventory path.
+     *
+     * @param[in] devPath     - Sysfs path to the I2C device node.
+     * @param[in] devAddr     - 7-bit I2C slave address of the panel.
+     * @param[in] objectPath  - D-Bus FRU inventory object path.
+     *
+     * @throw bad_alloc, runtime_error
      */
     Transport(const std::string& devPath, const uint8_t& devAddr,
-              const types::PanelType& type, const std::string& objectPath) :
-        devPath(devPath), devAddress(devAddr), panelType(type),
-        fruPath(objectPath)
-    {
-        panelI2CSetup();
-    }
+              const std::string& objectPath);
 
     /**
-     * A Destructor
-     * Closes the valid file descriptor when the object goes out of scope.
+     * @brief Destructor
+     *
+     * Closes the file descriptor held for the I2C device node, if open.
      */
-    ~Transport()
-    {
-        if (panelFileDescriptor != -1)
-        {
-            close(panelFileDescriptor);
-        }
-    }
+    ~Transport() noexcept;
 
-    /** @brief Write to the panel micro controller via I2C bus.
-     * This api does raw i2c writes of the panel commands to the panel's micro
-     * controller.
-     * @param[in] buffer - data that needs to be sent to the panel.
+    /**
+     * @brief Write raw bytes to the panel micro-controller via I2C
+     *
+     * Sends the given buffer over the I2C bus to the panel.
+     *
+     * If any failure occured while writing, a PEL is logged.
+     *
+     * @param[in] buffer - Byte sequence to send to the panel.
      */
-    void panelI2CWrite(const types::Binary& buffer) const;
+    void panelI2CWrite(const types::Binary& buffer) const noexcept;
 
-    /** @brief Method to set the transport key
-     * The transportKey boolean tells if the panel i2c bus is ready to use or
-     * not. This method is to flip the key value to true/false based on the end
-     * user requirement.
-     * @param[in] keyValue - boolean to tell whether to activate the key or not.
+    /**
+     * @brief Set the transport key to enable or disable I2C communication
+     *
+     * When set to true the I2C bus is considered ready for use; false disables
+     * all writes.
+     *
+     * @param[in] keyValue - true to enable the transport, false to disable.
      */
-    void setTransportKey(bool keyValue);
+    void setTransportKey(bool keyValue) noexcept;
 
-    /** @brief API to setup panel's button operational characteristics. */
-    void doButtonConfig();
-
-    /** @brief Method to check and return the current status of transport key.
-     * @return transportKey
+    /**
+     * @brief Return the current state of the transport key
+     *
+     * @return true if the transport key is enabled, false otherwise.
      */
-    inline bool isTransportKeyEnabled() const
+    inline bool isTransportKeyEnabled() const noexcept
     {
         return transportKey;
-    }
-
-    /** @brief Method to get panel type
-     * @return panel type(LCD/BASE)
-     */
-    inline types::PanelType getPanelType() const
-    {
-        return panelType;
     }
 
   private:
@@ -100,89 +101,28 @@ class Transport
      */
     bool transportKey = false;
 
-    /** @brief Panel type (base/lcd) */
-    const types::PanelType panelType;
-
     /** @brief i2cAddress and devAddress are same in value but differs in type.
      * This is required to log CALLOUT_IIC_ADDR in PEL.*/
     std::string i2cAddress{};
 
-    /** @brief Base/LCD panel FRU path */
+    /** @brief panel FRU Dbus object path */
     const std::string fruPath;
 
-    /** @brief Establish panel i2c connection
-     * This api establishes the i2c bus connection to the panel micro
-     * controller.
+    /**
+     * @brief Establish the I2C connection to the panel micro-controller
+     *
+     * Validates that devPath and devAddress are set, then:
+     *  - Formats devAddress as a hex string and stores it in i2cAddress for
+     *    use in PEL callout data.
+     *  - Opens the device node at devPath with O_RDWR | O_NONBLOCK and stores
+     *    the resulting file descriptor in panelFileDescriptor. On failure a PEL
+     *    (com.ibm.Panel.Error.I2CSetupFailure / Warning) is logged.
+     *  - Calls ioctl(I2C_SLAVE) to bind the file descriptor to devAddress. On
+     *    failure a PEL (com.ibm.Panel.Error.I2CSetupFailure / Warning) is
+     *    logged.
+     *
+     * @throws std::runtime_error
      */
     void panelI2CSetup();
-
-    /** @brief API to do soft reset.
-     * The Panel Code Soft Reset command is used to perform a soft reset of
-     * the Panel micro-controller. This will re-initialize the Panel micro-code
-     * to its start-up values. A delay of 100milliseconds is added after the
-     * soft reset operation.
-     */
-    void doSoftReset();
-
-    /**
-     * @brief API to get the panel out of a bootloader hang
-     *
-     * Due to a bug in some levels of the microcode, the panel can sometimes be
-     * stuck in the bootloader. This API attempts to recover from the situation
-     * by forcing the bootloader to jump to the main panel program.
-     */
-    void checkAndFixBootLoaderBug();
-
-    /**
-     * @brief API to read panel current version
-     *
-     * This method reads 6 bytes of panel's current version and stores in the io
-     * reference argument.
-     *
-     * @param[out] - Reference to byte vector to store the current version.
-     *
-     * @return true if version read successfully, false otherwise.
-     */
-    bool readPanelVersion(types::Binary& currVersion) const;
-
-    /**
-     * @brief API which does panel firmware update
-     * This method does both LCD and base firmware code update with their latest
-     * code respectively, if the existing panel firmware is not the latest.
-     */
-    void doFWUpdate() const;
-
-    /**
-     * @brief API to go to boot loader from main program
-     *
-     * @return true if its a successful jump to bootloader, false otherwise.
-     */
-    bool gotoBootloader() const;
-
-    /**
-     * @brief API which updates the panel FW with the latest.
-     *
-     * @return true if its a successful updation, false otherwise.
-     */
-    bool updateFlash() const;
-
-    /**
-     * @brief API to go main program from bootloader.
-     *
-     * @return true if its a successful jump to main program, false otherwise.
-     */
-    bool gotoMainProgram() const;
-
-    /** @brief Log error related to code update failure.
-     *
-     * @param[in] description - Error description.
-     * @param[in] err - errno.
-     * @param[in] control - Says if panel control reaches Main program or Boot
-     * loader.
-     * @param[in] pelIntf - PEL interface.
-     */
-    void logCodeUpdateError(const std::string& description, const int err,
-                            const std::string& control,
-                            const std::string& pelIntf) const;
 };
 } // namespace panel
