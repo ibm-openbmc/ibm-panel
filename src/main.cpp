@@ -1,10 +1,32 @@
 #include "const.hpp"
+#include "transport.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <memory>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
+
+/**
+ * @brief Initialise the panel subsystem.
+ *
+ * Creates a Transport instance and other panel-level objects required at
+ * start-up.
+ */
+void initPanel() noexcept
+{
+    try
+    {
+        // TODO: Pass real devPath, devAddr and fruPath once available.
+        auto transport = std::make_shared<panel::Transport>();
+    }
+    catch (const std::exception& ex)
+    {
+        lg2::error("Failed to initialise the panel, reason: {ERROR}", "ERROR",
+                   ex);
+        // TODO: log a critical PEL
+    }
+}
 
 int main()
 {
@@ -23,6 +45,8 @@ int main()
         std::shared_ptr<sdbusplus::asio::dbus_interface> iface =
             server.add_interface(panel::constants::panelObjectPath,
                                  panel::constants::panelInterface);
+
+        initPanel();
 
         iface->initialize();
 

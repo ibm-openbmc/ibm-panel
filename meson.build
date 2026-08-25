@@ -53,6 +53,7 @@ configure_file(
 executable(
     'ibm-panel',
     'src/main.cpp',
+    'src/transport.cpp',
     dependencies: [sdbusplus, phosphor_dbus_interfaces, phosphor_logging],
     include_directories: ['include'],
     install: true,
