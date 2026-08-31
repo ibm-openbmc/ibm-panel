@@ -15,6 +15,11 @@ static constexpr auto panelService = "com.ibm.PanelApp";
 static constexpr auto panelInterface = "com.ibm.panel";
 static constexpr auto panelObjectPath = "/com/ibm/panel_app";
 
+static constexpr auto pimService = "xyz.openbmc_project.Inventory.Manager";
+static constexpr auto systemInvPath = "/xyz/openbmc_project/inventory/system";
+static constexpr auto vsbpInterface = "com.ibm.ipzvpd.VSBP";
+static constexpr auto kwdIM = "IM";
+
 static constexpr std::string_view huygensIm = "70001000";
 
 // list of High-end system IM values
