@@ -16,5 +16,7 @@ using Binary = std::vector<Byte>;
 using FunctionNumber = uint8_t;
 using FunctionMask = uint16_t;
 using FunctionalityList = std::vector<FunctionNumber>;
+
+using PelAdditionalData = std::map<std::string, std::string>;
 } // namespace types
 } // namespace panel

@@ -1,4 +1,4 @@
-#pragma once
+#include "utils.hpp"
 
 #include "const.hpp"
 
@@ -8,20 +8,11 @@
 
 namespace panel
 {
-
-/**
- * @brief An API to create a PEL
- *
- * This API makes synchronous call to phosphor-logging Create method.
- *
- * @param[in] errIntf - Error Interface name
- * @param[in] severity -  Severity of the event
- * @param[in] additionalData - Additional information of PEL
- */
 namespace utils
 {
-inline void createPEL(const std::string& errIntf, const std::string& severity,
-                      const types::PelAdditionalData& additionalData) noexcept
+
+void createPEL(const std::string& errIntf, const std::string& severity,
+               const types::PelAdditionalData& additionalData)
 {
     try
     {
@@ -39,5 +30,6 @@ inline void createPEL(const std::string& errIntf, const std::string& severity,
         lg2::error("PEL creation failed with an error: {ERROR}", "ERROR", ex);
     }
 }
+
 } // namespace utils
 } // namespace panel

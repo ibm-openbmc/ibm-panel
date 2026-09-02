@@ -1,8 +1,11 @@
 #include "const.hpp"
 #include "panel_state_manager.hpp"
 #include "transport.hpp"
+#include "utils.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <format>
+#include <map>
 #include <memory>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
@@ -30,7 +33,14 @@ void initPanel() noexcept
     {
         lg2::error("Failed to initialise the panel, reason: {ERROR}", "ERROR",
                    ex);
-        // TODO: log a critical PEL
+
+        panel::types::PelAdditionalData additionalData{
+            {"DESCRIPTION",
+             std::format("Failed to initialise the panel, reason: {}",
+                         ex.what())}};
+        panel::utils::createPEL(
+            "xyz.openbmc_project.Common.Error.InternalFailure",
+            "xyz.openbmc_project.Logging.Entry.Level.Warning", additionalData);
     }
 }
 
