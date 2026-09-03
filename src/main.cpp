@@ -1,4 +1,5 @@
 #include "const.hpp"
+#include "state_manager.hpp"
 #include "transport.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -19,6 +20,9 @@ void initPanel() noexcept
     {
         // TODO: Pass real devPath, devAddr and fruPath once available.
         auto transport = std::make_shared<panel::Transport>();
+
+        // TODO: Update PanelStateManager to accept an Executor once available.
+        auto stateManager = std::make_shared<panel::StateManager>(transport);
     }
     catch (const std::exception& ex)
     {
