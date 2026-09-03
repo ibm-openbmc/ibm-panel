@@ -1,6 +1,8 @@
 [Unit]
 Description=IBM operator panel application.
 StopWhenUnneeded=false
+Requires=vpd-manager.service
+After=vpd-manager.service
 
 [Service]
 BusName=com.ibm.PanelApp
