@@ -38,5 +38,11 @@ static constexpr auto eventLoggingServiceName = "xyz.openbmc_project.Logging";
 static constexpr auto eventLoggingObjectPath = "/xyz/openbmc_project/logging";
 static constexpr auto eventLoggingInterface =
     "xyz.openbmc_project.Logging.Create";
+
+constexpr auto positionInterface =
+    "xyz.openbmc_project.Inventory.Decorator.Position";
+constexpr auto positionPropertyName = "Position";
+
+static constexpr auto VALUE_0 = 0;
 } // namespace constants
 } // namespace panel
