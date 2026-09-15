@@ -42,11 +42,18 @@ if get_option('system-vpd-dependency').enabled()
     service_file = 'service_files/ibm.panel.system.vpd.dependent.service'
 endif
 
+# Wait for ibm-power-highend-platform-apps.service to publish the BMC
+# position on D-Bus before starting (redundant-BMC systems only).
+bmc_position_dependency = ''
+if get_option('redundant-bmc')
+    bmc_position_dependency = 'After=ibm-power-highend-platform-apps.service'
+endif
+
 configure_file(
     input: service_file,
     output: 'com.ibm.panel.service',
+    configuration: {'BMC_POSITION_DEPENDENCY': bmc_position_dependency},
     install_dir: systemd_system_unit_dir,
-    copy: true,
     install: true,
 )
 

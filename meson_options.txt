@@ -1,2 +1,8 @@
 option('tests', type: 'feature', value: 'enabled', description: 'Build tests.',)
 option('system-vpd-dependency', type: 'feature', description: 'Enable/disable system vpd dependency.', value: 'disabled')
+option(
+    'redundant-bmc',
+    type: 'boolean',
+    value: false,
+    description: 'Enable support for redundant BMC systems',
+)
