@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <boost/asio/io_context.hpp>
+#include <format>
 #include <memory>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
@@ -82,9 +83,14 @@ void initPanel() noexcept
     }
     catch (const std::exception& ex)
     {
-        lg2::error("Failed to initialise the panel, reason: {ERROR}", "ERROR",
-                   ex);
-        // TODO: log a critical PEL
+        lg2::error("Failed to initialise Panel, reason: {ERROR}", "ERROR", ex);
+
+        panel::utils::createPEL(
+            "com.ibm.Panel.Error.InternalFailure",
+            "xyz.openbmc_project.Logging.Entry.Level.Warning",
+            {{"DESCRIPTION",
+              std::format("Failed to initialise Panel, reason: {}",
+                          ex.what())}});
     }
 }
 

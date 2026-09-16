@@ -34,5 +34,9 @@ static constexpr auto roleUnknown = 0x40;
 // allowing the role to be ignored for single BMC systems.
 static constexpr auto roleMask = 0x1C0;
 
+static constexpr auto eventLoggingServiceName = "xyz.openbmc_project.Logging";
+static constexpr auto eventLoggingObjectPath = "/xyz/openbmc_project/logging";
+static constexpr auto eventLoggingInterface =
+    "xyz.openbmc_project.Logging.Create";
 } // namespace constants
 } // namespace panel

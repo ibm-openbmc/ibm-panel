@@ -146,5 +146,33 @@ inline std::expected<std::string, error_code> getSystemIm() noexcept
     return std::unexpected(error_code::RECEIVED_INVALID_KWD_TYPE_FROM_DBUS);
 }
 
+/**
+ * @brief An API to create a PEL
+ *
+ * This API makes synchronous call to phosphor-logging Create method.
+ *
+ * @param[in] errIntf - Error Interface name
+ * @param[in] severity -  Severity of the event
+ * @param[in] additionalData - Additional information of PEL
+ */
+inline void createPEL(const std::string& errIntf, const std::string& severity,
+                      const types::PelAdditionalData& additionalData) noexcept
+{
+    try
+    {
+        auto bus = sdbusplus::bus::new_default();
+        auto method =
+            bus.new_method_call(constants::eventLoggingServiceName,
+                                constants::eventLoggingObjectPath,
+                                constants::eventLoggingInterface, "Create");
+
+        method.append(errIntf, severity, additionalData);
+        bus.call(method);
+    }
+    catch (const sdbusplus::exception_t& ex)
+    {
+        lg2::error("PEL creation failed with an error: {ERROR}", "ERROR", ex);
+    }
+}
 } // namespace utils
 } // namespace panel
