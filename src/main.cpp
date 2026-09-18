@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <boost/asio/io_context.hpp>
 #include <format>
+#include <limits>
 #include <memory>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
@@ -46,6 +47,82 @@ panel::types::RoleType getDefaultPanelRole(const std::string& im)
 }
 
 /**
+ * @brief Check and enable the LCD panel transport key.
+ *
+ * Reads the BMC position property from the D-Bus. Use read position value to
+ * read the panel control bits from microcontroller present in the `Patch
+ * Panel`. If the current BMC owns the access to LCD panel, transport key is
+ * enabled. Logs a PEL in case of any failure.
+ *
+ * @note Enabling the transport key requires:
+ *       -# Reading BMC position from the DBus.
+ *       -# Reading the Panel control bits from the Patch Panel to determine
+ *          ownership of the LCD panel using read position information.
+ *       -# If this BMC owns the position, enabling the transport key for the
+ *          LCD device.
+ *
+ * @param[in] transport - The transport object.
+ *
+ * @return BMC position value on successful DBus read, otherwise max value in
+ * case of any failure.
+ */
+size_t checkAndEnableLcdPanel([[maybe_unused]] const auto& transport) noexcept
+{
+    [[maybe_unused]] std::string errMessage;
+    try
+    {
+        const auto positionRes = panel::utils::readDbusProperty(
+            panel::constants::pimService, panel::constants::systemInvPath,
+            panel::constants::positionInterface,
+            panel::constants::positionPropertyName);
+
+        if (!positionRes)
+        {
+            errMessage = std::format(
+                "Failed to read BMC Position from D-Bus, reason: {}",
+                panel::utils::getErrCodeMsg(positionRes.error()));
+            lg2::error("{ERR}", "ERR", errMessage);
+        }
+        else if (const auto bmcPosition =
+                     std::get_if<size_t>(&positionRes.value()))
+        {
+            /* ToDo enable transport key based on below criteria
+             * 1. Check LCD panel is present, if device is present
+             * 1.1. Read the Panel control bits from Patch Panel to know
+             * who owns the position.
+             * 1.2. If control is owned by current BMC, enable the transport key
+             * for LCD device.
+             *
+             * Note: Until patch panel control-bit access is available to find
+             * the Panel ownership, the BMC at position `0` is granted control.
+             */
+
+            if (*bmcPosition == panel::constants::VALUE_0)
+            {
+                // ToDo: set transport key
+            }
+            return *bmcPosition;
+        }
+        else
+        {
+            errMessage =
+                "Invalid type received while reading BMC Position from D-Bus";
+            lg2::error("{ERR}", "ERR", errMessage);
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        errMessage = std::format("Error occurred while reading and enabling "
+                                 "Panel ownership, reason: {}",
+                                 ex.what());
+        lg2::error("{ERR}", "ERR", errMessage);
+    }
+
+    // ToDo: log a PEL with errMessage
+    return std::numeric_limits<size_t>::max();
+}
+
+/**
  * @brief Initialise the panel subsystem.
  *
  * Reads the system IM, determines the panel role, then creates a Transport
@@ -76,6 +153,25 @@ void initPanel() noexcept
 
         // TODO: Pass real devPath, devAddr and fruPath once available.
         auto transport = std::make_shared<panel::Transport>();
+
+        // BMC position is required during failover to request panel control
+        // from the microcontroller on the patch panel for redundant-BMC
+        // systems.
+        [[maybe_unused]] size_t bmcPosition =
+            std::numeric_limits<size_t>::max();
+
+        // For redundant-BMC systems, enable the transport key only if current
+        // BMC owns the LCD panel.
+        if (std::ranges::contains(panel::constants::redundantBmcSystemImList,
+                                  imResult.value()))
+        {
+            bmcPosition = checkAndEnableLcdPanel(transport);
+        }
+        else
+        {
+            // ToDo: Check the LCD Panel presence and enable the trasport key
+            // based on the device presence.
+        }
 
         // TODO: Update PanelStateManager to accept an Executor once available.
         auto stateManager =
