@@ -7,6 +7,7 @@
 #include <expected>
 #include <filesystem>
 #include <fstream>
+#include <gpiod.hpp>
 #include <nlohmann/json.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
@@ -499,9 +500,22 @@ inline std::expected<int, error_code>
 {
     try
     {
-        // TODO: Add gpiod-based GPIO line read implementation. Until then
-        // this placeholder always reports a value of 0.
-        return 0;
+        auto line = gpiod::find_line(std::string(gpioName));
+
+        if (!line)
+        {
+            return std::unexpected(error_code::GPIO_PIN_NOT_FOUND);
+        }
+
+        line.request(
+            {"ibm-panel GPIO Reader", gpiod::line_request::DIRECTION_INPUT, 0});
+
+        int value = line.get_value();
+
+        // Release the line resource
+        line.release();
+
+        return value;
     }
     catch (const std::exception& ex)
     {
@@ -544,6 +558,8 @@ inline std::expected<bool, error_code>
 
     if (!res)
     {
+        lg2::error("Failed to read GPIO : {G}, error: {E}", "G", gpioName, "E",
+                   getErrCodeMsg(res.error()));
         return std::unexpected(res.error());
     }
 
