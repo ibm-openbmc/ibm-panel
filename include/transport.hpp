@@ -34,5 +34,23 @@ class Transport
 
     /** @brief Destructor */
     ~Transport() noexcept;
+
+    /** @brief API to set the transport key
+     *
+     * The transportKey boolean tells if the i2c bus is ready to
+     * use or not. This method is to flip the key value to true/false based on
+     * the requirement.
+     *
+     * @param[in] keyValue - boolean to activate/deactivate the transportKey.
+     */
+    void setTransportKey(bool keyValue);
+
+  private:
+    /** @brief Key to check the availability of transport class.
+     * The transportKey tells if the i2c bus is ready to use or not.
+     * If key value is true, the transport class can be used to access the
+     * i2c bus. Otherwise transport class can't be used for i2c operation.
+     */
+    bool transportKey = false;
 };
 } // namespace panel
