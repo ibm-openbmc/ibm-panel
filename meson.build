@@ -49,6 +49,14 @@ if get_option('redundant-bmc')
     bmc_position_dependency = 'After=ibm-power-highend-platform-apps.service'
 endif
 
+# Install panel configuration files
+install_subdir(
+    'configuration/',
+    install_mode: 'rwxr-xr-x',
+    install_dir: '/usr/share/panel',
+    strip_directory: true,
+)
+
 configure_file(
     input: service_file,
     output: 'com.ibm.panel.service',
