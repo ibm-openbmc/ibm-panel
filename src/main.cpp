@@ -13,6 +13,17 @@
 #include <sdbusplus/asio/object_server.hpp>
 
 /**
+ * @brief Aggregates all long-lived panel subsystem objects.
+ *
+ * Holds the objects that need to survive for the duration of the event loop.
+ */
+struct PanelContext
+{
+    std::shared_ptr<panel::Transport> transport;
+    std::shared_ptr<panel::StateManager> stateManager;
+};
+
+/**
  * @brief Determine the panel role based on the system IM value.
  *
  * Checks the given IM value against the list of known redundant-BMC system IMs.
@@ -48,10 +59,13 @@ panel::types::RoleType getDefaultPanelRole(const std::string& im)
 /**
  * @brief Initialise the panel subsystem.
  *
- * Reads the system IM, determines the panel role, then creates a Transport
- * and PanelStateManager instance.
+ * Reads the system IM, determines the panel role, and populates all
+ * long-lived subsystem objects into the provided PanelContext.
+ *
+ * @param[out] ctx - PanelContext to populate. Members are left unchanged
+ *                   on failure.
  */
-void initPanel() noexcept
+void initPanel(PanelContext& ctx) noexcept
 {
     try
     {
@@ -75,11 +89,11 @@ void initPanel() noexcept
             getDefaultPanelRole(imResult.value());
 
         // TODO: Pass real devPath, devAddr and fruPath once available.
-        auto transport = std::make_shared<panel::Transport>();
+        ctx.transport = std::make_shared<panel::Transport>();
 
         // TODO: Update PanelStateManager to accept an Executor once available.
-        auto stateManager =
-            std::make_shared<panel::StateManager>(transport, defaultRole);
+        ctx.stateManager =
+            std::make_shared<panel::StateManager>(ctx.transport, defaultRole);
     }
     catch (const std::exception& ex)
     {
@@ -112,7 +126,10 @@ int main()
             server.add_interface(panel::constants::panelObjectPath,
                                  panel::constants::panelInterface);
 
-        initPanel();
+        // Construct ctx in main() so all subsystem objects remain alive
+        // for the entire event loop.
+        PanelContext ctx;
+        initPanel(ctx);
 
         iface->initialize();
 
