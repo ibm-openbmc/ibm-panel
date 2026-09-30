@@ -5,6 +5,9 @@
 #include "types.hpp"
 
 #include <expected>
+#include <filesystem>
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/exception.hpp>
@@ -172,6 +175,69 @@ inline void createPEL(const std::string& errIntf, const std::string& severity,
     catch (const sdbusplus::exception_t& ex)
     {
         lg2::error("PEL creation failed with an error: {ERROR}", "ERROR", ex);
+    }
+}
+
+/**
+ * @brief Build the panel configuration file path from an IM value.
+ *
+ * Constructs the path as:
+ *   /usr/share/panel/panel_<im>.json
+ *
+ * @param[in] im - System IM value as a hex string (e.g. "70001000").
+ *
+ * @return Absolute path to the configuration file for that system.
+ */
+inline std::string getPanelConfigPath(const std::string& im) noexcept
+{
+    return std::string(constants::panelConfigBasePath) + "/panel_" + im +
+           ".json";
+}
+
+/**
+ * @brief API to parse respective JSON.
+ *
+ * @param[in] filePath - Path to JSON.
+ *
+ * @return Parsed JSON object on success; corresponding error code on
+ * failure.
+ */
+inline std::expected<nlohmann::json, error_code>
+    getParsedJson(const std::string& filePath) noexcept
+{
+    if (filePath.empty())
+    {
+        return std::unexpected(error_code::INVALID_INPUT_PARAMETER);
+    }
+
+    std::error_code ec;
+    if (!std::filesystem::exists(filePath, ec))
+    {
+        return std::unexpected(ec ? error_code::FILE_ACCESS_ERROR
+                                  : error_code::FILE_NOT_FOUND);
+    }
+
+    try
+    {
+        std::ifstream file(filePath);
+        if (!file)
+        {
+            return std::unexpected(error_code::FILE_ACCESS_ERROR);
+        }
+
+        return nlohmann::json::parse(file);
+    }
+    catch (const nlohmann::json::parse_error& ex)
+    {
+        lg2::error("JSON parse error while parsing {PATH}: {ERROR}", "PATH",
+                   filePath, "ERROR", ex.what());
+        return std::unexpected(error_code::JSON_PARSE_ERROR);
+    }
+    catch (const std::exception& ex)
+    {
+        lg2::error("Unexpected error while parsing {PATH}: {ERROR}", "PATH",
+                   filePath, "ERROR", ex.what());
+        return std::unexpected(error_code::STANDARD_EXCEPTION);
     }
 }
 } // namespace utils
