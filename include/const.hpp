@@ -20,6 +20,8 @@ static constexpr auto systemInvPath = "/xyz/openbmc_project/inventory/system";
 static constexpr auto vsbpInterface = "com.ibm.ipzvpd.VSBP";
 static constexpr auto kwdIM = "IM";
 
+static constexpr auto panelConfigBasePath = "/usr/share/panel";
+
 static constexpr std::string_view huygensIm = "70001000";
 
 // List of redundant-BMC system IM values

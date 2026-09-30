@@ -164,6 +164,20 @@ void initPanel(PanelContext& ctx) noexcept
             throw std::runtime_error("System IM value found empty");
         }
 
+        // Parse the panel configuration for this system.
+        const std::string configPath =
+            utils::getPanelConfigPath(imResult.value());
+
+        const auto configResult = utils::getParsedJson(configPath);
+        if (!configResult)
+        {
+            throw std::runtime_error(std::format(
+                "Failed to parse panel configuration [{}], reason: {}",
+                configPath, utils::getErrCodeMsg(configResult.error())));
+        }
+
+        lg2::info("Panel configuration loaded from {PATH}", "PATH", configPath);
+
         // TODO: Move role fetching to SystemStatus once the class is
         // implemented.
         const types::RoleType defaultRole =
