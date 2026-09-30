@@ -1,0 +1,55 @@
+{
+    "lcdPanel": {
+        "gpioPresence": {
+            "pin": "RUSSEL_OPPANEL_PRESENCE_N",
+            "value": 0
+        },
+        "devicePath": "/dev/i2c-8",
+        "deviceAddress": 81,
+        "PanelObjectPath": "/xyz/openbmc_project/inventory/system/chassis0/motherboard/lcd_op_panel",
+        "listenOnPanelPresence": true,
+        "requiresI2cEnable": false
+    },
+    "listenOnProperties": {
+        "xyz.openbmc_project.State.BMC": [
+            {
+                "/xyz/openbmc_project/state/bmc0": [
+                    {
+                        "interfaceName": "xyz.openbmc_project.State.BMC",
+                        "properties": ["CurrentBMCState"]
+                    }
+                ]
+            }
+        ],
+        "xyz.openbmc_project.State.Chassis": [
+            {
+                "/xyz/openbmc_project/state/chassis0": [
+                    {
+                        "interfaceName": "xyz.openbmc_project.State.Chassis",
+                        "properties": ["CurrentPowerState"]
+                    }
+                ]
+            }
+        ],
+        "xyz.openbmc_project.State.Host": [
+            {
+                "/xyz/openbmc_project/state/host0": [
+                    {
+                        "interfaceName": "xyz.openbmc_project.State.Boot.Progress",
+                        "properties": ["BootProgress"]
+                    }
+                ]
+            }
+        ],
+        "xyz.openbmc_project.BIOSConfigManager": [
+            {
+                "/xyz/openbmc_project/bios_config/manager": [
+                    {
+                        "interfaceName": "xyz.openbmc_project.BIOSConfig.Manager",
+                        "properties": ["BaseBIOSTable"]
+                    }
+                ]
+            }
+        ]
+    }
+}
