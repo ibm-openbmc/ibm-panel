@@ -91,6 +91,28 @@ void initPanel(PanelContext& ctx) noexcept
         // TODO: Pass real devPath, devAddr and fruPath once available.
         ctx.transport = std::make_shared<panel::Transport>();
 
+        bool isPanelPresent = false;
+        auto panelPresenceRes =
+            panel::utils::readPanelPresence(imResult.value());
+
+        if (!panelPresenceRes)
+        {
+            lg2::error("Failed to read Panel presence, error: {E}", "E",
+                       panel::utils::getErrCodeMsg(panelPresenceRes.error()));
+        }
+        else
+        {
+            isPanelPresent = panelPresenceRes.value();
+        }
+
+        // TODO: Enable transport for redundant-BMC based on the ownership
+        // granted by the microcontroller present in the patch panel if the
+        // device is present.
+        if (isPanelPresent)
+        {
+            // TODO: enable the trasport key
+        }
+
         // TODO: Update PanelStateManager to accept an Executor once available.
         ctx.stateManager =
             std::make_shared<panel::StateManager>(ctx.transport, defaultRole);

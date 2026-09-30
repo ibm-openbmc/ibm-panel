@@ -38,5 +38,12 @@ static constexpr auto eventLoggingServiceName = "xyz.openbmc_project.Logging";
 static constexpr auto eventLoggingObjectPath = "/xyz/openbmc_project/logging";
 static constexpr auto eventLoggingInterface =
     "xyz.openbmc_project.Logging.Create";
+
+static constexpr auto huygensLcdPanelGpio = "RUSSEL_OPPANEL_PRESENCE_N";
+
+static constexpr auto VALUE_0 = 0;
+
+static types::systemGpioInfoType systemGpioInfo{
+    {huygensIm, {huygensLcdPanelGpio, VALUE_0}}};
 } // namespace constants
 } // namespace panel

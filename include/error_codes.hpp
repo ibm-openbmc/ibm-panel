@@ -13,6 +13,7 @@ enum error_code
     // Generic errors
     INVALID_INPUT_PARAMETER,
     STANDARD_EXCEPTION,
+    DEVICE_PRESENCE_UNKNOWN,
 };
 
 // Error code to error message map
@@ -24,4 +25,6 @@ const std::unordered_map<int, std::string> errorCodeMap = {
     {error_code::INVALID_INPUT_PARAMETER,
      "Either one of the input parameter is invalid or empty."},
     {error_code::STANDARD_EXCEPTION, "Standard Exception thrown"},
+    {error_code::DEVICE_PRESENCE_UNKNOWN,
+     "Panel device presence could not be determined"},
 };

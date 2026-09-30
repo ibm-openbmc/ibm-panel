@@ -5,6 +5,7 @@
 #include "types.hpp"
 
 #include <expected>
+#include <gpiod.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/exception.hpp>
@@ -173,6 +174,69 @@ inline void createPEL(const std::string& errIntf, const std::string& severity,
     {
         lg2::error("PEL creation failed with an error: {ERROR}", "ERROR", ex);
     }
+}
+
+/**
+ * @brief Read GPIO line value
+ *
+ * Reads the value of a specified GPIO line.
+ *
+ * @param[in] gpioName - Name of the GPIO line.
+ *
+ * @return gpio value on successful read operation, error code otherwise.
+ */
+inline std::expected<int, error_code>
+    readGpio(const std::string_view& gpioName) noexcept
+{
+    try
+    {
+        // TODO: Add gpiod-based GPIO line read implementation.
+        return 0;
+    }
+    catch (const std::exception& ex)
+    {
+        lg2::error("Exception while reading GPIO {G}: {E}", "G", gpioName, "E",
+                   ex);
+        return std::unexpected(error_code::DEVICE_PRESENCE_UNKNOWN);
+    }
+}
+
+/**
+ * @brief Determine whether the LCD op-panel is physically present.
+ *
+ * Looks up the GPIO line associated with the given system IM value in
+ * @ref constants::systemGpioInfo, reads the line, and compares the result
+ * against the expected active-low/active-high value stored in the map.
+ *
+ * @param[in] imValue - System IM value used to select the correct GPIO entry.
+ *
+ * @return true if the panel is present, false if absent, error_code in case of
+ * any failure occured while reading panel presence.
+ */
+inline std::expected<bool, error_code>
+    readPanelPresence(const std::string& imValue) noexcept
+{
+    if (imValue.empty())
+    {
+        return std::unexpected(error_code::INVALID_INPUT_PARAMETER);
+    }
+
+    const auto itr = constants::systemGpioInfo.find(imValue);
+    if (itr == constants::systemGpioInfo.end())
+    {
+        lg2::error("GPIO info not found for the given IM {IM}", "IM", imValue);
+        return std::unexpected(error_code::DEVICE_PRESENCE_UNKNOWN);
+    }
+
+    const auto& [gpioName, gpioExpectedValue] = itr->second;
+    const auto res = readGpio(gpioName);
+
+    if (!res)
+    {
+        return std::unexpected(res.error());
+    }
+
+    return res.value() == gpioExpectedValue;
 }
 } // namespace utils
 } // namespace panel

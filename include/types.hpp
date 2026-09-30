@@ -29,5 +29,8 @@ using DbusVariantType = std::variant<
 
 // Pel additional data contains map of key and value
 using PelAdditionalData = std::map<std::string, std::string>;
+
+// map of IM value to GPIO name and GPIO value
+using systemGpioInfoType = std::map<std::string_view, std::tuple<std::string_view, int>>;
 } // namespace types
 } // namespace panel
