@@ -18,6 +18,7 @@ systemd = dependency('systemd')
 sdbusplus = dependency('sdbusplus')
 phosphor_dbus_interfaces = dependency('phosphor-dbus-interfaces')
 phosphor_logging = dependency('phosphor-logging')
+nlohmann_json = dependency('nlohmann_json')
 
 cxx = meson.get_compiler('cpp')
 add_project_arguments(
@@ -72,7 +73,12 @@ panel_SOURCE = ['src/main.cpp'] + common_SOURCES
 executable(
     'ibm-panel',
     panel_SOURCE,
-    dependencies: [sdbusplus, phosphor_dbus_interfaces, phosphor_logging],
+    dependencies: [
+        sdbusplus,
+        phosphor_dbus_interfaces,
+        phosphor_logging,
+        nlohmann_json,
+    ],
     include_directories: ['include'],
     install: true,
 )

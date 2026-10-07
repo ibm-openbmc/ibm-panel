@@ -24,6 +24,7 @@ struct PanelContext
 {
     std::shared_ptr<panel::Transport> transport;
     std::shared_ptr<panel::StateManager> stateManager;
+    nlohmann::json sysConfigJson;
 };
 
 /**
@@ -163,6 +164,20 @@ void initPanel(PanelContext& ctx) noexcept
         {
             throw std::runtime_error("System IM value found empty");
         }
+
+        // Parse the panel configuration for this system.
+        const std::string configPath =
+            utils::getPanelConfigPath(imResult.value());
+
+        const auto configResult = utils::getParsedJson(configPath);
+        if (!configResult)
+        {
+            throw std::runtime_error(std::format(
+                "Failed to parse panel configuration [{}], reason: {}",
+                configPath, utils::getErrCodeMsg(configResult.error())));
+        }
+
+        ctx.sysConfigJson = configResult.value();
 
         // TODO: Move role fetching to SystemStatus once the class is
         // implemented.
