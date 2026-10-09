@@ -240,5 +240,119 @@ inline std::expected<nlohmann::json, error_code>
         return std::unexpected(error_code::STANDARD_EXCEPTION);
     }
 }
+
+/**
+ * @brief Validate "gpio" details in JSON object.
+ *
+ * API validates whether JSON contains required tags to process GPIO
+ * information.
+ *
+ * @param[in] configJson - JSON object for gpio.
+ *
+ * @return Empty on success; corresponding error code on failure.
+ */
+inline std::expected<void, error_code>
+    validateGpioTags([[maybe_unused]] const nlohmann::json& configJson) noexcept
+{
+    // ToDo: Validate gpio details in JSON
+    return {};
+}
+
+/**
+ * @brief Validate "lcdPanel" or "basePanel" tag in JSON configuration.
+ *
+ * @param[in] configJson - Parsed JSON object containing "lcdPanel" or
+ * "basePanel" details.
+ *
+ * @return Empty on success; corresponding error code on failure.
+ */
+inline std::expected<void, error_code>
+    validatePanelTags(const nlohmann::json& configJson) noexcept
+{
+    if (!configJson.is_object())
+    {
+        return std::unexpected(error_code::INVALID_JSON);
+    }
+
+    if (!configJson.contains("devicePath"))
+    {
+        return std::unexpected(error_code::DEVICE_PATH_NOT_FOUND);
+    }
+    else if (!configJson["devicePath"].is_string() ||
+             configJson["devicePath"].get<std::string>().empty())
+    {
+        return std::unexpected(error_code::INVALID_DEVICE_PATH);
+    }
+
+    if (!configJson.contains("deviceAddress"))
+    {
+        return std::unexpected(error_code::DEVICE_ADDRESS_NOT_FOUND);
+    }
+    else if (!configJson["deviceAddress"].is_number_integer())
+    {
+        return std::unexpected(error_code::INVALID_DEVICE_ADDRESS);
+    }
+
+    if (!configJson.contains("objectPath"))
+    {
+        return std::unexpected(error_code::OBJECT_PATH_NOT_FOUND);
+    }
+    else if (!configJson["objectPath"].is_string() ||
+             configJson["objectPath"].get<std::string>().empty())
+    {
+        return std::unexpected(error_code::INVALID_OBJECT_PATH);
+    }
+
+    if (configJson.contains("listenOnPanelPresence") &&
+        !configJson["listenOnPanelPresence"].is_boolean())
+    {
+        return std::unexpected(error_code::INVALID_TAG_VALUE);
+    }
+
+    if (configJson.contains("requiresI2cEnable") &&
+        !configJson["requiresI2cEnable"].is_boolean())
+    {
+        return std::unexpected(error_code::INVALID_TAG_VALUE);
+    }
+
+    if (configJson.contains("gpioPresence"))
+    {
+        if (const auto res = validateGpioTags(configJson["gpioPresence"]); !res)
+        {
+            return std::unexpected(res.error());
+        }
+    }
+
+    return {};
+}
+
+/**
+ * @brief Validate overall panel configuration JSON.
+ *
+ * @param[in] configJson - Parsed JSON object.
+ *
+ * @return Empty on success; corresponding error code on failure.
+ */
+inline std::expected<void, error_code>
+    validateConfigJson(const nlohmann::json& configJson) noexcept
+{
+    if (!configJson.is_object() || configJson.empty())
+    {
+        return std::unexpected(error_code::INVALID_JSON);
+    }
+
+    if (!configJson.contains("lcdPanel"))
+    {
+        return std::unexpected(error_code::MISSING_LCD_PANEL_TAG);
+    }
+
+    if (const auto res = validatePanelTags(configJson["lcdPanel"]); !res)
+    {
+        return std::unexpected(res.error());
+    }
+
+    // ToDo: Validate Button input device path and listenOnProperties tag
+    return {};
+}
 } // namespace utils
 } // namespace panel

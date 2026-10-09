@@ -176,6 +176,14 @@ void initPanel(PanelContext& ctx) noexcept
                 "Failed to parse panel configuration [{}], reason: {}",
                 configPath, utils::getErrCodeMsg(configResult.error())));
         }
+        else if (const auto validationRes =
+                     utils::validateConfigJson(configResult.value());
+                 !validationRes)
+        {
+            throw std::runtime_error(std::format(
+                "JSON validation failed for [{}], error: {}", configPath,
+                utils::getErrCodeMsg(validationRes.error())));
+        }
 
         ctx.sysConfigJson = configResult.value();
 
