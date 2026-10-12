@@ -308,7 +308,7 @@ static std::string getEthLocPort(const std::string& macAddr)
     const auto& ethernetObjPaths = utils::getSubTreePaths(
         "/xyz/openbmc_project/inventory",
         std::vector<std::string>(
-            {"xyz.openbmc_project.Inventory.Item.Ethernet"}),
+            {"xyz.openbmc_project.Inventory.Item.NetworkInterface"}),
         0);
 
     for (const auto& obj : ethernetObjPaths)
