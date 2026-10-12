@@ -252,9 +252,128 @@ inline std::expected<nlohmann::json, error_code>
  * @return Empty on success; corresponding error code on failure.
  */
 inline std::expected<void, error_code>
-    validateGpioTags([[maybe_unused]] const nlohmann::json& configJson) noexcept
+    validateGpioTags(const nlohmann::json& configJson) noexcept
 {
-    // ToDo: Validate gpio details in JSON
+    if (!configJson.is_object() || configJson.empty())
+    {
+        return std::unexpected(error_code::INVALID_JSON);
+    }
+
+    if (!configJson.contains("pin"))
+    {
+        return std::unexpected(error_code::GPIO_PIN_NOT_FOUND);
+    }
+    else if (!configJson["pin"].is_string() ||
+             configJson["pin"].get<std::string>().empty())
+    {
+        return std::unexpected(error_code::INVALID_GPIO_PIN);
+    }
+
+    if (!configJson.contains("value"))
+    {
+        return std::unexpected(error_code::GPIO_VALUE_NOT_FOUND);
+    }
+    else if (!configJson["value"].is_number_integer())
+    {
+        return std::unexpected(error_code::INVALID_GPIO_VALUE);
+    }
+
+    return {};
+}
+
+/**
+ * @brief Validate "listenOnProperties" tag in JSON configuration.
+ *
+ * @param[in] configJson - Parsed JSON object containing "listenOnProperties"
+ * details.
+ *
+ * @return Empty on success; corresponding error code on failure.
+ */
+inline std::expected<void, error_code>
+    validateListenOnPropertiesTags(const nlohmann::json& configJson) noexcept
+{
+    if (!configJson.is_object() || configJson.empty())
+    {
+        return std::unexpected(error_code::INVALID_JSON);
+    }
+
+    for (const auto& [service, objectList] : configJson.items())
+    {
+        if (service.empty())
+        {
+            return std::unexpected(error_code::INVALID_SERVICE_NAME);
+        }
+
+        if (!objectList.is_array() || objectList.empty())
+        {
+            return std::unexpected(error_code::INVALID_JSON);
+        }
+
+        for (const auto& objEntry : objectList)
+        {
+            if (!objEntry.is_object() || objEntry.empty())
+            {
+                return std::unexpected(error_code::INVALID_JSON);
+            }
+
+            for (const auto& [objPath, intfList] : objEntry.items())
+            {
+                if (objPath.empty())
+                {
+                    return std::unexpected(error_code::INVALID_OBJECT_PATH);
+                }
+
+                if (!intfList.is_array() || intfList.empty())
+                {
+                    return std::unexpected(error_code::INVALID_JSON);
+                }
+
+                for (const auto& intfEntry : intfList)
+                {
+                    if (!intfEntry.is_object() || intfEntry.empty())
+                    {
+                        return std::unexpected(error_code::INVALID_JSON);
+                    }
+
+                    if (!intfEntry.contains("interfaceName"))
+                    {
+                        return std::unexpected(
+                            error_code::MISSING_INTERFACE_TAG);
+                    }
+
+                    if (!intfEntry["interfaceName"].is_string() ||
+                        intfEntry["interfaceName"].get<std::string>().empty())
+                    {
+                        return std::unexpected(
+                            error_code::INVALID_INTERFACE_NAME);
+                    }
+
+                    if (!intfEntry.contains("properties"))
+                    {
+                        return std::unexpected(
+                            error_code::MISSING_PROPERTIES_TAG);
+                    }
+
+                    if (!intfEntry["properties"].is_array() ||
+                        intfEntry["properties"].empty())
+                    {
+                        return std::unexpected(error_code::INVALID_TAG_VALUE);
+                    }
+
+                    for (const auto& property : intfEntry["properties"])
+                    {
+                        if (!property.is_string() ||
+                            property.get<std::string>().empty())
+                        {
+                            return std::unexpected(
+                                error_code::INVALID_PROPERTY_NAME);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     return {};
 }
 
@@ -351,7 +470,18 @@ inline std::expected<void, error_code>
         return std::unexpected(res.error());
     }
 
-    // ToDo: Validate Button input device path and listenOnProperties tag
+    if (!configJson.contains("listenOnProperties"))
+    {
+        return std::unexpected(error_code::MISSING_LISTEN_ON_PROPERTIES_TAG);
+    }
+    if (const auto res =
+            validateListenOnPropertiesTags(configJson["listenOnProperties"]);
+        !res)
+    {
+        return std::unexpected(res.error());
+    }
+
+    // ToDo: Validate Button input device path
     return {};
 }
 } // namespace utils
