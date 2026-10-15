@@ -35,10 +35,13 @@ enum error_code
     JSON_PARSE_ERROR,
     INVALID_JSON,
     INVALID_TAG_VALUE,
+    JSON_TAG_ERROR,
     MISSING_LCD_PANEL_TAG,
     MISSING_LISTEN_ON_PROPERTIES_TAG,
     MISSING_INTERFACE_TAG,
     MISSING_PROPERTIES_TAG,
+    DEVICE_PRESENCE_UNKNOWN,
+    MISSING_GPIO_PRESENCE_TAG,
 };
 
 // Error code to error message map
@@ -62,6 +65,8 @@ const std::unordered_map<int, std::string> errorCodeMap = {
     {error_code::INVALID_OBJECT_PATH, "The object path is invalid or empty."},
     {error_code::INVALID_TAG_VALUE,
      "The tag value or type in the JSON is invalid."},
+    {error_code::JSON_TAG_ERROR,
+     "A required JSON tag is missing or has an unexpected value type."},
     {error_code::MISSING_LCD_PANEL_TAG, "Required lcdPanel tag is missing."},
     {error_code::GPIO_PIN_NOT_FOUND, "The GPIO pin is not found."},
     {error_code::INVALID_GPIO_PIN, "The GPIO pin is invalid or empty."},
@@ -78,4 +83,7 @@ const std::unordered_map<int, std::string> errorCodeMap = {
      "The property name is invalid or empty."},
     {MISSING_LISTEN_ON_PROPERTIES_TAG,
      "Required listenOnProperties tag is missing in the JSON"},
+    {error_code::DEVICE_PRESENCE_UNKNOWN,
+     "Panel device presence could not be determined."},
+    {error_code::MISSING_GPIO_PRESENCE_TAG, "gpioPresence tag is missing"},
 };
