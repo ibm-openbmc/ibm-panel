@@ -217,7 +217,7 @@ void initPanel(std::shared_ptr<sdbusplus::asio::connection>& conn,
             std::make_shared<panel::StateManager>(ctx.transport, defaultRole);
 
         ctx.systemStatus = std::make_shared<SystemStatus>(
-            conn, ctx.stateManager, ctx.transport, configResult.value());
+            conn, ctx.stateManager, ctx.transport, ctx.sysConfigJson);
     }
     catch (const std::exception& ex)
     {

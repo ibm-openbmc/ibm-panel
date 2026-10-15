@@ -39,17 +39,20 @@ class SystemStatus
     /**
      * @brief Parameterized constructor
      *
-     * @param[in] conn - Dbus connection
+     * @param[in] connection - Dbus connection
      * @param[in,out] stateManager - StateManager object
      * @param[in,out] transport - Transport object used to communicate with the
      * LCD panel.
      * @param[in] configJson - System config JSON object
+     *
+     * @throw std::runtime_error
      */
-    SystemStatus(
-        [[maybe_unused]] std::shared_ptr<sdbusplus::asio::connection>& conn,
-        [[maybe_unused]] std::shared_ptr<StateManager>& stateManager,
-        [[maybe_unused]] std::shared_ptr<Transport>& transport,
-        const nlohmann::json& configJson) : sysConfigJson(configJson)
+    SystemStatus(std::shared_ptr<sdbusplus::asio::connection>& connection,
+                 std::shared_ptr<StateManager>& stateManager,
+                 std::shared_ptr<Transport>& transport,
+                 const nlohmann::json& configJson) :
+        connection(connection), stateManager(stateManager),
+        transport(transport), sysConfigJson(configJson)
     {
         if (sysConfigJson.empty())
         {
@@ -73,6 +76,57 @@ class SystemStatus
     void initialize() noexcept;
 
   private:
+    /**
+     * @brief Create a NameOwnerChanged listener for the given D-Bus service
+     *
+     * Registers a signal match on the D-Bus that fires whenever the named
+     * service starts or stops, and stores the created match object in the
+     * class member. On callback, each property listed for this service in
+     * the config JSON will be read from D-Bus and the StateManager API will be
+     * invoked to update the system status, only if a property read succeeds.
+     *
+     * @param[in] service - D-Bus service name to watch.
+     *
+     * @throw std::runtime_error
+     */
+    void createNameOwnerChangedListener(const std::string& service);
+
+    /**
+     * @brief Check whether a D-Bus service is currently running
+     *
+     * @param[in] service - D-Bus service name to check.
+     *
+     * @return true if the service is running; false otherwise.
+     */
+    bool isServiceRunning(const std::string& service) noexcept;
+
+    /**
+     * @brief Create a property changed listener
+     *
+     * Registers a signal match on the bus that fires whenever any property on
+     * @p interface at @p objectPath changes value, and stores the created
+     * match object in the class member. The callback reads the updated
+     * property value and calls the StateManager API to update the system
+     * status.
+     *
+     * @param[in] objectPath - D-Bus object path to watch.
+     * @param[in] interface - D-Bus interface name to watch.
+     *
+     * @throw std::runtime_error
+     */
+    void createPropertiesChangedListener(const std::string& objectPath,
+                                         const std::string& interface);
+
+    /** @brief D-Bus connection */
+    std::shared_ptr<sdbusplus::asio::connection> connection;
+
+    /** @brief StateManager object */
+    std::shared_ptr<StateManager> stateManager;
+
+    /** @brief Transport object */
+    std::shared_ptr<Transport> transport;
+
+    /** @brief System config JSON */
     const nlohmann::json& sysConfigJson;
 };
 } // namespace panel
