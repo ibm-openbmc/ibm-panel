@@ -66,7 +66,11 @@ configure_file(
     install: true,
 )
 
-common_SOURCES = ['src/transport.cpp', 'src/state_manager.cpp']
+common_SOURCES = [
+    'src/transport.cpp',
+    'src/state_manager.cpp',
+    'src/system_status.cpp',
+]
 
 panel_SOURCE = ['src/main.cpp'] + common_SOURCES
 

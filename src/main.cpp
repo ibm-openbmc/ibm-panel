@@ -1,6 +1,7 @@
 #include "const.hpp"
 #include "error_codes.hpp"
 #include "state_manager.hpp"
+#include "system_status.hpp"
 #include "transport.hpp"
 #include "utils.hpp"
 
@@ -9,6 +10,7 @@
 #include <format>
 #include <limits>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/asio/connection.hpp>
 #include <sdbusplus/asio/object_server.hpp>
@@ -24,6 +26,7 @@ struct PanelContext
 {
     std::shared_ptr<panel::Transport> transport;
     std::shared_ptr<panel::StateManager> stateManager;
+    std::shared_ptr<panel::SystemStatus> systemStatus;
     nlohmann::json sysConfigJson;
 };
 
@@ -147,7 +150,8 @@ void setTransportKeyForMultiBmcSystem(
  * @param[out] ctx - PanelContext to populate. Members are left unchanged
  *                   on failure.
  */
-void initPanel(PanelContext& ctx) noexcept
+void initPanel(std::shared_ptr<sdbusplus::asio::connection>& conn,
+               PanelContext& ctx) noexcept
 {
     try
     {
@@ -211,6 +215,9 @@ void initPanel(PanelContext& ctx) noexcept
         // TODO: Update PanelStateManager to accept an Executor once available.
         ctx.stateManager =
             std::make_shared<panel::StateManager>(ctx.transport, defaultRole);
+
+        ctx.systemStatus = std::make_shared<SystemStatus>(
+            conn, ctx.stateManager, ctx.transport, configResult.value());
     }
     catch (const std::exception& ex)
     {
@@ -246,7 +253,7 @@ int main()
         // Construct ctx in main() so all subsystem objects remain alive
         // for the entire event loop.
         panel::PanelContext ctx;
-        panel::initPanel(ctx);
+        panel::initPanel(conn, ctx);
 
         iface->initialize();
 
