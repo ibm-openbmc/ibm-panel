@@ -51,6 +51,16 @@
                     }
                 ]
             }
+        ],
+        "xyz.openbmc_project.State.BMC.Redundancy": [
+            {
+                "/xyz/openbmc_project/state/bmc0": [
+                    {
+                        "interfaceName": "xyz.openbmc_project.State.BMC.Redundancy",
+                        "properties": ["Role"]
+                    }
+                ]
+            }
         ]
     }
 }
