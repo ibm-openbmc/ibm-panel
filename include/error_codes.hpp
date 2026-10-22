@@ -41,6 +41,8 @@ enum error_code
     MISSING_PROPERTIES_TAG,
     DEVICE_PRESENCE_UNKNOWN,
     MISSING_GPIO_PRESENCE_TAG,
+    GPIO_LINE_EXCEPTION,
+    DEVICE_NOT_PRESENT,
 };
 
 // Error code to error message map
@@ -83,4 +85,7 @@ const std::unordered_map<int, std::string> errorCodeMap = {
     {error_code::DEVICE_PRESENCE_UNKNOWN,
      "Panel device presence could not be determined."},
     {error_code::MISSING_GPIO_PRESENCE_TAG, "gpioPresence tag is missing"},
-};
+    {error_code::GPIO_LINE_EXCEPTION,
+     "There was an exception while finding GPIO line."},
+    {error_code::DEVICE_NOT_PRESENT,
+     "Presence pin read successfully but device was absent."}};
