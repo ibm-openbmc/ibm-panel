@@ -46,5 +46,10 @@ constexpr auto positionInterface =
 constexpr auto positionPropertyName = "Position";
 
 static constexpr auto VALUE_0 = 0;
+
+// D-Bus service
+static constexpr auto dbusService = "org.freedesktop.DBus";
+static constexpr auto dbusObjectPath = "/org/freedesktop/DBus";
+static constexpr auto dbusInterface = "org.freedesktop.DBus";
 } // namespace constants
 } // namespace panel
