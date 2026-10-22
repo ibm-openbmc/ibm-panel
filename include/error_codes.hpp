@@ -39,6 +39,8 @@ enum error_code
     MISSING_LISTEN_ON_PROPERTIES_TAG,
     MISSING_INTERFACE_TAG,
     MISSING_PROPERTIES_TAG,
+    DEVICE_PRESENCE_UNKNOWN,
+    MISSING_GPIO_PRESENCE_TAG,
 };
 
 // Error code to error message map
@@ -78,4 +80,7 @@ const std::unordered_map<int, std::string> errorCodeMap = {
      "The property name is invalid or empty."},
     {MISSING_LISTEN_ON_PROPERTIES_TAG,
      "Required listenOnProperties tag is missing in the JSON"},
+    {error_code::DEVICE_PRESENCE_UNKNOWN,
+     "Panel device presence could not be determined."},
+    {error_code::MISSING_GPIO_PRESENCE_TAG, "gpioPresence tag is missing"},
 };

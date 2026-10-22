@@ -484,5 +484,70 @@ inline std::expected<void, error_code>
     // ToDo: Validate Button input device path
     return {};
 }
+
+/**
+ * @brief Read GPIO line value
+ *
+ * Reads the value of a specified GPIO line.
+ *
+ * @param[in] gpioName - Name of the GPIO line.
+ *
+ * @return gpio value on successful read operation, error code otherwise.
+ */
+inline std::expected<int, error_code>
+    readGpio(std::string_view gpioName) noexcept
+{
+    try
+    {
+        // TODO: Add gpiod-based GPIO line read implementation. Until then
+        // this placeholder always reports a value of 0.
+        return 0;
+    }
+    catch (const std::exception& ex)
+    {
+        lg2::error("Exception while reading GPIO {G}: {E}", "G", gpioName, "E",
+                   ex);
+        return std::unexpected(error_code::DEVICE_PRESENCE_UNKNOWN);
+    }
+}
+
+/**
+ * @brief Determine whether the panel is physically present.
+ *
+ * Calls readGpio to read the GPIO pin named in the config JSON and compares
+ * the result against the expected value present in the JSON object.
+ *
+ * @param[in] configJson - JSON object containing gpio information.
+ *
+ * @return true if the panel is present, false if absent, error code in case
+ * of any failure while reading the panel presence.
+ */
+inline std::expected<bool, error_code>
+    readPanelPresence(const nlohmann::json& configJson) noexcept
+{
+    if (!configJson.contains("gpioPresence"))
+    {
+        return std::unexpected(error_code::MISSING_GPIO_PRESENCE_TAG);
+    }
+
+    if (const auto res = validateGpioTags(configJson["gpioPresence"]); !res)
+    {
+        return std::unexpected(res.error());
+    }
+
+    const auto gpioName =
+        configJson["gpioPresence"].at("pin").get<std::string>();
+    const auto gpioExpectedValue =
+        configJson["gpioPresence"].at("value").get<int>();
+
+    const auto res = utils::readGpio(gpioName);
+
+    if (!res)
+    {
+        return std::unexpected(res.error());
+    }
+
+    return res.value() == gpioExpectedValue;
+}
 } // namespace utils
 } // namespace panel

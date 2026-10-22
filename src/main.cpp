@@ -91,10 +91,9 @@ void setTransportKeyForMultiBmcSystem(
     {
 
         /* ToDo enable transport key based on below criteria
-         * 1. Check LCD panel is present, if device is present
-         * 1.1. Read the Panel control bits from Patch Panel to know
+         * 1. Read the Panel control bits from Patch Panel to know
          * who owns the position.
-         * 1.2. If control is owned by current BMC, enable the transport key
+         * 2. If control is owned by current BMC, enable the transport key
          * for LCD device.
          *
          * Note: Until patch panel control-bit access is available to find
@@ -199,17 +198,31 @@ void initPanel(std::shared_ptr<sdbusplus::asio::connection>& conn,
         // TODO: Pass real devPath, devAddr and fruPath once available.
         ctx.transport = std::make_shared<panel::Transport>();
 
-        // For redundant-BMC systems, enable the transport key only if the
-        // current BMC owns the panel control.
-        if (std::ranges::contains(constants::redundantBmcSystemImList,
-                                  imResult.value()))
+        const auto& lcdPanelJson = configResult.value()["lcdPanel"];
+        const auto panelPresenceRes = utils::readPanelPresence(lcdPanelJson);
+
+        if (!panelPresenceRes)
         {
-            setTransportKeyForMultiBmcSystem(ctx.transport);
+            lg2::error("Failed to read LCD Panel presence, error: {E}", "E",
+                       utils::getErrCodeMsg(panelPresenceRes.error()));
+        }
+        else if (panelPresenceRes.value())
+        {
+            // For redundant-BMC systems, enable the transport key only if the
+            // current BMC owns the panel control.
+            if (std::ranges::contains(constants::redundantBmcSystemImList,
+                                      imResult.value()))
+            {
+                setTransportKeyForMultiBmcSystem(ctx.transport);
+            }
+            else
+            {
+                // ToDo: Enable the transport key as panel is present.
+            }
         }
         else
         {
-            // ToDo: Check the LCD Panel presence and enable the trasport key
-            // based on the device presence.
+            lg2::error("LCD Panel detected as absent.");
         }
 
         // TODO: Update PanelStateManager to accept an Executor once available.
