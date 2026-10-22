@@ -7,7 +7,9 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <sdbusplus/asio/connection.hpp>
+#include <sdbusplus/bus/match.hpp>
 #include <string>
+#include <vector>
 
 namespace panel
 {
@@ -77,6 +79,25 @@ class SystemStatus
 
   private:
     /**
+     * @brief Call the StateManager API dedicated to a property
+     *
+     * Selects the StateManager API based on @p service, @p objectPath,
+     * @p interface and @p property, and calls it with @p value. Logs an error
+     * if no API matches.
+     *
+     * @param[in] service - D-Bus service name.
+     * @param[in] objectPath - D-Bus object path.
+     * @param[in] interface - D-Bus interface name.
+     * @param[in] property - Property name.
+     * @param[in] value - Value read from D-Bus.
+     */
+    void dispatchProperty(const std::string& service,
+                          const std::string& objectPath,
+                          const std::string& interface,
+                          const std::string& property,
+                          const types::DbusVariantType& value) noexcept;
+
+    /**
      * @brief Create a NameOwnerChanged listener for the given D-Bus service
      *
      * Registers a signal match on the D-Bus that fires whenever the named
@@ -90,6 +111,19 @@ class SystemStatus
      * @throw std::runtime_error
      */
     void createNameOwnerChangedListener(const std::string& service);
+
+    /**
+     * @brief Callback for the NameOwnerChanged signal of a watched service
+     *
+     * When the service starts (non-empty new owner), looks up the service in
+     * the config JSON, reads every configured property, and for each property
+     * read successfully, calls the StateManager update API for it.
+     *
+     * @param[in] msg - NameOwnerChanged signal message.
+     * @param[in] service - D-Bus service name this signal was registered for.
+     */
+    void nameOwnerChangedCallback(sdbusplus::message_t& msg,
+                                  const std::string& service) noexcept;
 
     /**
      * @brief Check whether a D-Bus service is currently running
@@ -128,5 +162,8 @@ class SystemStatus
 
     /** @brief System config JSON */
     const nlohmann::json& sysConfigJson;
+
+    /** @brief NameOwnerChanged signal matches, one per watched service */
+    std::vector<sdbusplus::bus::match_t> nameOwnerChangedMatches;
 };
 } // namespace panel
