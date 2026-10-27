@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -30,5 +31,20 @@ using DbusVariantType = std::variant<
 
 // Pel additional data contains map of key and value
 using PelAdditionalData = std::map<std::string, std::string>;
+
+/**
+ * @brief Snapshot of the system properties read from D-Bus.
+ *
+ * Each field is std::nullopt until its property is successfully read. A field
+ * left as std::nullopt must not be used to update the panel state.
+ */
+struct SystemStatusInfo
+{
+    std::optional<std::string> bootProgress = std::nullopt;
+    std::optional<std::string> currentBmcState = std::nullopt;
+    std::optional<std::string> currentPowerState = std::nullopt;
+    std::optional<std::string> operatingMode = std::nullopt;
+    std::optional<std::string> bmcRole = std::nullopt;
+};
 } // namespace types
 } // namespace panel

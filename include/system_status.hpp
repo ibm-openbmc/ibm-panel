@@ -151,6 +151,26 @@ class SystemStatus
     void createPropertiesChangedListener(const std::string& objectPath,
                                          const std::string& interface);
 
+    /**
+     * @brief Read current D-Bus property value and store
+     *
+     * For each property name in @p properties, issues a D-Bus read
+     * and stores the returned value in the dedicated field of @p statusInfo.
+     *
+     * @param[in] service - D-Bus service that owns the object.
+     * @param[in] objectPath - D-Bus object path.
+     * @param[in] interface - D-Bus interface name.
+     * @param[in] properties - Json object containing list of property names.
+     * @param[in,out] statusInfo - Structure to populate with the values read.
+     *
+     * @return true if at least one property was successfully read and stored in
+     * the structure; false otherwise.
+     */
+    bool readAndStorePropertyValue(
+        const std::string& service, const std::string& objectPath,
+        const std::string& interface, const auto& properties,
+        types::SystemStatusInfo& statusInfo) noexcept;
+
     /** @brief D-Bus connection */
     std::shared_ptr<sdbusplus::asio::connection> connection;
 

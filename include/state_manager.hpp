@@ -54,6 +54,17 @@ class StateManager
         initPanelState();
     }
 
+    /**
+     * @brief Update the system state bitmask from the values read
+     *
+     * Only the fields of @p statusInfo that hold a value are applied; the bits
+     * corresponding to fields that are std::nullopt are left unchanged.
+     *
+     * @param[in] statusInfo - System status information read from D-Bus.
+     */
+    void applySystemStatusInfo(
+        const types::SystemStatusInfo& statusInfo) noexcept;
+
   private:
     /**
      * @brief Initializes panel state members to their default values
