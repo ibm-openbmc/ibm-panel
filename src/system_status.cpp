@@ -2,7 +2,10 @@
 
 #include "utils.hpp"
 
+#include <algorithm>
+#include <array>
 #include <phosphor-logging/lg2.hpp>
+#include <string_view>
 
 namespace panel
 {
@@ -133,17 +136,64 @@ void SystemStatus::nameOwnerChangedCallback(sdbusplus::message_t& msg,
     }
 }
 
+void SystemStatus::handleBmcState(
+    [[maybe_unused]] const types::DbusVariantType& value)
+{
+    // ToDo: Convert value and call the dedicated StateManager API.
+}
+
+void SystemStatus::handleBmcRole(
+    [[maybe_unused]] const types::DbusVariantType& value)
+{
+    // ToDo: Convert value and call the dedicated StateManager API.
+}
+
 void SystemStatus::dispatchProperty(
-    [[maybe_unused]] const std::string& service,
-    [[maybe_unused]] const std::string& objectPath,
-    [[maybe_unused]] const std::string& interface,
-    [[maybe_unused]] const std::string& property,
-    [[maybe_unused]] const types::DbusVariantType& value) noexcept
+    const std::string& service, const std::string& objectPath,
+    const std::string& interface, const std::string& property,
+    const types::DbusVariantType& value) noexcept
 {
     try
     {
-        // ToDo: dispatch property to dedicated StateManager API based on the
-        // recieved input details.
+        /** @brief Handler function type for a D-Bus property value */
+        using PropertyHandler =
+            void (SystemStatus::*)(const types::DbusVariantType&);
+
+        /** @brief Identifies a D-Bus property and its dedicated handler */
+        struct PropertyHandlerEntry
+        {
+            std::string_view service;
+            std::string_view objectPath;
+            std::string_view interface;
+            std::string_view property;
+            PropertyHandler handler;
+        };
+
+        static constexpr std::array handlers = {
+            PropertyHandlerEntry{
+                constants::bmcStateServiceName, constants::bmcStateObjectPath,
+                constants::bmcStateInterface, "CurrentBMCState",
+                &SystemStatus::handleBmcState},
+            PropertyHandlerEntry{constants::bmcRedundancyServiceName,
+                                 constants::bmcRedundancyObjectPath,
+                                 constants::bmcRedundancyInterface, "Role",
+                                 &SystemStatus::handleBmcRole},
+        };
+
+        const auto it = std::ranges::find_if(handlers, [&](const auto& entry) {
+            return entry.service == service && entry.objectPath == objectPath &&
+                   entry.interface == interface && entry.property == property;
+        });
+
+        if (it == handlers.end())
+        {
+            lg2::error("No handler for [{SVC}] [{PATH}] [{INTF}] [{PROP}]",
+                       "SVC", service, "PATH", objectPath, "INTF", interface,
+                       "PROP", property);
+            return;
+        }
+
+        (this->*(it->handler))(value);
     }
     catch (const std::exception& ex)
     {

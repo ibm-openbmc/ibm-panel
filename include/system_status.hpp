@@ -79,11 +79,25 @@ class SystemStatus
 
   private:
     /**
+     * @brief Handle the BMC state property
+     *
+     * @param[in] value - Value read from D-Bus.
+     */
+    void handleBmcState(const types::DbusVariantType& value);
+
+    /**
+     * @brief Handle the BMC redundancy role property
+     *
+     * @param[in] value - Value read from D-Bus.
+     */
+    void handleBmcRole(const types::DbusVariantType& value);
+
+    /**
      * @brief Call the StateManager API dedicated to a property
      *
-     * Selects the StateManager API based on @p service, @p objectPath,
+     * Looks up the handler registered for @p service, @p objectPath,
      * @p interface and @p property, and calls it with @p value. Logs an error
-     * if no API matches.
+     * if no handler matches.
      *
      * @param[in] service - D-Bus service name.
      * @param[in] objectPath - D-Bus object path.
