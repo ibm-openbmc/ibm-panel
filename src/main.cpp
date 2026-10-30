@@ -217,7 +217,7 @@ void initPanel(std::shared_ptr<sdbusplus::asio::connection>& conn,
             }
             else
             {
-                // ToDo: Enable the transport key as panel is present.
+                ctx.transport->setTransportKey(true);
             }
         }
         else
