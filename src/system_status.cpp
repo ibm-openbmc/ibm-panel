@@ -245,20 +245,73 @@ void SystemStatus::createPropertiesChangedListener(
 }
 
 bool SystemStatus::readAndStorePropertyValue(
-    [[maybe_unused]] const std::string& service,
-    [[maybe_unused]] const std::string& objectPath,
-    [[maybe_unused]] const std::string& interface,
-    [[maybe_unused]] const auto& properties,
-    [[maybe_unused]] types::SystemStatusInfo& statusInfo) noexcept
+    const std::string& service, const std::string& objectPath,
+    const std::string& interface, const nlohmann::json& properties,
+    types::SystemStatusInfo& statusInfo)
 {
-    // ToDo: For each property in properties:
-    //   1. Call utils::readDbusProperty(service, objectPath, interface,
-    //      property) to get the current value from D-Bus.
-    //   2. On success, store the returned value in the dedicated field of
-    //      SystemStatusInfo (each property has its own field) and set a local
-    //      flag to true.
-    // Return the flag — true if at least one property was read & stored
-    // successfully.
-    return false;
+    bool readAny = false;
+
+    for (const auto& aProperty : properties)
+    {
+        const std::string propertyName = aProperty.template get<std::string>();
+
+        // Extract system parameters from BaseBIOSTable
+        if (propertyName == "BaseBIOSTable")
+        {
+            const auto readResult = utils::readSystemParametersFromBiosTable();
+            if (!readResult)
+            {
+                lg2::error(
+                    "Failed to read BaseBIOSTable system parameters: skipping");
+                continue;
+            }
+
+            statusInfo.operatingMode = std::get<1>(*readResult);
+            readAny = true;
+            continue;
+        }
+
+        const auto result = utils::readDbusProperty(service, objectPath,
+                                                    interface, propertyName);
+        if (!result)
+        {
+            continue;
+        }
+
+        const auto* value = std::get_if<std::string>(&result.value());
+        if (!value)
+        {
+            lg2::error("D-Bus property [{PROP}] is not a string: skipping",
+                       "PROP", propertyName);
+            continue;
+        }
+
+        if (propertyName == "BootProgress")
+        {
+            statusInfo.bootProgress = *value;
+        }
+        else if (propertyName == "CurrentBMCState")
+        {
+            statusInfo.currentBmcState = *value;
+        }
+        else if (propertyName == "CurrentPowerState")
+        {
+            statusInfo.currentPowerState = *value;
+        }
+        else if (propertyName == "Role")
+        {
+            statusInfo.bmcRole = *value;
+        }
+        else
+        {
+            lg2::error("Unknown property [{PROP}]: skipping", "PROP",
+                       propertyName);
+            continue;
+        }
+
+        readAny = true;
+    }
+
+    return readAny;
 }
 } // namespace panel
