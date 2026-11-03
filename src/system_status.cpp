@@ -1,5 +1,6 @@
 #include "system_status.hpp"
 
+#include "const.hpp"
 #include "utils.hpp"
 
 #include <phosphor-logging/lg2.hpp>
@@ -69,11 +70,34 @@ void SystemStatus::createNameOwnerChangedListener(const std::string& service)
               service);
 }
 
-bool SystemStatus::isServiceRunning(
-    [[maybe_unused]] const std::string& service) noexcept
+bool SystemStatus::isServiceRunning(const std::string& service) noexcept
 {
-    // ToDo: Query is given Dbus service running and return the result
-    return false;
+    try
+    {
+        if (service.empty())
+        {
+            lg2::error("Service name is empty, cannot check if it is running");
+            return false;
+        }
+
+        auto method = connection->new_method_call(
+            constants::dbusService, constants::dbusObjectPath,
+            constants::dbusInterface, "NameHasOwner");
+        method.append(service);
+
+        auto reply = connection->call(method);
+
+        bool hasOwner = false;
+        reply.read(hasOwner);
+        return hasOwner;
+    }
+    catch (const std::exception& ex)
+    {
+        lg2::error("Failed to check if service {SVC} is running, error: "
+                   "{ERROR}",
+                   "SVC", service, "ERROR", ex);
+        return false;
+    }
 }
 
 void SystemStatus::createPropertiesChangedListener(
