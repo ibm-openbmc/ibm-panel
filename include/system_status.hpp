@@ -153,17 +153,37 @@ class SystemStatus
      *
      * Registers a signal match on the bus that fires whenever any property on
      * @p interface at @p objectPath changes value, and stores the created
-     * match object in the class member. The callback reads the updated
-     * property value and calls the StateManager API to update the system
-     * status.
+     * match object in the class member. The callback hands the new value of
+     * each property listed in @p properties to dispatchProperty.
      *
+     * @param[in] service - D-Bus service name that owns the object.
      * @param[in] objectPath - D-Bus object path to watch.
      * @param[in] interface - D-Bus interface name to watch.
+     * @param[in] properties - Names of the properties to act on.
      *
      * @throw std::runtime_error
      */
-    void createPropertiesChangedListener(const std::string& objectPath,
-                                         const std::string& interface);
+    void createPropertiesChangedListener(
+        const std::string& service, const std::string& objectPath,
+        const std::string& interface,
+        const std::vector<std::string>& properties);
+
+    /**
+     * @brief Callback for the PropertiesChanged signal
+     *
+     * Reads the changed properties from the signal and, for each one listed
+     * in @p properties, calls dispatchProperty with the new value.
+     *
+     * @param[in] msg - PropertiesChanged signal message.
+     * @param[in] service - D-Bus service name.
+     * @param[in] objectPath - D-Bus object path.
+     * @param[in] interface - D-Bus interface name.
+     * @param[in] properties - Names of the properties to act on.
+     */
+    void propertiesChangedCallback(
+        sdbusplus::message_t& msg, const std::string& service,
+        const std::string& objectPath, const std::string& interface,
+        const std::vector<std::string>& properties) noexcept;
 
     /**
      * @brief Read current D-Bus property value and store
@@ -199,5 +219,9 @@ class SystemStatus
 
     /** @brief NameOwnerChanged signal matches, one per watched service */
     std::vector<sdbusplus::bus::match_t> nameOwnerChangedMatches;
+
+    /** @brief PropertiesChanged signal matches, one per object path and
+     * interface pair */
+    std::vector<sdbusplus::bus::match_t> propertiesChangedMatches;
 };
 } // namespace panel
