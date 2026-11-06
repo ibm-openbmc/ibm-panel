@@ -16,6 +16,14 @@ void SystemStatus::initialize() noexcept
             return;
         }
 
+        // Read & store initial system status properties value from D-Bus
+        types::SystemStatusInfo statusInfo;
+
+        // Tracks whether at least one property was successfully read.
+        // The StateManager API is called once after all entries are processed,
+        // only if this is true.
+        bool readAnyProperty = false;
+
         const auto& listenOnProps = sysConfigJson["listenOnProperties"];
 
         for (const auto& [service, objectList] : listenOnProps.items())
@@ -41,14 +49,19 @@ void SystemStatus::initialize() noexcept
 
                         if (serviceRunning)
                         {
-                            // Todo: read property from dbus, update the state
-                            // structure.
+                            readAnyProperty |= readAndStorePropertyValue(
+                                service, objectPath, interface,
+                                intfEntry["properties"], statusInfo);
                         }
                     }
                 }
             }
         }
-        // ToDo: Call StateManager API with the populated status structure.
+
+        if (readAnyProperty)
+        {
+            stateManager->applySystemStatusInfo(statusInfo);
+        }
     }
     catch (const std::exception& ex)
     {
@@ -155,5 +168,23 @@ void SystemStatus::createPropertiesChangedListener(
     // API to update the system status.
     lg2::info("registered PropertiesChanged watcher [{PATH}] [{INTF}]", "PATH",
               objectPath, "INTF", interface);
+}
+
+bool SystemStatus::readAndStorePropertyValue(
+    [[maybe_unused]] const std::string& service,
+    [[maybe_unused]] const std::string& objectPath,
+    [[maybe_unused]] const std::string& interface,
+    [[maybe_unused]] const auto& properties,
+    [[maybe_unused]] types::SystemStatusInfo& statusInfo) noexcept
+{
+    // ToDo: For each property in properties:
+    //   1. Call utils::readDbusProperty(service, objectPath, interface,
+    //      property) to get the current value from D-Bus.
+    //   2. On success, store the returned value in the dedicated field of
+    //      SystemStatusInfo (each property has its own field) and set a local
+    //      flag to true.
+    // Return the flag — true if at least one property was read & stored
+    // successfully.
+    return false;
 }
 } // namespace panel

@@ -194,4 +194,11 @@ void StateManager::initPanelState() noexcept
     panelCurSubStates.push_back(StateType::INVALID_STATE);
 }
 
+void StateManager::applySystemStatusInfo(
+    [[maybe_unused]] const types::SystemStatusInfo& statusInfo) noexcept
+{
+    // ToDo: Map each populated field of statusInfo to its bit in systemState
+    // (power, BMC standby, PHYP runtime, operating mode, BMC role).
+}
+
 } // namespace panel
