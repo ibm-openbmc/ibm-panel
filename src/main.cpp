@@ -83,8 +83,7 @@ types::RoleType getDefaultPanelRole(const std::string& im)
  *
  * @param[in] transport - The transport object.
  */
-void setTransportKeyForMultiBmcSystem(
-    [[maybe_unused]] const auto& transport) noexcept
+void setTransportKeyForMultiBmcSystem(const auto& transport) noexcept
 {
     std::string errMessage{};
     try
@@ -114,7 +113,7 @@ void setTransportKeyForMultiBmcSystem(
         {
             if (*val == constants::VALUE_0)
             {
-                // ToDo: set transport key
+                transport->setTransportKey(true);
                 return;
             }
         }
