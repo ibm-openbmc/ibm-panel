@@ -45,6 +45,17 @@ constexpr auto positionInterface =
     "xyz.openbmc_project.Inventory.Decorator.Position";
 constexpr auto positionPropertyName = "Position";
 
+static constexpr auto bmcStateServiceName = "xyz.openbmc_project.State.BMC";
+static constexpr auto bmcStateObjectPath = "/xyz/openbmc_project/state/bmc0";
+static constexpr auto bmcStateInterface = "xyz.openbmc_project.State.BMC";
+
+static constexpr auto bmcRedundancyServiceName =
+    "xyz.openbmc_project.State.BMC.Redundancy";
+static constexpr auto bmcRedundancyObjectPath =
+    "/xyz/openbmc_project/state/bmc0";
+static constexpr auto bmcRedundancyInterface =
+    "xyz.openbmc_project.State.BMC.Redundancy";
+
 static constexpr auto VALUE_0 = 0;
 } // namespace constants
 } // namespace panel
