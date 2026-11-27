@@ -179,11 +179,14 @@ class SystemStatus
      *
      * @return true if at least one property was successfully read and stored in
      * the structure; false otherwise.
+     *
+     * @throw exception
      */
-    bool readAndStorePropertyValue(
-        const std::string& service, const std::string& objectPath,
-        const std::string& interface, const auto& properties,
-        types::SystemStatusInfo& statusInfo) noexcept;
+    bool readAndStorePropertyValue(const std::string& service,
+                                   const std::string& objectPath,
+                                   const std::string& interface,
+                                   const nlohmann::json& properties,
+                                   types::SystemStatusInfo& statusInfo);
 
     /** @brief D-Bus connection */
     std::shared_ptr<sdbusplus::asio::connection> connection;

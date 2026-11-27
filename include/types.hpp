@@ -27,7 +27,21 @@ using systemStateType = uint16_t;
 using DbusVariantType = std::variant<
     std::vector<std::tuple<std::string, std::string, std::string>>,
     types::Binary,
+    std::string,
     size_t>;
+// clang-format on
+
+/**
+ * @brief System parameters read from the BaseBIOSTable D-Bus property.
+ *
+ * Fields (in order):
+ *   0 - OSBootType          (pvm_os_boot_type)
+ *   1 - systemOperatingMode (pvm_system_operating_mode)
+ *   2 - HMCManaged          (pvm_hmc_managed)
+ *   3 - hypType             (hb_hyp_switch)
+ */
+using BiosParams =
+    std::tuple<std::string, std::string, std::string, std::string>;
 
 // Pel additional data contains map of key and value
 using PelAdditionalData = std::map<std::string, std::string>;

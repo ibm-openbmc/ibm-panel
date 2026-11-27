@@ -565,5 +565,25 @@ inline std::expected<bool, error_code>
 
     return res.value() == gpioExpectedValue;
 }
+
+/**
+ * @brief Read system parameters from the BaseBIOSTable D-Bus property.
+ *
+ * Reads the "BaseBIOSTable" property on the BIOSConfig.Manager interface and
+ * extracts the following BIOS attributes into a typed tuple:
+ *   - pvm_os_boot_type          → (index 0)
+ *   - pvm_system_operating_mode → (index 1)
+ *   - pvm_hmc_managed           → (index 2)
+ *   - hb_hyp_switch             → (index 3)
+ *
+ * @return Populated BiosParams tuple on success; corresponding
+ * error code on failure.
+ */
+inline std::expected<types::BiosParams, error_code>
+    readSystemParametersFromBiosTable() noexcept
+{
+    // ToDo: Read BaseBIOSTable from D-Bus and extract system parameters.
+    return std::unexpected(error_code::DBUS_FAILURE);
+}
 } // namespace utils
 } // namespace panel
