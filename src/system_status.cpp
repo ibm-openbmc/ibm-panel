@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <phosphor-logging/lg2.hpp>
 #include <string_view>
 
@@ -49,7 +50,10 @@ void SystemStatus::initialize() noexcept
 
                         // Create PropertiesChanged match for each
                         //     object path + interface pair.
-                        createPropertiesChangedListener(objectPath, interface);
+                        createPropertiesChangedListener(
+                            service, objectPath, interface,
+                            intfEntry["properties"]
+                                .get<std::vector<std::string>>());
 
                         if (serviceRunning)
                         {
@@ -234,14 +238,53 @@ bool SystemStatus::isServiceRunning(const std::string& service) noexcept
 }
 
 void SystemStatus::createPropertiesChangedListener(
-    const std::string& objectPath, const std::string& interface)
+    const std::string& service, const std::string& objectPath,
+    const std::string& interface, const std::vector<std::string>& properties)
 {
-    // ToDo: Register a PropertiesChanged signal match for objectPath /
-    // interface and store the created match object in the class member. The
-    // callback should read the updated property value and call the StateManager
-    // API to update the system status.
+    propertiesChangedMatches.emplace_back(
+        *connection,
+        sdbusplus::bus::match::rules::propertiesChanged(objectPath, interface),
+        [this, service, objectPath, interface,
+         properties](sdbusplus::message_t& msg) {
+            propertiesChangedCallback(msg, service, objectPath, interface,
+                                      properties);
+        });
+
     lg2::info("registered PropertiesChanged watcher [{PATH}] [{INTF}]", "PATH",
               objectPath, "INTF", interface);
+}
+
+void SystemStatus::propertiesChangedCallback(
+    sdbusplus::message_t& msg, const std::string& service,
+    const std::string& objectPath, const std::string& interface,
+    const std::vector<std::string>& properties) noexcept
+{
+    try
+    {
+        std::string signalInterface;
+        std::map<std::string, types::DbusVariantType> changedProperties;
+        msg.read(signalInterface, changedProperties);
+
+        // Only the properties listed in the config JSON are of interest.
+        for (const auto& name : properties)
+        {
+            const auto it = changedProperties.find(name);
+            if (it == changedProperties.end())
+            {
+                continue;
+            }
+
+            dispatchProperty(service, objectPath, interface, name, it->second);
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        lg2::error("Failed to handle PropertiesChanged [{PATH}] [{INTF}] for "
+                   "service [{SRV}], reason: "
+                   "{ERROR}",
+                   "PATH", objectPath, "INTF", interface, "SRV", service,
+                   "ERROR", ex);
+    }
 }
 
 bool SystemStatus::readAndStorePropertyValue(
